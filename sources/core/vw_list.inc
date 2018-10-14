@@ -1,0 +1,35 @@
+//	Virtual Worlds
+enum
+{
+	VW_NONE,
+	VW_OTHER,
+	VW_AIRPORT,	//	(2),	не перемещать, чтоб не сбились объекты интерьера
+	VW_LOGIN,	//	(3),	не перемещать
+	VW_LSPD,
+	VW_FBI,
+	VW_BANK,
+	VW_CNN,
+	VW_CITYHALL,
+	VW_HOSPITAL,
+	VW_HOTEL,
+	VW_AUTOSCHOOL,
+	VW_SEXSHOP1,
+	VW_SEXSHOP2,
+	VW_SEXSHOP3,
+	VW_RUSMAF,
+	VW_LCN,
+	VW_YAKUZA,
+	VW_GROOVE,
+	VW_BALLAS,
+	VW_VAGOS,
+	VW_AZTECAS,
+	VW_RIFA,
+	VW_CUTSCENE,
+	VW_RACE,
+	VW_PAINTBALL,
+	VW_AJAIL,
+	VW_REG		= 1000,
+	VW_BIZ		= 2000,		//	2000...2999
+	VW_HOUSE	= 3000,		//	3000...3999
+	VW_JAIL		= 4000,		//	4000...4999
+}
