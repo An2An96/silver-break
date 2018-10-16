@@ -48,9 +48,6 @@ samp.ban
 #
 # Common files
 #
-
-*.sublime-workspace
-*.sublime-project
-
+gamemodes/
 scriptfiles/td_editor/
 scriptfiles/**/*.tde
