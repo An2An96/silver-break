@@ -1,0 +1,22 @@
+{
+	"gamemodes": [
+		"SB"
+	],
+	"plugins": [
+		"Zeex/samp-plugin-crashdetect",
+		"samp-incognito/samp-streamer-plugin",
+		"ziggi/rustext",
+		"urShadow/Pawn.CMD",
+		"ziggi/FCNPC",
+		"pBlueG/SA-MP-MySQL",
+		"maddinat0r/sscanf",
+		"MapAndreas",
+		"timerfix"
+	],
+	"rcon_password": "1",
+	"port": 7777,
+	"hostname": "The Silver Break",
+	"language": "Russian",
+	"maxplayers": 503,
+	"maxnpc": 40
+}
