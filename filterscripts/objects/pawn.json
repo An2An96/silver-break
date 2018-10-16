@@ -1,0 +1,10 @@
+{
+	"user": "An2An96",
+	"repo": "objects",
+	"entry": "objects.pwn",
+	"output": "../objects.amx",
+	"dependencies": [
+		"sampctl/samp-stdlib",
+		"samp-incognito/samp-streamer-plugin"
+	]
+}

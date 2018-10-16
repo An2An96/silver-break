@@ -22,7 +22,7 @@
  */
 
 #pragma dynamic 8192
-#pragma disablerecursion
+//#pragma disablerecursion
 
 //	Basis
 #include <a_samp>
@@ -36,15 +36,24 @@ _CancelSelectTextDraw(playerid)
 }
 #define CancelSelectTextDraw	_CancelSelectTextDraw
 
+//	Dependencies
+#include <a_mysql>
+#include <sscanf2>
+#include <streamer>
+#include <rustext>
+#include <Pawn.CMD>
+#include <FCNPC>
+#include <crashdetect>
+
 //	Libs
-#include "../sources/lib/a_mysql"
-#include "../sources/lib/sscanf2"
-#include "../sources/lib/streamer"
-#include "../sources/lib/Pawn.CMD"
-#include "../sources/lib/FCNPC"
-#include "../sources/lib/crashdetect"
+//#include "../sources/lib/a_mysql"
+//#include "../sources/lib/sscanf2"
+//#include "../sources/lib/streamer"
+//#include "../sources/lib/Pawn.CMD"
+//#include "../sources/lib/FCNPC"
+//#include "../sources/lib/crashdetect"
+//#include "../sources/lib/rustext"
 #include "../sources/lib/mapandreas"
-#include "../sources/lib/rustext"
 #include "../sources/lib/timerfix"
 
 //	Utils
@@ -69,10 +78,10 @@ _CancelSelectTextDraw(playerid)
 #include "../sources/faction/gang/header"
 #include "../sources/vehicle/header"
 #include "../sources/interface/header"
-#include "../sources/job/header"
+//#include "../sources/job/header"
 #include "../sources/house/header"
 #include "../sources/faction/header"
-#include "../sources/faction/police/header"
+//#include "../sources/faction/police/header"
 
 //	--->	Other libraries are included after the variable declaration (Find: #connectlib)
 
@@ -2220,20 +2229,13 @@ new TDriverCount = 0;
 
 //	Jobs
 #include 	"../sources/job/core"
-	#tryinclude "../sources/job/job_theft"
-	#tryinclude "../sources/job/job_busdriver"
-	#tryinclude "../sources/job/job_trucker"
-	#tryinclude "../sources/job/job_taxi"
-	#tryinclude "../sources/job/part_loader"
-	#tryinclude "../sources/job/part_farmer"
-	#tryinclude "../sources/job/part_delivery"
 
 //	Factions
-#include "../sources/faction/core"
+#include "faction/core"
 	//	Police
-#include "../sources/faction/police/core"
-#include "../sources/faction/police/mission"	
-#include "../sources/faction/police/pursuit"	
+#include "faction/police/core"
+// #include "../sources/faction/police/mission"	
+// #include "../sources/faction/police/pursuit"	
 	//	Gangs
 #include "../sources/faction/gang/core"
 #include "../sources/faction/gang/gang_zones"
@@ -2253,22 +2255,22 @@ new TDriverCount = 0;
 #tryinclude "../sources/service/casino"
 
 //	Events
-#include "../sources/events/races"
+#include "events/races"
 
 //	Interface
-#include "../sources/interface/fader"
-#include "../sources/interface/hint"
-#include "../sources/interface/exp_line"
-#include "../sources/interface/progress"
-#include "../sources/interface/repbar"
-#include "../sources/interface/mission"
-#include "../sources/interface/visual_timer"
-#include "../sources/interface/cam_effect"
-#include "../sources/interface/hack_lock"
-#include "../sources/interface/buy_menu"
-#include "../sources/interface/select_menu"
-#include "../sources/interface/selecter"
-#include "../sources/interface/core"
+#include "interface/fader"
+#include "interface/hint"
+#include "interface/exp_line"
+#include "interface/progress"
+#include "interface/repbar"
+#include "interface/mission"
+#include "interface/visual_timer"
+#include "interface/cam_effect"
+#include "interface/hack_lock"
+#include "interface/buy_menu"
+#include "interface/select_menu"
+#include "interface/selecter"
+#include "interface/core"
 
 stock isRus(playerid)
 {
