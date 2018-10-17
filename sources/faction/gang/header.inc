@@ -1,8 +1,8 @@
-#if defined _gang_header_included
+#if defined FACTION_GANG_HEADER_INCLUDED
   #endinput
 #endif
 
-#define _gang_header_included
+#define FACTION_GANG_HEADER_INCLUDED
 
 #define Gang.	Gang_
 

@@ -4,6 +4,8 @@
 
 #define _inventory_things_included
 
+#include "../sources/job/header"
+
 new gPresentBoxObject;
 
 UseItem:Gascan(playerid, thingid, option, count)

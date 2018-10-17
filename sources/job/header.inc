@@ -6,6 +6,8 @@
 
 #define Job.	Job_
 
+#define CONTRACT_TIME			180		// Время рабочего контракта
+
 forward OnPlayerStartWork(playerid, work);
 forward OnPlayerFinishWork(playerid, work, reason);
 forward GetPlayerJob(playerid);
@@ -36,7 +38,7 @@ enum
 	//JOB_DRUGDEAL,	// 	Наркодиллер (Нелегально, Yakuza)
 
 //	Подработки (В КОНЦЕ)
-	PART_LOADER,	//	Грузчик
+	PART_LOADER	= 9,//	Грузчик
 	PART_FARMER,	//	Фермер
 	PART_DELIVERY,	//	Доставка
 	PART_DIVER,		//	Дайвер					[not implemented]

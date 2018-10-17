@@ -14,7 +14,7 @@ enum
     NEWS_TYPE_BUSINESS_PURCHASE     // id бизнеса, тип (строкой) -- закусочная там хуй знает
 }
 
-stock PushNews(playerid, type, object_id, object_string[] = "")
+stock PushNews(playerid, type, object_id, const object_string[] = "")
 {
     new query[256];
     mysql_format(g_SQL, query, sizeof(query), "INSERT INTO `ucp_common_news` SET `user_id` = '%d', `type` = '%d', `object_id` = '%d', `object_string` = '%s'", GetPlayerUserID(playerid), type, object_id, object_string);

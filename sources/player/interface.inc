@@ -103,7 +103,7 @@ IFace.UpdateRestartInfo(second)
 }
 
 //	Change money
-IFace.ChangeMoney_Update(playerid, money)
+public IFace.ChangeMoney_Update(playerid, money)
 {
 	new string[32];
 	format(string, sizeof(string), "%s%d$", (money > 0) ? ("~g~+") : ("~r~"), money);

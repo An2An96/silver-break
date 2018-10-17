@@ -6,6 +6,8 @@
 		* Функции изменения погоды и времени
 */
 
+#include "faction/header"
+
 forward OnPlayerChangeSkin(playerid, skinid);
 
 enum E_SPAWN

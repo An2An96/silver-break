@@ -4,6 +4,9 @@
 
 #define _player_account_included
 
+#include "inventory/header"
+#include "faction/header"
+
 #define MIN_PASS_SYMB			4		// Мин длина пароля
 #define MAX_PASS_SYMB   		32      // Максимальная длина пароля
 #define MAX_SALT_PASS			16
@@ -144,21 +147,21 @@ Public: OnPlayerGetRegister(playerid)
 	if(cache_num_rows())
 	{	//	зарегистрирован на проекте
 		new banunix;
-	   	cache_get_value_name_int(0, "id", 		PlayerInfo[playerid][pUserID]);
-	   	cache_get_value_name_int(0, "banunix", 	banunix);
+		cache_get_value_name_int(0, "id", 		PlayerInfo[playerid][pUserID]);
+		cache_get_value_name_int(0, "banunix", 	banunix);
 
 		new bantime = banunix - gettime();
 		if(banunix > 0 && bantime > 0)
-	    {
-	        SendClientMessage(playerid, COLOR_SERVER, "You are banned from this server.");
-	        SendRemainingBanTime(playerid, banunix);
+		{
+			SendClientMessage(playerid, COLOR_SERVER, "You are banned from this server.");
+			SendRemainingBanTime(playerid, banunix);
 			KickEx(playerid);
-	    }
-	    else
-	    {
-		    cache_get_value_name_int(0, "exitunix", PlayerInfo[playerid][pExitUNIX]);
-		    gPlayerRegged[playerid] = REG_STATE_LOGIN;
-	    }
+		}
+		else
+		{
+			cache_get_value_name_int(0, "exitunix", PlayerInfo[playerid][pExitUNIX]);
+			gPlayerRegged[playerid] = REG_STATE_LOGIN;
+		}
 	}
 	else
 	{

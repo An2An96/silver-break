@@ -1,16 +1,23 @@
-#if !defined _job_header_included
-	#endinput
-#endif
+// #if !defined _job_header_included
+// 	#endinput
+// #endif
 
 #if defined _job_core_included
 	#endinput
 #endif
-
 #define _job_core_included
 
-#define CONTRACT_TIME			180		// Время рабочего контракта
+#include "../sources/job/header"
 
 #include "../sources/job/interface"
+
+#tryinclude "../sources/job/job_theft"
+#tryinclude "../sources/job/job_busdriver"
+#tryinclude "../sources/job/job_trucker"
+#tryinclude "../sources/job/job_taxi"
+#tryinclude "../sources/job/part_loader"
+#tryinclude "../sources/job/part_farmer"
+#tryinclude "../sources/job/part_delivery"
 
 static 
 	pJob[MAX_PLAYERS]			=	{ JOB_NONE, ... },

@@ -1,49 +1,12 @@
-#if defined _police_core_included
+#if defined	FACTION_POLICE_CORE_INCLUDED
 	#endinput
 #endif
+#define FACTION_POLICE_CORE_INCLUDED
 
-#define _police_core_included
+#include "faction/police/header"
 
-enum E_CRIME
-{
-	E_TITLE[32],
-	E_START_WL,		// Если меньше этого, то даст этот
-	E_WL,			// Сколько будет прибавляться
-	E_MAX_WL,		// Какой максимальный за нарушение
-	E_SHOW_AGAIN	// Показывать информацию о преступлении при повторном совершении(кога звезд уже максимум)
-}
-
-new CrimesList[][E_CRIME] =
-{
-	//	Легкие (штраф)
-	{ "Вождение без освещения",			1, 1, 2, false },
-	{ "Вождение в пьяном виде",			3, 1, 3, false },
-	{ "Вождение без лицензии",			3, 1, 3, false },
-	{ "Хулиганство", 					3, 1, 3, false },
-	//	Средние (арест)
-	{ "Ограбление магазина",			4, 2, 6, false },
-	{ "Угон автотранспорта",			4, 1, 4, false },
-	{ "Изготовление оружия",			4, 1, 4, false },
-	{ "Изготовление наркотиков",		4, 1, 4, false },
-	{ "Оказание сопротивления",			4, 1, 4, false },
-	{ "Перевозка преступника",			4, 1, 4, false },
-	{ "Незаконное ношение оружия",		4, 1, 4, false },
-	{ "Ношение запрещенных предметов",	4, 1, 4, false },
-	//	Тяжкие (арест)
-	{ "Убийство", 						4, 1, 8, false },
-	{ "Нападение на сотрудника",		4, 1, 6, false },
-	{ "Побег из тюрьмы",				8, 1, 8, false },
-	{ "Проникновение в тюрьму",			8, 1, 8, false }
-};
-
-new PlayerCuffedTime[MAX_PLAYERS];
-new CriminalMarkers[MAX_PLAYERS];
-new bool:CriminalDanger[MAX_PLAYERS];    // Особо опасен (сопротивление)
-new criminal_timer[MAX_PLAYERS];
-
-static 
-	PlayerText:PTD_WantedLevel,
-	PlayerText:PTD_WantedStatus;
+#include "faction/police/mission"	
+#include "faction/police/pursuit"
 
 Public: Police_OnPlayerDeath(playerid, killerid, reason)
 {
@@ -143,7 +106,7 @@ IFace.UpdatePlayerWanted(playerid)
 }
 
 //////////	Functions	//////////
-stock MySetPlayerWantedLevel(playerid, level)
+public MySetPlayerWantedLevel(playerid, level)
 {
 	if(IsPlayerNPC(playerid)) return true;
 	PlayerInfo[playerid][pWantedLvl] = level;
@@ -218,7 +181,7 @@ stock GivePlayerWantedLevel(playerid, level, maxlvl, reason[], show_again = true
 	return 0;
 }
 
-CrimePlayer(playerid, crimeid)
+public CrimePlayer(playerid, crimeid)
 {
 	if(0 <= crimeid < sizeof(CrimesList))
 	{

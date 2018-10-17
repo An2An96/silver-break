@@ -4,6 +4,8 @@
 
 #define _vehicle_core_included
 
+#include "vehicle/header"
+
 stock MyCreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1 = -1, color2 = -1, respawn_delay = VEH_SPAWNTIME, addsiren = 0)
 {
 	if(modelid != -1 && (modelid < 400 || modelid > 611)) return false;
@@ -172,6 +174,101 @@ UpdateVehicleLabel(vehicleid)
 		}
 	}
 	return true;
+}
+
+stock IsAvailableVehicle(vehicleid, playerid)
+{	// return:	VEH_AVAILABLE_NONE		- не имеет доступа к авто
+	//			VEH_AVAILABLE_DRIVE		- может ездить, но не может заводить, закрывать и т д
+	//			VEH_AVAILABLE_CONTROL	- может управлять: закрывать, заводить (арендованное авто/ивент)
+	//			VEH_AVAILABLE_OWNER		- личное авто
+
+	//	Другие авто
+	switch(CarInfo[vehicleid][cType])
+	{
+	    case C_TYPE_DEFAULT:
+	    {
+	        if(CarInfo[vehicleid][cOwnerID] == INVALID_PLAYER_ID) 	return VEH_AVAILABLE_NONE;
+	        else if(CarInfo[vehicleid][cOwnerID] == -1) 			return VEH_AVAILABLE_CONTROL;
+	        else if(CarInfo[vehicleid][cOwnerID] == playerid) 		return VEH_AVAILABLE_CONTROL;
+	    }
+	    //	Личные авто
+	    case C_TYPE_PLAYER:
+	    {
+	        if(CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pUserID]) 	return VEH_AVAILABLE_OWNER;
+	        else 																return VEH_AVAILABLE_DRIVE;
+	    }
+	    //	Фракционные авто
+	    case C_TYPE_FACTION:
+	    {
+	        if(CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction]) 	return VEH_AVAILABLE_CONTROL;
+	    }
+	    //	Рабочие авто
+	    case C_TYPE_JOB:
+	    {
+	    	if(CarInfo[vehicleid][cOwnerID] == Job.GetPlayerJob(playerid))
+	    	{
+	    		if(VehInfo[vehicleid][vRentPrice] > 0)
+				{
+					if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
+					{
+						return VEH_AVAILABLE_CONTROL;
+					}
+					else
+					{
+						return VEH_AVAILABLE_DRIVE;
+					}
+				}
+				else
+				{
+					return VEH_AVAILABLE_CONTROL;
+				}
+    		}
+	        else if(CarInfo[vehicleid][cOwnerID] == JOB_NONE)					return VEH_AVAILABLE_CONTROL;
+	    }
+	    //	Авто подработок
+	    case C_TYPE_PARTJOB:
+	    {
+	    	if(Job.GetPlayerNowWork(playerid) == CarInfo[vehicleid][cOwnerID])
+	    	{
+	    		if(VehInfo[vehicleid][vRentPrice] > 0)
+				{
+					if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
+					{
+						return VEH_AVAILABLE_CONTROL;
+					}
+					else
+					{
+						return VEH_AVAILABLE_DRIVE;
+					}
+				}
+				else
+				{
+					return VEH_AVAILABLE_CONTROL;
+				}
+	    	}	
+	    }
+	    //	Арендованные авто
+	    case C_TYPE_RENT:
+	    {
+	    	if(VehInfo[vehicleid][vRentPrice] > 0)
+			{
+				if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
+				{
+					return VEH_AVAILABLE_CONTROL;
+				}
+			}
+			else
+			{
+				return VEH_AVAILABLE_DRIVE;
+			}
+	    }
+	    //	Машины созданные администрацией
+	    case C_TYPE_EVENT:
+	    {
+	        return VEH_AVAILABLE_CONTROL;
+	    }
+	}
+	return VEH_AVAILABLE_NONE;
 }
 
 //	Control Vehicles

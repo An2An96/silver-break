@@ -121,3 +121,13 @@ new const FactionSalary[MAX_FACTIONS][8] =
 	{ 0, 0, 0, 0, 0, 0, 0, 0 },
 	{ 300, 400, 500, 600, 700, 800, 1000, 0 }
 };
+
+enum WH_ENUM
+{
+	bool:WH_LOADED, 	// Статус загрузки из базы (false - не загружено)
+	WH_MONEY,			// Деньги
+	WH_DRUGS,			// Наркотики
+	WH_MATS,			// Материалы
+	WH_GUN[WH_GUN_MAX],	// Список оружия (GetWarehouseWeaponid)
+};
+new Warehouse[MAX_FACTIONS][WH_ENUM];

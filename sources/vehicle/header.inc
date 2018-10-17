@@ -1,3 +1,8 @@
+#if defined VEHICLE_HEADER_INCLUDED
+	#endinput
+#endif
+#define VEHICLE_HEADER_INCLUDED
+
 #define Vehicle.		Vehicle_
 
 forward bool:GetVehicleEngine(vehicleid);

@@ -4,6 +4,9 @@
 
 #define _ac_core_included
 
+#include "interface/header"
+#include "vehicle/header"
+
 #define Anticheat.				Anticheat_
 
 #define MAX_WARNS 				3 									//	Максимум сробатывания одного античита до кика игрока

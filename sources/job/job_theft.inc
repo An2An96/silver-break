@@ -7,6 +7,8 @@
 #endif
 #define _job_job_theft_included
 
+#include "faction/header"
+
 #define THEFT_RELOAD_TIME       1800    // Перезарядка между угонами авто (1800 = 30 мин)
 
 //  Угон автотранспорта

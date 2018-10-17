@@ -1,14 +1,4 @@
-#define MAX_DONATE_FUR  		12      // ћаксимум дополнительных донат слотов дл€ мебели
-#define MAX_FURNITURE			40 		//  оличество мебели (без доната)
-#define FUR_SLOT_PRICE  		25   	// ÷ена дополнительного слота мебели
-#define ITEMS_PER_LINE  		7       //  оличество пунктов на одной строке в листе покупки мебели
-
-#define PICKUPID_BHOUSE 		19522 	// ид пикапа купленного дома
-#define PICKUPID_RHOUSE			19523	// ид пикапа дома с арендой
-#define PICKUPID_SHOUSE 		1273 	// ид пикапа продаваемого дома (19470)
-#define ICONID_SHOUSE   		31		// ид иконки продаваемого дома
-
-#define TAX_HOUSE	 			360		// Ќалог на дом (сутки)
+#include "house/header"
 
 RestoreDefaultHouses()
 {	// X, Y, Z, A, Class, Zone (0 LS, 1 SF, 2 LV)

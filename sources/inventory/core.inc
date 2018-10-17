@@ -4,15 +4,17 @@
 
 #define _inventory_included
 
-#include "../sources/inventory/model"
-#include "../sources/inventory/acsr"
-#include "../sources/inventory/weapon"
-#include "../sources/inventory/interface"
-#include "../sources/inventory/dialogs"
-#include "../sources/inventory/things"
-#include "../sources/inventory/throw"
-#include "../sources/inventory/in_hands"
-#include "../sources/inventory/trashcan"
+#include "inventory/header"
+
+#include "inventory/model"
+#include "inventory/acsr"
+#include "inventory/weapon"
+#include "inventory/interface"
+#include "inventory/dialogs"
+#include "inventory/things"
+#include "inventory/throw"
+#include "inventory/in_hands"
+#include "inventory/trashcan"
 
 //////////	Callbacks	//////////
 Public: Inv.OnGameModeInit()

@@ -1,12 +1,10 @@
-#if !defined _headers_interface_included
-	#endinput
-#endif
-
 #if defined _core_interface_included
 	#endinput
 #endif
 
 #define _core_interface_included
+
+#include "interface/header"
 
 //---	Global TD
 new
@@ -1194,7 +1192,7 @@ IFace.Load_Player(playerid)
 		IFace.House_Create_Player(playerid);
 	#endif
 
-	#if defined _police_core_included
+	#if defined FACTION_POLICE_CORE_INCLUDED
 		IFace.Wanted_Create_Player(playerid);
 	#endif
 }

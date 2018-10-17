@@ -4,25 +4,7 @@
 
 #define _police_pursuit_included
 
-//	Полицейские погони
-new PursuitStatus[MAX_PLAYERS],				// Статус погони
-	PursuitState[MAX_PLAYERS],				// GetPlayerState в начале погони
-	PursuitCount[MAX_PLAYERS],				// Счетчик времени
-	PursuitLastUNIX[MAX_PLAYERS],			// Unix последней остановки
-	PursuitTickcount[MAX_PLAYERS],			// Счетчик мегафона
-	bool:PursuitLamp[MAX_PLAYERS],			// Статус фар на момент остановки
-	bool:PursuitCrimTransit[MAX_PLAYERS],	// Перевозит ли преступника
-	bool:PursuitIllegalItem[MAX_PLAYERS],	//	Нашли ли нелегальные предметы
-	bool:PursuitAllowArrest[MAX_PLAYERS],	//	Разрешено ли арестовать (розыск < 4)
-	PursuitReinforc[MAX_PLAYERS],
-	PursuitReinforcReload[MAX_PLAYERS],
-	PursuitReinforcMapIcon[MAX_PLAYERS],
-	PursuitReinforcTime[MAX_PLAYERS],
-	PursuitArest[MAX_PLAYERS],
-	PursuitArestPlayer[MAX_PLAYERS] = { INVALID_PLAYER_ID, ... },	//	ид игрока которого арестовывает коп
-	PursuitCancelHandsup[MAX_PLAYERS],
-	pursuit_timer[MAX_PLAYERS];
-new Text3D:criminal_3d[MAX_PLAYERS];
+#include "faction/police/header"
 
 Public: Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 {

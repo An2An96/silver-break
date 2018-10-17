@@ -1,3 +1,6 @@
+#include "faction/header"
+#include "faction/police/header"
+
 stock SetPlayerFaction(playerid, faction, rank = 1)
 {
 	// Нормировка ранга

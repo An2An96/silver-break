@@ -18,19 +18,23 @@
 //-------------[MySQL Date Base]----------//
 #define MYSQL_LOG			(ERROR | WARNING)
 
-//#define MYSQL_LOCAL
+#define MYSQL_LOCAL
 #if defined MYSQL_LOCAL
 	//	Для входа:	127.0.0.1/phpmyadmin/
 	#define MYSQL_HOST		"127.0.0.1"
 	#define MYSQL_USER 		"root"
 	#define MYSQL_PASS 		""
-	#define MAIN_DB 		"main"
+	#define MAIN_DB 		"sb_main"
+	// #define MYSQL_HOST		"51.68.137.210"
+	// #define MYSQL_USER 		"root"
+	// #define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
+	// #define MAIN_DB 		"samp_main"
 #else
 	//	Для входа:	http://213.32.88.126/phpmyadmin
-	#define MYSQL_HOST		"164.177.177.68"
-	#define MYSQL_USER 		"nemir"
-	#define MYSQL_PASS 		"umer"
-	#define MAIN_DB 		"sb_main"
+	#define MYSQL_HOST		"127.0.0.1"
+	#define MYSQL_USER 		"root"
+	#define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
+	#define MAIN_DB 		"samp_main"
 #endif
 
 new SERVER_ID = INVALID_DATA;

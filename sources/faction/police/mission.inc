@@ -1,3 +1,5 @@
+#include "house/header"
+
 enum pmInfo
 {
 	pmNum,      // Номер вызова
@@ -120,7 +122,7 @@ PoliceMissionComplete(playerid, amount, reason[] = "")
     PoliceMissionCancel(playerid, "quit"); // Обнуление миссии
 }
 
-PoliceMissionCancel(playerid, reason[] = "")
+PoliceMissionCancel(playerid, const reason[] = "")
 {
 	if(PM_Type[playerid] == 3)
 	{// Поиск угнанного авто

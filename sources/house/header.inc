@@ -1,4 +1,20 @@
+#if defined HOUSE_HEADER_INCLUDED
+	#endinput
+#endif
+#define HOUSE_HEADER_INCLUDED
+
 #define MAX_HOUSES      		350     // Количество домов
+#define MAX_DONATE_FUR  		12      // Максимум дополнительных донат слотов для мебели
+#define MAX_FURNITURE			40 		// Количество мебели (без доната)
+#define FUR_SLOT_PRICE  		25   	// Цена дополнительного слота мебели
+#define ITEMS_PER_LINE  		7       // Количество пунктов на одной строке в листе покупки мебели
+
+#define PICKUPID_BHOUSE 		19522 	// ид пикапа купленного дома
+#define PICKUPID_RHOUSE			19523	// ид пикапа дома с арендой
+#define PICKUPID_SHOUSE 		1273 	// ид пикапа продаваемого дома (19470)
+#define ICONID_SHOUSE   		31		// ид иконки продаваемого дома
+
+#define TAX_HOUSE	 			360		// Налог на дом (сутки)
 
 new const Float:InterCoords[][][] =
 {

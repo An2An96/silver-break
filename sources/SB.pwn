@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2011-2017 Borog25 & Impereal
+ * Copyright (C) 2011-2018 Borog25 & Impereal
  *
  * Silver Break RPG
- * Last edit:	30/03/2017
+ * Last edit:	16/10/2018 22:33
  * Version:		3.5.0
  *
  * System requirements:
@@ -46,42 +46,25 @@ _CancelSelectTextDraw(playerid)
 #include <crashdetect>
 
 //	Libs
-//#include "../sources/lib/a_mysql"
-//#include "../sources/lib/sscanf2"
-//#include "../sources/lib/streamer"
-//#include "../sources/lib/Pawn.CMD"
-//#include "../sources/lib/FCNPC"
-//#include "../sources/lib/crashdetect"
-//#include "../sources/lib/rustext"
-#include "../sources/lib/mapandreas"
-#include "../sources/lib/timerfix"
+#include "lib/mapandreas"
+#include "lib/timerfix"
 
 //	Utils
-#include "../sources/utils/foreach"
-#include "../sources/utils/mdialog"
-#include "../sources/utils/fixes"
-#include "../sources/utils/t_time"
-#include "../sources/utils/mxINI"
-#include "../sources/utils/world_text"
-#include "../sources/utils/drift"
+#include "utils/foreach"
+#include "utils/mdialog"
+#include "utils/fixes"
+#include "utils/t_time"
+#include "utils/mxINI"
+#include "utils/world_text"
+#include "utils/drift"
 
 //	Core
-#include "../sources/core/colors"
-#include "../sources/core/const_data"
-#include "../sources/core/utils"
-#include "../sources/core/sa_zones"
-#include "../sources/core/config"
-#include "../sources/core/vw_list"
-
-//	Headers
-#include "../sources/inventory/header"
-#include "../sources/faction/gang/header"
-#include "../sources/vehicle/header"
-#include "../sources/interface/header"
-//#include "../sources/job/header"
-#include "../sources/house/header"
-#include "../sources/faction/header"
-//#include "../sources/faction/police/header"
+#include "core/colors"
+#include "core/const_data"
+#include "core/utils"
+#include "core/sa_zones"
+#include "core/config"
+#include "core/vw_list"
 
 //	--->	Other libraries are included after the variable declaration (Find: #connectlib)
 
@@ -478,16 +461,6 @@ enum
 }
 
 //----------
-enum WH_ENUM
-{
-	bool:WH_LOADED, 	// Статус загрузки из базы (false - не загружено)
-	WH_MONEY,			// Деньги
-	WH_DRUGS,			// Наркотики
-	WH_MATS,			// Материалы
-	WH_GUN[WH_GUN_MAX],	// Список оружия (GetWarehouseWeaponid)
-};
-new Warehouse[MAX_FACTIONS][WH_ENUM];
-
 enum E_ANIMLIST
 {
 	ANIM_TITLE[32],
@@ -4560,107 +4533,6 @@ MyHidePlayerDialog(playerid)
 	Dialogid[playerid] = INVALID_DIALOGID;
 	DialogTimeleft[playerid] = 0;
 	ShowPlayerDialog(playerid, Dialogid[playerid], DIALOG_STYLE_MSGBOX, " ", " ", " ", " ");
-}
-
-stock IsAvailableVehicle(vehicleid, playerid)
-{	// return:	VEH_AVAILABLE_NONE		- не имеет доступа к авто
-	//			VEH_AVAILABLE_DRIVE		- может ездить, но не может заводить, закрывать и т д
-	//			VEH_AVAILABLE_CONTROL	- может управлять: закрывать, заводить (арендованное авто/ивент)
-	//			VEH_AVAILABLE_OWNER		- личное авто
-
-	//	Другие авто
-	switch(CarInfo[vehicleid][cType])
-	{
-	    case C_TYPE_DEFAULT:
-	    {
-	        if(CarInfo[vehicleid][cOwnerID] == INVALID_PLAYER_ID) 	return VEH_AVAILABLE_NONE;
-	        else if(CarInfo[vehicleid][cOwnerID] == -1) 			return VEH_AVAILABLE_CONTROL;
-	        else if(CarInfo[vehicleid][cOwnerID] == playerid) 		return VEH_AVAILABLE_CONTROL;
-	    }
-
-	    //	Личные авто
-	    case C_TYPE_PLAYER:
-	    {
-	        if(CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pUserID]) 	return VEH_AVAILABLE_OWNER;
-	        else 																return VEH_AVAILABLE_DRIVE;
-	    }
-
-	    //	Фракционные авто
-	    case C_TYPE_FACTION:
-	    {
-	        if(CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction]) 	return VEH_AVAILABLE_CONTROL;
-	    }
-
-	    //	Рабочие авто
-	    case C_TYPE_JOB:
-	    {
-	    	if(CarInfo[vehicleid][cOwnerID] == Job.GetPlayerJob(playerid))
-	    	{
-	    		if(VehInfo[vehicleid][vRentPrice] > 0)
-				{
-					if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
-					{
-						return VEH_AVAILABLE_CONTROL;
-					}
-					else
-					{
-						return VEH_AVAILABLE_DRIVE;
-					}
-				}
-				else
-				{
-					return VEH_AVAILABLE_CONTROL;
-				}
-    		}
-	        else if(CarInfo[vehicleid][cOwnerID] == JOB_NONE)					return VEH_AVAILABLE_CONTROL;
-	    }
-
-	    //	Авто подработок
-	    case C_TYPE_PARTJOB:
-	    {
-	    	if(Job.GetPlayerNowWork(playerid) == CarInfo[vehicleid][cOwnerID])
-	    	{
-	    		if(VehInfo[vehicleid][vRentPrice] > 0)
-				{
-					if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
-					{
-						return VEH_AVAILABLE_CONTROL;
-					}
-					else
-					{
-						return VEH_AVAILABLE_DRIVE;
-					}
-				}
-				else
-				{
-					return VEH_AVAILABLE_CONTROL;
-				}
-	    	}	
-	    }
-
-	    //	Арендованные авто
-	    case C_TYPE_RENT:
-	    {
-	    	if(VehInfo[vehicleid][vRentPrice] > 0)
-			{
-				if(VehInfo[vehicleid][vRentOwner] == PlayerInfo[playerid][pUserID])
-				{
-					return VEH_AVAILABLE_CONTROL;
-				}
-			}
-			else
-			{
-				return VEH_AVAILABLE_DRIVE;
-			}
-	    }
-
-	    //	Машины созданные администрацией
-	    case C_TYPE_EVENT:
-	    {
-	        return VEH_AVAILABLE_CONTROL;
-	    }
-	}
-	return VEH_AVAILABLE_NONE;
 }
 
 //////
@@ -25962,15 +25834,15 @@ public OnPlayerEditAttachedObject(playerid, response, index, modelid, boneid, Fl
     return true;
 }
 
-new _graffiti;
-CMD:graffiti(playerid, params[])
-{
-	new Float:pos[3];
-	MyGetPlayerPos(playerid, Arr3<pos>);
-	_graffiti = CreateDynamicObject(18659, Arr3<pos>, 0.0, 0.0, 0.0);
-	SelectObject(playerid);
-	return true;
-}
+// new _graffiti;
+// CMD:graffiti(playerid, params[])
+// {
+// 	new Float:pos[3];
+// 	MyGetPlayerPos(playerid, Arr3<pos>);
+// 	_graffiti = CreateDynamicObject(18659, Arr3<pos>, 0.0, 0.0, 0.0);
+// 	SelectObject(playerid);
+// 	return true;
+// }
 
 public OnPlayerEditDynamicObject(playerid, objectid, response, Float:x, Float:y, Float:z, Float:rx, Float:ry, Float:rz)
 {

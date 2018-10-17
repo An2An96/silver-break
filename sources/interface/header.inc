@@ -1,8 +1,8 @@
-#if defined _headers_interface_included
-  #endinput
+#if defined INTERFACE_HEADER_INCLUDED
+	#endinput
 #endif
 
-#define _headers_interface_included
+#define INTERFACE_HEADER_INCLUDED
 
 #define 	IFace.		IFace_
 
@@ -13,6 +13,8 @@
 
 forward IsPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle);
 forward OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle);
+
+forward IFace.ChangeMoney_Update(playerid, money);
 
 enum IFace.E_GROUPS
 {

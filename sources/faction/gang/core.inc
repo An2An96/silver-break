@@ -4,6 +4,8 @@
 
 #define _gang_core_included
 
+#include "faction/gang/header"
+
 Public: Gang.OnGameModeInit()
 {
 	GangZone_Load();

@@ -4,6 +4,8 @@
 
 #define _inventory_dialogs_included
 
+#include "../sources/faction/police/header"
+
 static string[256];
 
 DialogCreate:Inv_Drop(playerid)

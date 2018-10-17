@@ -4,6 +4,8 @@
 
 #define _player_phone_included
 
+#include "faction/police/header"
+
 #define PHONE_BASE_POS_X	35.0
 #define PHONE_BASE_POS_Y	305.0
 

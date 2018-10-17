@@ -1,8 +1,7 @@
-#if defined _inventory_header_included
+#if defined INVENTORY_HEADER_INCLUDED
   #endinput
 #endif
-
-#define _inventory_header_included
+#define INVENTORY_HEADER_INCLUDED
 
 #define Inv.					Inv_
 #define Acsr.					Acsr_
