@@ -49,5 +49,6 @@ samp.ban
 # Common files
 #
 gamemodes/
+sources/backups
 scriptfiles/td_editor/
 scriptfiles/**/*.tde
