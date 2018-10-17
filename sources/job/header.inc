@@ -86,3 +86,11 @@ new Jobs[][E_JOB_INFO] = {
 	{ "Дайвер",				0,	true,	true,	{ 0.0, 0.0, 0.0 },	false },	//	PART_DIVER
 	{ "Курьер",				0,	true,	true,	{ 0.0, 0.0, 0.0 },	false }		//	PART_PIZZA
 };
+
+new 
+	pJob[MAX_PLAYERS]			=	{ JOB_NONE, ... },
+	pContract[MAX_PLAYERS],
+	pAtWork[MAX_PLAYERS] 		= 	{ JOB_NONE, ... },
+	pJobMapIcon[MAX_PLAYERS]	=	{ INVALID_STREAMER_ID, ... },
+	Float:pJobWage[MAX_PLAYERS],		// Счетчик заработка (перечисляется в 00 минут)
+	Float:pPartWage[MAX_PLAYERS];

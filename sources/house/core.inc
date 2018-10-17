@@ -1,5 +1,7 @@
 #include "house/header"
 
+#include "house/interface"
+
 RestoreDefaultHouses()
 {	// X, Y, Z, A, Class, Zone (0 LS, 1 SF, 2 LV)
 	new File:file = fopen(GM_FOLDER"houses.cfg", io_read);

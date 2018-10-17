@@ -1,5 +1,7 @@
 #include "faction/header"
-#include "faction/police/header"
+
+#include "faction/police/core"
+#include "faction/gang/core"
 
 stock SetPlayerFaction(playerid, faction, rank = 1)
 {

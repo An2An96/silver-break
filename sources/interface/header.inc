@@ -14,6 +14,8 @@
 forward IsPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle);
 forward OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle);
 
+forward IFace.Load_Player(playerid);
+
 forward IFace.ChangeMoney_Update(playerid, money);
 
 enum IFace.E_GROUPS

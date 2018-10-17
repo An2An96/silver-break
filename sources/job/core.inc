@@ -1,33 +1,21 @@
-// #if !defined _job_header_included
-// 	#endinput
-// #endif
-
 #if defined _job_core_included
 	#endinput
 #endif
 #define _job_core_included
 
-#include "../sources/job/header"
+#include "job/header"
 
-#include "../sources/job/interface"
+#include "job/interface"
 
-#tryinclude "../sources/job/job_theft"
-#tryinclude "../sources/job/job_busdriver"
-#tryinclude "../sources/job/job_trucker"
-#tryinclude "../sources/job/job_taxi"
-#tryinclude "../sources/job/part_loader"
-#tryinclude "../sources/job/part_farmer"
-#tryinclude "../sources/job/part_delivery"
+#tryinclude "job/job_theft"
+#tryinclude "job/job_busdriver"
+#tryinclude "job/job_trucker"
+#tryinclude "job/job_taxi"
+#tryinclude "job/part_loader"
+#tryinclude "job/part_farmer"
+#tryinclude "job/part_delivery"
 
-static 
-	pJob[MAX_PLAYERS]			=	{ JOB_NONE, ... },
-	pContract[MAX_PLAYERS],
-	pAtWork[MAX_PLAYERS] 		= 	{ JOB_NONE, ... },
-	pJobMapIcon[MAX_PLAYERS]	=	{ INVALID_STREAMER_ID, ... },
-	Float:pJobWage[MAX_PLAYERS],		// Счетчик заработка (перечисляется в 00 минут)
-	Float:pPartWage[MAX_PLAYERS];
-
-Public: Job.OnPlayerDeath(playerid, killerid, reason)
+public OnPlayerDeath(playerid, killerid, reason)
 {
 	/*if(Job.GetPlayerPartWage(playerid) > 0)
 	{
@@ -38,8 +26,47 @@ Public: Job.OnPlayerDeath(playerid, killerid, reason)
 	{
 		Job.ClearPlayerNowWork(playerid, Job.REASON_DEATH);
 	}
-	return true;
+
+	#if defined JobCore_OnPlayerDeath
+		return JobCore_OnPlayerDeath(playerid, killerid, reason);
+	#else
+		return 1;
+	#endif
 }
+#if defined _ALS_OnPlayerDeath
+	#undef OnPlayerDeath
+#else
+	#define _ALS_OnPlayerDeath
+#endif
+
+#define OnPlayerDeath JobCore_OnPlayerDeath
+#if defined JobCore_OnPlayerDeath
+	forward JobCore_OnPlayerDeath(playerid, killerid, reason);
+#endif
+
+public OnPlayerDisconnect(playerid, reason)
+{
+	Job.ClearPlayerNowWork(playerid, Job.REASON_DISCONNECT);
+	#if defined	_job_job_taxi_included
+		CancelUseTaxi(playerid);            			// Очистка пассажирского такси
+	#endif
+
+	#if defined JobCore_OnPlayerDisconnect
+		return JobCore_OnPlayerDisconnect(playerid, reason);
+	#else
+		return 1;
+	#endif
+}
+#if defined _ALS_OnPlayerDisconnect
+	#undef OnPlayerDisconnect
+#else
+	#define _ALS_OnPlayerDisconnect
+#endif
+
+#define OnPlayerDisconnect JobCore_OnPlayerDisconnect
+#if defined JobCore_OnPlayerDisconnect
+	forward JobCore_OnPlayerDisconnect(playerid, reason);
+#endif
 
 //////////////////////////////////
 Job.SetORM(ORM:ormid, playerid)

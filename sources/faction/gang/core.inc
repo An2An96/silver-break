@@ -6,6 +6,10 @@
 
 #include "faction/gang/header"
 
+#include "faction/gang/gang_zones"
+#include "faction/gang/robbery"
+#include "faction/gang/interface"
+
 Public: Gang.OnGameModeInit()
 {
 	GangZone_Load();

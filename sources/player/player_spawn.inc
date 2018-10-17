@@ -144,7 +144,6 @@ stock ReloadPlayerSkin(playerid)
 	return true;
 }
 
-
 /*
 	Установит игроку нужный скин, на оснований того, состоит ли он во фракции или нет
 */
@@ -180,7 +179,9 @@ UpdatePlayerSkin(playerid, set = true)
 
 Public: FixVehicleAnim(playerid)
 {
-	if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)             MyApplyAnimation(playerid, "PED", "CAR_SIT", 4.1, 1, 0, 0, 0, 0, 1);
-	else if(GetPlayerState(playerid) == PLAYER_STATE_PASSENGER)     MyApplyAnimation(playerid, "PED", "CAR_SITP", 4.1, 1, 0, 0, 0, 0, 1);
+	if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
+		MyApplyAnimation(playerid, "PED", "CAR_SIT", 4.1, 1, 0, 0, 0, 0, 1);
+	else if(GetPlayerState(playerid) == PLAYER_STATE_PASSENGER)
+		MyApplyAnimation(playerid, "PED", "CAR_SITP", 4.1, 1, 0, 0, 0, 0, 1);
 	//else FixPlayerFreeze(playerid);
 }

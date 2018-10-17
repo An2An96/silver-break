@@ -6,6 +6,9 @@
 
 #include "vehicle/header"
 
+#include "vehicle/load"
+#include "vehicle/interface"
+
 stock MyCreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1 = -1, color2 = -1, respawn_delay = VEH_SPAWNTIME, addsiren = 0)
 {
 	if(modelid != -1 && (modelid < 400 || modelid > 611)) return false;
