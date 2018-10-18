@@ -277,82 +277,12 @@ strcheck(const string1[], const string2[], bool:ignorecase = false, length = cel
     else    return false;
 }
 
-Float: floatdif(Float:oper1, Float:oper2)
-{   // Только для положительных углов
-    return floatabs((floatround(oper1-oper2+180.0)%360)-180.0);
-}
-
-//  Вхождение одной точки в другую с некоторым радиусом
-stock cmatch(Float:x1, Float:y1, Float:z1, Float:x2, Float:y2, Float:z2, Float:size)
-{
-    if(floatabs(x1 - x2) > size || floatabs(y1 - y2) > size || floatabs(z1 - z2) > size) return 0;
-    return 1;
-}
-
 //  Очистка чата
 ClearChatbox(playerid, lines)
 {
     for(new i = 0; i < lines; i++)
         SendClientMessage(playerid, -1, " ");
     return true;
-}
-
-//  Функции получения различных дистанций
-stock IsPlayerNearPlayer(playerid, giveplayerid, Float:dist)
-{
-    new Float:pos[3];
-    GetPlayerPos(playerid, Arr3<pos>);
-    new Float:plpos[3];
-    GetPlayerPos(giveplayerid, Arr3<plpos>);
-    if(dist > floatround(floatsqroot(floatpower(pos[0] - plpos[0], 2) + floatpower(pos[1] - plpos[1], 2) + floatpower(pos[2] - plpos[2], 2))))
-        return true;
-    return false;
-}
-
-Float:GetDistanceBetweenPlayers(player1, player2, ignore_z = false)
-{
-    new Float:x1, Float:y1, Float:z1;
-    GetPlayerPos(player1, x1, y1, z1);
-    new Float:x2, Float:y2, Float:z2;
-    GetPlayerPos(player2, x2, y2, z2);
-    if(ignore_z) z2 = z1;
-    return floatsqroot((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
-}
-
-Float:GetDistanceFromMeToPoint(playerid, Float:x2, Float:y2, Float:z2 = 0.0)
-{
-    new Float:x1, Float:y1, Float:z1;
-    GetPlayerPos(playerid, x1, y1, z1);
-    if(z2 == 0.0) z2 = z1;
-    return floatsqroot((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
-}
-
-stock Float:GetSquareDistance(Float:x1, Float:y1, Float:z1, Float:x2, Float:y2, Float:z2)
-{
-    x1 -= x2;   y1 -= y2;   z1 -= z2;
-    x1 *= x1;   y1 *= y1;   z1 *= z1;
-    return (x1 + y1 + z1);
-}
-
-Float:GetDistanceFromPointToPoint(Float:x1, Float:y1, Float:z1, Float:x2, Float:y2, Float:z2 = 0.0)
-{
-    if(z2 == 0.0)   z2 = z1;
-    return floatsqroot((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
-}
-
-IsCoordInSquare(Float:X, Float:Y, Float:MinX, Float:MinY, Float:MaxX, Float:MaxY)
-{
-    return (MaxX >= X >= MinX && MaxY >= Y >= MinY) ? true : false;
-}
-
-IsPlayerInSquare(playerid, Float:MinX, Float:MinY, Float:MaxX, Float:MaxY, bool:incZ = true)
-{
-    new Float:X, Float:Y, Float:Z;
-    GetPlayerPos(playerid, X, Y, Z);
-    //if((MinX <= X <= MaxX || MaxX <= X <= MinX) && (MinY <= Y <= MaxY || MaxY <= Y <= MinY) && Z < 530.0)
-    //if(MaxX >= X >= MinX && MaxY >= Y >= MinY && (incZ == false || Z < 530.0))  return true;
-    if(IsCoordInSquare(X, Y, MinX, MinY, MaxX, MaxY) && (incZ == false || Z < 530.0))   return true;
-    return false;
 }
 
 stock GetPlayerSpeed(playerid, block_height = 0)
@@ -427,7 +357,7 @@ stock IsValidEmail(mail[])
 //  Vehicle functions
 GetVehicleSpeed(vehicleid)
 {
-    new Float:pos[3];
-    GetVehicleVelocity(vehicleid, Arr3<pos>);
-    return floatround(floatsqroot(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]) * 160);
+	new Float:pos[3];
+	GetVehicleVelocity(vehicleid, Arr3<pos>);
+	return floatround(floatsqroot(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]) * 160);
 }
