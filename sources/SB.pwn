@@ -2,7 +2,7 @@
  * Copyright (C) 2011-2018 Borog25 & Impereal
  *
  * Silver Break RPG
- * Last edit:	16/10/2018 22:33
+ * Last edit:	17/10/2018
  * Version:		3.5.0
  *
  * System requirements:
@@ -85,8 +85,9 @@ _CancelSelectTextDraw(playerid)
 #include "player/register"
 #include "player/player_spawn"
 #include "player/interface"
+#include "player/chat/core"
+#include "player/phone/main"
 #tryinclude "player/achieve"
-#tryinclude "player/phone"
 #tryinclude "player/chat_binds"
 
 #include	"inventory/core"	//	Inventory
@@ -829,12 +830,6 @@ stock IsPlayerInPaynSpray(playerid)
 }
 
 //---
-stock SendPoliceMessage(color, string[])
-{
-    foreach(Cop, i)	SendClientMessage(i, color, string);
-    return true;
-}
-
 ReturnDate()
 {
 	new string[16];
@@ -851,78 +846,6 @@ ReturnTime()
 	gettime(hour,minute,second);
 	format(string,10,"%02d:%02d",hour,minute);
 	return string;
-}
-
-stock SendRadiusMessage(playerid, Float:range, color, string[])
-{
-	new Float:X, Float:Y, Float:Z;
-	GetPlayerPos(playerid, X, Y, Z);
-	SendRadiusMessageEx(X, Y, Z, range, color, string);
-}
-
-stock SendRadiusMessageEx(Float:X, Float:Y, Float:Z, Float:range, color, string[])
-{
-	foreach(LoginPlayer, i)
-	{
-	    if(IsPlayerInRangeOfPoint(i, range, X, Y, Z))
-	    {
-	        SendClientMessage(i, color, string);
-		}
-	}
-}
-
-stock ProxDetector(playerid, Float:rad, const string[], color1 = 0xFFFFFFFF, color2 = 0xE6E6E6E6, color3 = 0xC8C8C8C8, color4 = 0xAAAAAAAA, color5 = 0x8C8C8C8C, censore = false)
-{
-	new bool:founded;
-	new Float:X, Float:Y, Float:Z;
-	GetPlayerPos(playerid, X, Y, Z);
-	new Float:dist, Float:radius = 0;
-	new vw = GetPlayerVirtualWorld(playerid);
-	//	Антимат
-	new cens_string[256];
-	strput(cens_string, string);
-	if(censore)
-	{
-		if(RemoveBadWords(cens_string) >= 5 && GetPlayerAdmin(playerid) == 0)
-		{
-			new stmp[128];
-			PlayerInfo[playerid][pMuteTime] = 5 * 60;
-		    SendFormatMessageToAll(COLOR_WHITE, stmp, "%s[%d] "SCOLOR_LIGHTRED"получил молчанку на "SCOLOR_WHITE"5 минут "SCOLOR_LIGHTRED"за обилие мата", ReturnPlayerName(playerid), playerid);
-		    return true;
-		}
-	}
-	foreach(LoginPlayer, i)
-	{
-		if(GetPlayerVirtualWorld(i) != vw)	continue;
-		#if defined _player_phone_included
-			if(Phone_GetSpeaker(playerid) == i)	continue;
-		#endif
-		dist = GetDistanceFromMeToPoint(i, X, Y, Z);
-		if(dist > rad) continue;
-		for(new x = 0; x < 5; x++)
-		{
-		    radius += rad / 5;
-			if(dist < radius)
-			{
-			    switch(x)
-			    {
-			        case 0: SendClientMessage(i, color1, PlayerInfo[i][pCensored] ? cens_string : string);
-			        case 1: SendClientMessage(i, color2, PlayerInfo[i][pCensored] ? cens_string : string);
-			        case 2: SendClientMessage(i, color3, PlayerInfo[i][pCensored] ? cens_string : string);
-			        case 3: SendClientMessage(i, color4, PlayerInfo[i][pCensored] ? cens_string : string);
-			        case 4: SendClientMessage(i, color5, PlayerInfo[i][pCensored] ? cens_string : string);
-			    }
-				if(playerid != i) founded = true;
-			    break;
-			}
-		}
-	}
-	return founded;
-}
-
-stock CensoreProxDetector(playerid, Float:rad, const string[], color1 = 0xFFFFFFFF, color2 = 0xE6E6E6E6, color3 = 0xC8C8C8C8, color4 = 0xAAAAAAAA, color5 = 0x8C8C8C8C)
-{
-	return ProxDetector(playerid, rad, string, color1, color2, color3, color4, color5, true);
 }
 
 stock MySetPlayerPosFade(playerid, fadeid, Float:x, Float:y, Float:z, Float:a = 0.0, bool:freeze = false, interior = 0, virt = 0)
@@ -1405,35 +1328,6 @@ SendRemainingBanTime(playerid, banunix)
 	SendClientMessage(playerid, COLOR_SERVER, string);
 }
 
-IsIpAdress(ip[])
-{
-	new cutip[4][3];
-	if(sscanf(ip, "p<.>s[3]s[3]s[3]s[3]", Arr4<cutip>))
-	{
-		return false;
-	}
-	for(new i = 0; i < 4; i++)
-	{
-		for(new j = 0; j < strlen(cutip[i]); j++)
-		{
-			if((cutip[i][j] >= '0' && cutip[i][j] <= '9') == false && cutip[i][j] != '*')
-			{
-				return false;
-			}
-		}
-	}
-	//format(str, 16, "%d.%d.%d.%d", ippart[0], ippart[1], ippart[2], ippart[3]);
-	//if(strlen(ip) != strlen(str)) return false;
-	return true;
-}
-
-stock ReturnPlayerIP(playerid)
-{
-	new IP[16];
-	GetPlayerIp(playerid, IP, 16);
-	return IP;
-}
-
 IsAdminsOnline()
 {
 	foreach(LoginPlayer, i)
@@ -1491,14 +1385,6 @@ stock MyCreateNPC(name[], script[] = "")
 	    //ConnectNPC(name, script);
 	    return -1;
 	#endif
-}
-
-stock SendFactionMessage(faction, color, string[])
-{
-	foreach(LoginPlayer, i)
-	    if(PlayerInfo[i][pFaction] == faction)
-	        SendClientMessage(i, color, string);
-	return true;
 }
 
 stock GetRandomModel()
@@ -1824,8 +1710,6 @@ public OnPlayerEnterReceived(playerid, enterid)
 			}
 	    }
 	}
-
-	
 	return true;
 }
 
@@ -2375,15 +2259,6 @@ ChoosePlayerVehicle(playerid, mode)
 	return 1;
 }
 
-HidePropertyMenu(playerid)
-{
-	gPickupTime[playerid] = 3;
-	PickupedHouse[playerid] = -1;
-	CancelSelectTextDraw(playerid);
-	GameTextForPlayer(playerid, " ", 1000, 3);
-	IFace.ToggleGroup(playerid, IFace.HOUSE_ENTER_MENU, false);
-}
-
 MyShowPlayerDialog(playerid, dialogid, style, caption[], info[], button1[], button2[] = "", dtl = 60)
 {
 	if(dialogid != INVALID_DIALOGID && Dialogid[playerid] != INVALID_DIALOGID)
@@ -2442,32 +2317,6 @@ ColorMenuHide(playerid)
     for(new i = 0; i <= 66; i++)	TextDrawHideForPlayer(playerid, PayNSprayColorMenu[i]);
     CancelSelectTextDraw(playerid);
     PlayerSelectVCFM[playerid] = false;
-	return true;
-}
-
-stock UpdatePlayerHouseMapIcon(playerid)
-{
-	DestroyDynamicMapIcon(PlayerHouseMapIcon[playerid]), PlayerHouseMapIcon[playerid] = INVALID_STREAMER_ID;
-	new h = FoundHouse(PlayerInfo[playerid][pHousing]);
-	if(h != (-1))
-	{
-		PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(HouseInfo[h][hX], HouseInfo[h][hY], HouseInfo[h][hZ], 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
-	}
-	else
-	{
-		if(PlayerInfo[playerid][pRent] < 0)
-		{
-			PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(2232.9, -1159.8, 25.9, 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
-		}
-		else if(PlayerInfo[playerid][pRent] > 0)
-		{
-			h = FoundHouse(PlayerInfo[playerid][pRent]);
-			if(h != (-1))
-			{
-				PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(HouseInfo[h][hX], HouseInfo[h][hY], HouseInfo[h][hZ], 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
-			}
-		}
-	}
 	return true;
 }
 
@@ -2916,12 +2765,13 @@ stock GetBizWhichPlayer(playerid, only_within = 1)
 }
 
 //---
-stock IsPlayerInGreenZoneVW(playerid)
+stock	IsPlayerInGreenZoneVW(playerid)
 {
 	new vw = GetPlayerVirtualWorld(playerid);
 	switch(vw)
 	{
-		case VW_AIRPORT, VW_LSPD, VW_FBI, VW_BANK, VW_CNN, VW_CITYHALL, VW_HOSPITAL, VW_HOTEL, VW_AUTOSCHOOL:	return true;
+		case VW_AIRPORT,VW_LSPD, VW_FBI, VW_BANK, VW_CNN, VW_CITYHALL,
+			VW_HOSPITAL, VW_HOTEL, VW_AUTOSCHOOL:	return true;
 	}
 	return false;
 }
@@ -5122,100 +4972,6 @@ ClearPlayerShooting(playerid, bool:disconnect = false)
 		PlayerBusy{playerid} = false;
 	}
 	return true;
-}
-
-MySendClientMessageToAll(color, const message[], censore = false)
-{
-	//	Антимат
-	new cens_string[256];
-	strput(cens_string, message);
-	if(censore)	RemoveBadWords(cens_string);
-	foreach(LoginPlayer, i)
-	{
-		if(gBlockAction[i] >> 1 & 1) continue;
-	    SendClientMessage(i, color, PlayerInfo[i][pCensored] ? cens_string : message);
-	}
-}
-
-stock SendLocalMessage(playerid, targetid, const message[], anim = true)
-{
-	new string[256];
-	if(targetid != -1)
-	{
-		format(string, sizeof(string), "- %s (%s)", message, ReturnActorName(playerid));
-		SendClientMessage(targetid, COLOR_SAYING, string);
-		if(anim)	ApplyActorAnimation(playerid, "PED", "IDLE_CHAT", 4.1, 0, 1, 1, 1, 1);
-	}
-	else
-	{
-	    //GetPVarString(playerid, "color", string, sizeof(string));
-	    //if(strlen(string) == 0) format(string, sizeof(string), "- %s (%s)[%d]", message, ReturnPlayerName(playerid), playerid);
-		//else format(string, sizeof(string), "- %s {%s}(%s)[%d]", message, string, ReturnPlayerName(playerid), playerid);
-
-		new const iLineLen = 96;
-		new szString[100];
-		new bool:bResult;
-
-	#if defined _player_phone_included
-		if(Phone_GetStatus(playerid) == PHONE_WAIT)	anim = false;
-		if(Phone_GetStatus(playerid) == PHONE_SPEAK || Phone_GetStatus(playerid) == PHONE_ANSWER)
-		{
-	   	 	format(szString, sizeof(szString), "- %s[%d] (в телефон): ", ReturnPlayerName(playerid), playerid);
-	   	 	anim = false;
-		}
-		else
-		{
-	#endif
-			format(szString, sizeof(szString), "- %s[%d] говорит: ", ReturnPlayerName(playerid), playerid);
-	#if defined _player_phone_included
-		}
-	#endif
-		for(new 
-				i = 0, 
-				iCurPos = 0,
-				iTextLen = strlen(message), 
-				szTmp[100]; 
-			iCurPos < iTextLen; i++)
-		{
-			strmid(szTmp, message, iCurPos, (iCurPos + iLineLen - ((i == 0) ? strlen(szString) : 0 )));
-			strcat(szString, szTmp);
-			iCurPos += strlen(szTmp);
-			if(iCurPos < iTextLen)	strcat(szString, "...");
-			if(i == 0)	SetPlayerChatBubble(playerid, szTmp, COLOR_LIGHTGREEN, 20.0, 5000);
-			
-			#if defined _player_phone_included
-				if(Phone_GetStatus(playerid) == PHONE_SPEAK || Phone_GetStatus(playerid) == PHONE_ANSWER)
-				{
-					SendClientMessage(Phone_GetSpeaker(playerid), COLOR_YELLOW, szString);
-					bResult = true;
-				}
-			#endif
-			if(CensoreProxDetector(playerid, 20.0, szString))
-			{
-				bResult = true;
-			}
-			strdel(szString, 0, strlen(szString));
-		}
-
-		if(!bResult && PlayerInfo[playerid][pLevel] < 4)
-		{
-			ShowPlayerHint(playerid, "Вы пишите в локальный чат, при этом возле вас никого нет~n~~n~~y~/o - общий чат___________~n~/ask - задать вопрос", 8000);
-		}
-
-		if(IsPlayerInAnyVehicle(playerid) == 0 && gPlayerUsingLoopingAnim[playerid] == false)
-		{
-		    new stoptime = strlen(message) * 100;
-		    KillTimer(talking_timer[playerid]);
-			//MyApplyAnimation(playerid, "PED", "IDLE_CHAT", 4.1, 0, 1, 1, 1, 1, 1);
-			new chat_anims[][16] = { "prtial_gngtlkA", "prtial_gngtlkB",	"prtial_gngtlkC",	"prtial_gngtlkD",	"prtial_gngtlkE",	"prtial_gngtlkF",	"prtial_gngtlkG",	"prtial_gngtlkH" };
-			if(anim)
-			{
-				MyApplyAnimation(playerid, "GANGS", chat_anims[ random( sizeof(chat_anims) ) ], 4.1, 0, 1, 1, 1, 1, 1);
-				talking_timer[playerid] = SetPlayerTimerEx(playerid, "ClearFreezeAnim", (stoptime > 6000) ? 6000 : stoptime, false, "i", playerid);
-			}	
-		}
-	}
-	return 1;
 }
 
 Public: ClearFreezeAnim(playerid)
@@ -10285,40 +10041,6 @@ _strfind(const string[], const sub[], pos = 0)
 		if(curpos == sublen)	return startpos;
 	}
 	return -1;
-}
-
-stock RemoveBadWords(text[], bool:onlycount = false)
-{
-	new pos = 0, len = 0, epos = 0, bool:except = false, count = 0;
-	for(new i = 0; i < sizeof(BadWords); i++)
-	{
-		pos = 0;
-		do
-		{
-			pos = _strfind(text, BadWords[i], pos);
-			if(pos != -1)
-			{
-				len = strlen(BadWords[i]);
-				for(new e = 0; e < sizeof(Exceptions); e++)
-				{
-					epos = _strfind(text, Exceptions[e]);
-					if(epos > 0 && epos <= pos && epos + strlen(Exceptions[e]) >= pos + len)
-					{
-						except = true;
-						break;
-					}
-				}
-				if(except == false)
-				{
-					if(onlycount == false)	for(new k = pos; k < pos + len; k++) text[k] = '*';
-					count++;
-				}
-				else except = false;
-				pos += len;
-			}
-		} while(pos != (-1));
-	}
-	return count;
 }
 
 public OnPlayerText(playerid, text[])
@@ -27169,36 +26891,6 @@ COMMAND:server(playerid, params[])
     return 1;
 }
 
-flags:setvw(CMD_MODER);
-COMMAND:setvw(playerid, params[])
-{// [BT]
-	new giveplayerid, vw;
-	if(sscanf(params, "ri", giveplayerid, vw))
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /setvw [playerid] [vw]");
-	if(!IsPlayerLogged(giveplayerid))
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-	if(GetPlayerState(giveplayerid) == 2)
-	    SetVehicleVirtualWorld(GetPlayerVehicleID(giveplayerid), vw);
-	SetPlayerVirtualWorld(giveplayerid, vw);
-    SendClientMessage(playerid, COLOR_WHITE, "Задан новый виртуальный мир для игрока");
-    SendClientMessage(giveplayerid, COLOR_WHITE, "Администратор изменил ваш виртуальный мир");
-	return 1;
-}
-
-flags:setint(CMD_MODER);
-COMMAND:setint(playerid, params[])
-{// [BT]
-	new inter, giveplayerid;
-	if(sscanf(params, "ri", giveplayerid, inter))
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /setint [playerid] [int]");
-	if(!IsPlayerLogged(giveplayerid))
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-	SetPlayerInterior(giveplayerid, inter);
-    SendClientMessage(playerid, COLOR_WHITE, "Задан новый интерьер для игрока");
-    SendClientMessage(giveplayerid, COLOR_WHITE, "Администратор изменил вам интерьер");
-    return 1;
-}
-
 flags:coplist(CMD_MODER);
 COMMAND:coplist(playerid, params[])
 {// [BT]
@@ -27645,30 +27337,6 @@ COMMAND:a(playerid, params[])
 	return true;
 }
 
-COMMAND:o(playerid, params[])
-{
-	if(TOGOOC == false)
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Общий чат отключен.");
-
-	new string[128];
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-	    return SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /o [сообщение]");
-
-	//	Антимат
-	if(RemoveBadWords(string, true) >= 5)
-	{
-		new stmp[128];
-		PlayerInfo[playerid][pMuteTime] = 5 * 60;
-	    SendFormatMessageToAll(COLOR_LIGHTRED, stmp, "[AdmWrn]: %s[%d] получил молчанку на 5 минут за обилие мата", ReturnPlayerName(playerid), playerid);
-	    return true;
-	}
-	CensoreFormatMessageToAll(GetPlayerColor(playerid), string, "(( Oбщий чат )) %s[%d]: {FFFFFF}%s", ReturnPlayerName(playerid), playerid, string);
-	return true;
-}
-
 COMMAND:gov(playerid, params[])
 {
 	if(!IsGover(PlayerInfo[playerid][pFaction]))
@@ -27682,52 +27350,6 @@ COMMAND:gov(playerid, params[])
 	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /gov [сообщение]");
 	SendFormatMessageToAll(COLOR_DBLUE, string, "[Госдепартамент]: %s %s[%d]: {FFFFFF}%s", GetPlayerRank(playerid), ReturnPlayerName(playerid), playerid, string);
 	return 1;
-}
-
-COMMAND:do(playerid, params[])
-{
-	new string[128];
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-		return SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /do [событие]");
-	format(string, 128, "* %s (( %s ))", string, ReturnPlayerName(playerid));
-	ProxDetector(playerid, 30.0, string, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, true);
-	printf("[chat] %s", string);
-	return true;
-}
-
-COMMAND:try(playerid, params[])
-{
-    new string[128];
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-		return SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /try [действие]");
-	new randa = random(2) + 1;
-    if(randa == 1)	format(string, sizeof(string), "* %s пытается: %s (успешно)", ReturnPlayerName(playerid), string);
-	else 			format(string, sizeof(string), "* %s пытается: %s (безуспешно)", ReturnPlayerName(playerid), string);
-	ProxDetector(playerid, 30.0, string, COLOR_TRY, COLOR_TRY, COLOR_TRY, COLOR_TRY, COLOR_TRY, true);
-	printf("[chat] %s", string);
-	return true;
-}
-
-COMMAND:me(playerid, params[])
-{
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-	{
-		new string[128];
-		SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-	    if(random(2))	SetPlayerChatBubble(playerid, "Пытается что-то сказать...", COLOR_LIGHTRED, 20.0, 5000);
-	    else			SetPlayerChatBubble(playerid, "Мычит...", COLOR_LIGHTRED, 20.0, 5000);
-	}
-	else
-	{
-		if(sscanf(params, "s[128]", params))
-		    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /me [действие]");
-		PlayerAction(playerid, params, true);
-	}
-	return true;
 }
 
 COMMAND:d(playerid, params[])
@@ -27887,59 +27509,6 @@ COMMAND:f(playerid, params[])
 			SendClientMessage(i, color, PlayerInfo[i][pCensored] ? cens_string : string);
 	}
 	return true;
-}
-
-COMMAND:s(playerid, params[])
-{
-	new string[196];
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /s [сообщение]");
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-	{
-		SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-		return 1;
-	}
-	format(string, sizeof(string), "- %s кричит: %s", ReturnPlayerName(playerid), string);
-	CensoreProxDetector(playerid, 30.0, string, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 0xE6E6E6E6, 0xC8C8C8C8);
-	SetPlayerChatBubble(playerid, params, COLOR_LIGHTGREEN, 30.0, 5000);
-	if(IsPlayerInAnyVehicle(playerid) == 0 && playerBenchUsed{playerid} == 0)
-		MyApplyAnimation(playerid, "ON_LOOKERS", "shout_01", 4.1, 0, 0, 0, 0, 0);
-	//printf("[%s]: %s", ReturnPlayerName(playerid), params);
-	return true;
-}
-
-alias:b("n");
-COMMAND:b(playerid, params[])
-{
-    new string[196];
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /b [сообщение]");
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-	{
-		SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-		return 1;
-	}
-	format(string, sizeof(string), "(( %s[%d]: %s )) ", ReturnPlayerName(playerid), playerid, string);
-	CensoreProxDetector(playerid, 20.0, string);
-	SetPlayerChatBubble(playerid, params, COLOR_LIGHTGREEN, 20.0, 5000);
-	return 1;
-}
-
-alias:close("c");
-COMMAND:close(playerid, params[])
-{
-    new string[196];
-	if(sscanf(params, "s[128]", string))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /c [сообщение]");
-	if(PlayerInfo[playerid][pMuteTime] > 0)
-	{
-		SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вы забанены в чате, осталось: %d сек.", PlayerInfo[playerid][pMuteTime]);
-		return 1;
-	}
-    format(string, sizeof(string), "- %s[%d] шепчет: %s", ReturnPlayerName(playerid), playerid, string);
-	CensoreProxDetector(playerid, 4.0, string, COLOR_GRAD1, COLOR_GRAD2, COLOR_GRAD3, COLOR_GRAD4, COLOR_GRAD5);
-	SetPlayerChatBubble(playerid, params, COLOR_LIGHTGREEN, 4.0, 5000);
-	return 1;
 }
 
 COMMAND:ad(playerid, params[])
@@ -28130,14 +27699,6 @@ COMMAND:live(playerid, params[])
 
 //---
 COMMAND:admins(playerid, params[])	return ShowDialog(playerid, DMODE_ADMINS);
-
-COMMAND:censore(playerid, params[])
-{
-	if(PlayerInfo[playerid][pCensored])	SendClientMessage(playerid, COLOR_RED, "Вы отключили цензуру");
-	else								SendClientMessage(playerid, COLOR_GREEN, "Вы не будете видеть мат");
-	PlayerInfo[playerid][pCensored] = !PlayerInfo[playerid][pCensored];
-	return true;
-}
 
 COMMAND:gps(playerid, params[])
 {

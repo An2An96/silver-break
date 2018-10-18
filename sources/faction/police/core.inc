@@ -278,6 +278,13 @@ IFace.Wanted_Create_Player(playerid)
 	PlayerTextDrawSetShadow(playerid, PTD_WantedStatus, 1);
 }
 
+stock SendPoliceMessage(color, string[])
+{
+	foreach(Cop, i)
+		SendClientMessage(i, color, string);
+	return true;
+}
+
 //////////	Commands	////////////
 COMMAND:wanted(playerid, params[])
 {

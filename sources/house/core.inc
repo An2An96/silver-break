@@ -412,3 +412,38 @@ GetPlayerHouse(playerid)
 	cache_delete(result);
 	return house;
 }
+
+stock	UpdatePlayerHouseMapIcon(playerid)
+{
+	DestroyDynamicMapIcon(PlayerHouseMapIcon[playerid]), PlayerHouseMapIcon[playerid] = INVALID_STREAMER_ID;
+	new h = FoundHouse(PlayerInfo[playerid][pHousing]);
+	if(h != (-1))
+	{
+		PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(HouseInfo[h][hX], HouseInfo[h][hY], HouseInfo[h][hZ], 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
+	}
+	else
+	{
+		if(PlayerInfo[playerid][pRent] < 0)
+		{
+			PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(2232.9, -1159.8, 25.9, 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
+		}
+		else if(PlayerInfo[playerid][pRent] > 0)
+		{
+			h = FoundHouse(PlayerInfo[playerid][pRent]);
+			if(h != (-1))
+			{
+				PlayerHouseMapIcon[playerid] = CreateDynamicMapIcon(HouseInfo[h][hX], HouseInfo[h][hY], HouseInfo[h][hZ], 35, 0, -1, -1, playerid, 3000.0, MAPICON_GLOBAL);
+			}
+		}
+	}
+	return true;
+}
+
+HidePropertyMenu(playerid)
+{
+	gPickupTime[playerid] = 3;
+	PickupedHouse[playerid] = -1;
+	CancelSelectTextDraw(playerid);
+	GameTextForPlayer(playerid, " ", 1000, 3);
+	IFace.ToggleGroup(playerid, IFace.HOUSE_ENTER_MENU, false);
+}

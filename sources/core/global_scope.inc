@@ -77,9 +77,6 @@
 #define NextLvlExp(%0)                      	(LEVEL_EXP * (%0 - 1))
 #define getNextLevelExp(%0)                 	NextLvlExp(PlayerInfo[%0][pLevel] + 1)         
 #define GetPlayerAdminStatus(%0) 				getAdminStatus(PlayerInfo[%0][pAdmin]) 
-#define SendFormatMessage(%0,%1,%2,%3,%4)		format(%2,sizeof %2,%3,%4), SendClientMessage(%0,%1,%2)				//	SendFormatMessage(playerid, color, var, string, format)
-#define SendFormatMessageToAll(%0,%1,%2,%3)		format(%1,sizeof %1,%2,%3), MySendClientMessageToAll(%0,%1)			//	SendFormatMessageToAll(color, var, string, format)
-#define CensoreFormatMessageToAll(%0,%1,%2,%3)	format(%1,sizeof %1,%2,%3), MySendClientMessageToAll(%0,%1,true)	//	CensoreFormatMessageToAll(color, var, string, format)
 
 //	Префиксы сообщений
 #define PREFIX_ADMIN			SCOLOR_LIGHTRED	"[Adm] {FFFFFF}"
@@ -954,9 +951,6 @@ new const Float:FillPos[][3] =
 	{ -117.4886,	1005.4965,	19.8 	}
 };
 
-new const BadWords[][] = { "бля", "хуй", "хуи", "хуя", "хуе", "пизд", "еба", "ебъ", "ебу", "ебл", "чмо", "сука", "суки", "мудил", "мудак", "ублюдок", "пидор", "пидар", "гандон", "мразь", "залуп" };
-new const Exceptions[][] = { "оскорбля", "учебни", "страхуй", "штрихуй", "сабля", "корабля", "требу", "чмок", "рубля" };
-
 new const FightStyleNames[][16] = {
 	"Нормальный",
 	"Бокс",
@@ -1196,7 +1190,6 @@ new FW_Sparks[MAX_PLAYERS][8];
 new GotoObject[MAX_PLAYERS];
 new StartupAntiflood[MAX_PLAYERS];
 new MakeleaderPlayerid[MAX_PLAYERS];
-new talking_timer[MAX_PLAYERS];
 new pRepair[MAX_PLAYERS];
 new unfreeze_timer[MAX_PLAYERS];
 new weaponid_new[MAX_PLAYERS];

@@ -6,6 +6,7 @@
 
 #include "interface/header"
 #include "vehicle/header"
+#include "player/chat/header"
 
 #define Anticheat.				Anticheat_
 

@@ -216,8 +216,8 @@ ChangeStringCase(string[], newCase)
     {
         case 3:
         {
-            if(string[len - 1] == 'Р°')      string[len - 1] = 'Сѓ';
-            else if(string[len - 1] == 'Рђ') string[len - 1] = 'РЈ';
+            if(string[len - 1] == 'а')      string[len - 1] = 'у';
+            else if(string[len - 1] == 'А') string[len - 1] = 'У';
         }
     }
 }
@@ -228,18 +228,25 @@ stock AddPVarFloat(playerid, var[], Float:val)
     return SetPVarFloat(playerid, var, GetPVarFloat(playerid, var) + val);
 } 
 
-//  РџРѕР»СѓС‡РёС‚СЊ СЃС‚СЂРѕРєСѓ СЃ РёРјРµРЅРµРј РёРіСЂРѕРєР°
-stock ReturnPlayerName(playerid)
+//  Получить строку с именем игрока
+stock	ReturnPlayerName(playerid)
 {
-    new playername[MAX_PLAYER_NAME];
-    GetPlayerName(playerid, playername, MAX_PLAYER_NAME);
-    return playername;
+	new playername[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, playername, MAX_PLAYER_NAME);
+	return playername;
 }
 
-stock ReturnWeaponName(weaponid)
+stock	ReturnPlayerIP(playerid)
+{
+	new IP[16];
+	GetPlayerIp(playerid, IP, 16);
+	return IP;
+}
+
+stock	ReturnWeaponName(weaponid)
 {
 	new gunname[32];
-    GetWeaponName(weaponid, gunname, sizeof(gunname));
+	GetWeaponName(weaponid, gunname, sizeof(gunname));
 	return gunname;
 }
 
@@ -250,34 +257,34 @@ stock HexToRGB(color)
     return string;
 }
 
-// РЈР±СЂР°С‚СЊ РІРµСЂС…РЅРёР№ СЂРµРіРёСЃС‚СЂ РІ СЃС‚СЂРѕРєРµ
+// Убрать верхний регистр в строке
 stock string_tolow(string[])    
 {   
     for(new i = 0; i < strlen(string); i++)
         string[i] = tolower(string[i]); 
 }
 
-//  Р—Р°РїРёСЃСЊ СЃС‚СЂРѕРєРё РІ С„Р°Р№Р»
+//  Запись строки в файл
 stock fwriterus(File:filename,string[])
 {
     for(new i, len = strlen(string); i < len; i++)
         fputchar(filename, string[i], false);
 }
 
-//  Р’СЃС‚Р°РІРёС‚СЊ РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ РІ РґСЂСѓРіСѓСЋ
+//  Вставить одну строку в другую
 strput(dest[], const source[], minus = 0)   
 {   
     return strmid(dest, source, 0, strlen(source) - minus, 255);  
 }
 
-//  РЎСЂР°РІРЅРёС‚СЊ РґРІРµ СЃС‚СЂРѕРєРё
+//  Сравнить две строки
 strcheck(const string1[], const string2[], bool:ignorecase = false, length = cellmax)
 {
     if(!strcmp(string1, string2, ignorecase, length) && strlen(string1) && strlen(string2)) return true;
     else    return false;
 }
 
-//  РћС‡РёСЃС‚РєР° С‡Р°С‚Р°
+//  Очистка чата
 ClearChatbox(playerid, lines)
 {
     for(new i = 0; i < lines; i++)
@@ -311,7 +318,7 @@ stock IsCorrectName(const string[], bool:special = false)
         switch(string[k])
         {
             case 'A'..'Z', 'a'..'z', '0'..'9', '-', '_', '[', ']', '(', ')': { }
-            case 'Рђ'..'РЇ', 'Р°'..'СЏ', ' ', '.': if(special == false) return false;
+            case 'А'..'Я', 'а'..'я', ' ', '.': if(special == false) return false;
             default:    return false;
         }
     }
@@ -331,27 +338,50 @@ stock IsRPName(const string[])
 
 stock IsValidEmail(mail[])
 {
-    new len = strlen(mail),
-        dog = strfind(mail, "@", false, 0);
-    if( len < 7 || len > 129 ||
-        dog == -1 || strfind(mail, ".", false, dog + 1) == -1 ||
-        strfind(mail, "@", false, dog + 1) != -1 ||
-        mail[len - 1] == '.' || mail[len - 2] == '.' || mail[dog + 1] == '.' || mail[0] == '@')
-    {
-        return false;
-    }
-    new index;
-    while(mail[index])
-    {
-        if((mail[index] >= 'A' && mail[index] <= 'Z') || (mail[index] >= 'a' && mail[index] <= 'z') || (mail[index] >= '0' && mail[index] <= '9')
-        ||  mail[index] == '-' || mail[index] == '_' || mail[index] == '.' || mail[index] == '@')
-        {
-            index++;
-        }
-        else
-            return false;
-    }
-    return true;
+	new index,
+		len = strlen(mail),
+		dog = strfind(mail, "@", false, 0);
+
+	if( len < 7 || len > 129 ||
+		dog == -1 || strfind(mail, ".", false, dog + 1) == -1 ||
+		strfind(mail, "@", false, dog + 1) != -1 ||
+		mail[len - 1] == '.' || mail[len - 2] == '.' || mail[dog + 1] == '.' || mail[0] == '@')
+	{
+		return false;
+	}
+	while(mail[index])
+	{
+		if((mail[index] >= 'A' && mail[index] <= 'Z') || (mail[index] >= 'a' && mail[index] <= 'z') || (mail[index] >= '0' && mail[index] <= '9')
+		||  mail[index] == '-' || mail[index] == '_' || mail[index] == '.' || mail[index] == '@')
+		{
+			index++;
+		}
+		else
+			return false;
+	}
+	return true;
+}
+
+stock   IsIpAdress(ip[])
+{
+	new cutip[4][3];
+	if(sscanf(ip, "p<.>s[3]s[3]s[3]s[3]", Arr4<cutip>))
+	{
+		return false;
+	}
+	for(new i = 0; i < 4; i++)
+	{
+		for(new j = 0; j < strlen(cutip[i]); j++)
+		{
+			if((cutip[i][j] >= '0' && cutip[i][j] <= '9') == false && cutip[i][j] != '*')
+			{
+				return false;
+			}
+		}
+	}
+	//format(str, 16, "%d.%d.%d.%d", ippart[0], ippart[1], ippart[2], ippart[3]);
+	//if(strlen(ip) != strlen(str)) return false;
+	return true;
 }
 
 //  Vehicle functions

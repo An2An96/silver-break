@@ -71,27 +71,20 @@ stock	Float: GetDistanceBetweenPlayers(player1, player2, ignore_z = false)
 
 	GetPlayerPos(player1, pos[0][0], pos[0][1], pos[0][2]);
 	GetPlayerPos(player2, pos[1][0], pos[1][1], pos[1][2]);
-	//if(ignore_z)
-	//	z2 = z1;
 	result = GetDistanceFromPointToPoint(pos[0][0], pos[0][1], pos[0][2],
 		pos[1][0], pos[1][1], pos[1][2], ignore_z);
-	// result = floatsqroot(floatpower(2.0, pos[1][0] - pos[0][0])
-	// 	+ floatpower(2.0, pos[1][1] - pos[0][1])
-	// 	+ floatpower(2.0, pos[1][2] - pos[0][2]));
 	return (result);
 }
 
-stock	Float: GetDistanceFromMeToPoint(playerid, Float:x2, Float:y2, Float:z2 = 0.0)
+stock	Float: GetDistanceFromMeToPoint(playerid, Float:x2, Float:y2, Float:z2, ignore_z = false)
 {
 	new Float:pos[3],
 		Float:result;
 
 	GetPlayerPos(playerid, pos[0], pos[1], pos[2]);
-	if(z2 == 0.0)
+	if(ignore_z)
 		z2 = pos[2];
 	result = GetDistanceFromPointToPoint(pos[0], pos[1], pos[2], x2, y2, z2);
-	// result = floatsqroot(floatpower(2.0, x2 - pos[0])
-	// 	+ floatpower(2.0, y2 - pos[1]) + floatpower(2.0, z2 - pos[2]));
 	return (result);
 }
 

@@ -6,6 +6,7 @@
 
 #include "inventory/header"
 #include "faction/header"
+#include "player/chat/header"
 
 #define MIN_PASS_SYMB			4		// Мин длина пароля
 #define MAX_PASS_SYMB   		32      // Максимальная длина пароля
