@@ -205,6 +205,23 @@ stock Float:Job.GetPlayerWage(playerid)
 	return pJobWage[playerid];
 }
 
+stock CalcWage(wage, level)
+{
+	return wage + floatround(wage * (getWageBonus(level) / 100.0));
+}
+
+stock getWageBonus(level)
+{
+	switch(level)
+	{
+	    case 2: return 5;
+	    case 3: return 10;
+	    case 4: return 15;
+	    case 5: return 20;
+	}
+	return 0;
+}
+
 //////////	Part Wage 	//////////
 stock Job.GivePlayerPartWage(playerid, Float:amount)
 {

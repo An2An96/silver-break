@@ -255,6 +255,49 @@ Public: CriminalTimer(playerid)
 	return true;
 }
 
+stock	GivePoliceWarn(playerid, scores, reason[])
+{
+	if(PlayerInfo[playerid][pFaction] == F_POLICE)
+	{
+		if(IsPlayerLeader(playerid))
+		{
+			ShowPlayerHint(playerid, "~w~Атаковать невиновных ~r~запрещено~w~!");
+		}
+		else
+		{
+			new string[128];
+			PlayerInfo[playerid][pCopWarn] += scores;
+			if(PlayerInfo[playerid][pCopWarn] >= 500)
+			{
+				PlayerInfo[playerid][pCopWarn] = 300;
+				if(PlayerInfo[playerid][pRank] <= 1)
+				{	// Увольнение
+					SetPlayerFaction(playerid, F_NONE);
+					MySpawnPlayer(playerid);
+					ShowPlayerHint(playerid, "~w~За постоянные нарушения~n~Вы были ~r~YВОЛЕНЫ~w~ из полиции", 10000);
+					format(string, 128, "[R] %s был уволен за постоянные нарушения", ReturnPlayerName(playerid));
+				}
+				else
+				{
+					PlayerInfo[playerid][pRank] -= 1;
+					PlayerInfo[playerid][pCopWarn] = 300;
+					format(string, 128, "~w~За неправомерные действия~n~~r~Вы понижены до '%sа'~n~~w~Прекратите, иначе вас уволят!", GetPlayerRank(playerid));
+					ShowPlayerHint(playerid, string);
+					UpdatePlayerSkin(playerid);
+					format(string, 128, "[R] %s был понижен до '%sа' за неправомерные действия", ReturnPlayerName(playerid), GetPlayerRank(playerid));
+				}
+				SendPoliceMessage(COLOR_BLUE, string);
+			}
+			else
+			{
+				format(string, 128, "~w~Вы получаете выговор!~n~~r~%s~n~~w~Предупреждений: %s[%d/500]",
+					reason, (PlayerInfo[playerid][pCopWarn] < 300) ? ("~w~") : ("~r~"), PlayerInfo[playerid][pCopWarn]);
+				ShowPlayerHint(playerid, string);
+			}
+		}
+	}
+}
+
 IFace.Wanted_Create_Player(playerid)
 {
 	PTD_WantedLevel = CreatePlayerTextDraw(playerid, 610.0, 100.0, "]]]]]]]]");

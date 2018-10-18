@@ -36,14 +36,14 @@ COMMAND:call(playerid, params[])
 	{
  		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете позвонить самому себе.");
 	}
-	if(!CallLocalFunction("OnPlayerPhoneCall", "dd", playerid, number))
+	if(CallLocalFunction("OnPlayerPhoneCall", "dd", playerid, number) == 0)
 	{
 		foreach(LoginPlayer, i)
 		{
-		    if(PlayerInfo[i][pPhoneNumber] == number)
-		    {
+			if(PlayerInfo[i][pPhoneNumber] == number)
+			{
 				return StartCall(playerid, i);
-		    }
+			}
 		}
 		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Аппарат абонента выключен или находится вне зоны действия сети.");
 	}

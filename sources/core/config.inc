@@ -18,7 +18,7 @@
 //-------------[MySQL Date Base]----------//
 #define MYSQL_LOG			(ERROR | WARNING)
 
-#define MYSQL_LOCAL
+//#define MYSQL_LOCAL
 #if defined MYSQL_LOCAL
 	//	Для входа:	127.0.0.1/phpmyadmin/
 	#define MYSQL_HOST		"127.0.0.1"

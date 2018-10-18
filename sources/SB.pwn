@@ -47,7 +47,6 @@
 #include "utils/t_time"
 #include "utils/mxINI"
 #include "utils/world_text"
-#include "utils/drift"
 #include "utils/space_utils"
 
 _CancelSelectTextDraw(playerid)
@@ -86,7 +85,7 @@ _CancelSelectTextDraw(playerid)
 #include "player/player_spawn"
 #include "player/interface"
 #include "player/chat/core"
-#include "player/phone/main"
+#include "player/phone/core"
 #tryinclude "player/achieve"
 #tryinclude "player/chat_binds"
 
@@ -706,33 +705,6 @@ stock GiveFactionMoney(faction, money)
 }
 
 //----
-stock GetPlayerAdmin(playerid)
-{
-	if(AdminDuty[playerid])
-	{
-		if(IsPlayerAdmin(playerid))		return ADMIN_RCON;
-		else							return PlayerInfo[playerid][pAdmin];
-	}
-	else 								return 0;
-}
-
-stock getAdminStatus(adminlvl)
-{
-	new status[24];
-	switch(adminlvl)
-	{
-	    case ADMIN_NONE:        status = "Not Admin";
-	    case ADMIN_HELPER:		status = "Хелпер";
-	    case ADMIN_IVENTER:		status = "Ивент-менеджер";
-	    case ADMIN_MODER:		status = "Модератор";
-	    case ADMIN_ADMIN:		status = "Администратор";
-	    case ADMIN_GADMIN:		status = "Гл.Администратор";
-	    case ADMIN_DEVELOPER:	status = "Разработчик";
-	    default: format(status, 24, "AdmLvl-%d", adminlvl);
-	}
-	return status;
-}
-
 SetPlayerInJail(playerid, spawn = true)
 {
 	PlayerInfo[playerid][pJailTime] = -GetPlayerWantedLevel(playerid);
@@ -1259,19 +1231,6 @@ stock SendOfflineMessage(userid, const text[])
 	mysql_query_ex(query);
 }
 
-stock SendAdminMessage(color, string[], admlvl = ADMIN_HELPER + 1)
-{
-    foreach(LoginPlayer, i)
-    {
-	    if(GetPlayerAdmin(i) >= admlvl)
-	    {
-	    	SendClientMessage(i, color, string);
-	    }
-    }
-	Admin_Log(string);
-	return true;
-}
-
 Admin_Log(string[])
 {
 	new day, month, year;
@@ -1326,18 +1285,6 @@ SendRemainingBanTime(playerid, banunix)
 		format(string, 128, "%s %d минут", string, minutes);
 	}
 	SendClientMessage(playerid, COLOR_SERVER, string);
-}
-
-IsAdminsOnline()
-{
-	foreach(LoginPlayer, i)
-	{
-	    if(GetPlayerAdmin(i) && AdminDuty[i])
-	    {
-			return true;
-	    }
-	}
-	return false;
 }
 
 Public: UpdatePlayerWeather(playerid)
@@ -3229,18 +3176,6 @@ AS_ClearVars(playerid)
 	return true;
 }
 
-stock PlayerAction(playerid, action[], censore = false)
-{
-	if(SpectateID[playerid] != INVALID_PLAYER_ID) return true;
-
-	new string[128];
-	format(string, 128, "* %s %s", ReturnPlayerName(playerid), action);
-	ProxDetector(playerid, 30.0, string, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, censore);
-	SetPlayerChatBubble(playerid, action, COLOR_PURPLE, 30.0, 10000);
-	printf("[chat] %s", string);
-	return true;
-}
-
 stock MySetPlayerCheckpoint(playerid, type, Float:X, Float:Y, Float:Z, Float:size)
 {
 	MyDisablePlayerCheckpoint(playerid);
@@ -4118,63 +4053,19 @@ stock OnActorReaction(playerid, targetid)
 	return true;
 }
 
-//	Police
-stock GivePoliceWarn(playerid, scores, reason[])
-{
-	if(PlayerInfo[playerid][pFaction] == F_POLICE)
-	{
-		if(IsPlayerLeader(playerid))
-		{
-		    ShowPlayerHint(playerid, "~w~Атаковать невиновных ~r~запрещено~w~!");
-		}
-		else
-		{
-			new string[128];
-			PlayerInfo[playerid][pCopWarn] += scores;
-			if(PlayerInfo[playerid][pCopWarn] >= 500)
-			{
-			    PlayerInfo[playerid][pCopWarn] = 300;
-			    if(PlayerInfo[playerid][pRank] <= 1)
-			    {	// Увольнение
-					SetPlayerFaction(playerid, F_NONE);
-					MySpawnPlayer(playerid);
-					ShowPlayerHint(playerid, "~w~За постоянные нарушения~n~Вы были ~r~YВОЛЕНЫ~w~ из полиции", 10000);
-					format(string, 128, "[R] %s был уволен за постоянные нарушения", ReturnPlayerName(playerid));
-			    }
-			    else
-			    {
-				    PlayerInfo[playerid][pRank] -= 1;
-				    PlayerInfo[playerid][pCopWarn] = 300;
-				    format(string, 128, "~w~За неправомерные действия~n~~r~Вы понижены до '%sа'~n~~w~Прекратите, иначе вас уволят!", GetPlayerRank(playerid));
-				    ShowPlayerHint(playerid, string);
-				    UpdatePlayerSkin(playerid);
-				    format(string, 128, "[R] %s был понижен до '%sа' за неправомерные действия", ReturnPlayerName(playerid), GetPlayerRank(playerid));
-			    }
-			    SendPoliceMessage(COLOR_BLUE, string);
-			}
-			else
-			{
-				format(string, 128, "~w~Вы получаете выговор!~n~~r~%s~n~~w~Предупреждений: %s[%d/500]",
-					reason, (PlayerInfo[playerid][pCopWarn] < 300) ? ("~w~") : ("~r~"), PlayerInfo[playerid][pCopWarn]);
-			    ShowPlayerHint(playerid, string);
-			}
-		}
-    }
-}
-
 Public: MissionTimer(playerid)
 {
 	switch(mission_id[playerid])
 	{
-	    case MIS_NONE: return 1;
-	    default:
-	    {
-	        if(mission_timer[playerid] > 0)
-	        {
-	            KillTimer(mission_timer[playerid]);
-	            mission_timer[playerid] = 0;
-	        }
-	    }
+		case MIS_NONE: return 1;
+		default:
+		{
+			if(mission_timer[playerid] > 0)
+			{
+				KillTimer(mission_timer[playerid]);
+				mission_timer[playerid] = 0;
+			}
+		}
 	}
 	return 1;
 }
@@ -5399,23 +5290,6 @@ stock GiveTruckSkill(playerid, skill = 1)
 			RepBarShow(playerid, string, PlayerInfo[playerid][pTruckSkill] - 1, PlayerInfo[playerid][pTruckSkill], next);
 		}
 	}
-}
-
-stock CalcWage(wage, level)
-{
-	return wage + floatround(wage * (getWageBonus(level) / 100.0));
-}
-
-stock getWageBonus(level)
-{
-	switch(level)
-	{
-	    case 2: return 5;
-	    case 3: return 10;
-	    case 4: return 15;
-	    case 5: return 20;
-	}
-	return 0;
 }
 
 stock ReloadEmmetStore()
@@ -8726,13 +8600,13 @@ Public: OnPlayerLogged(playerid)
 
 	// Запрет огня по своим для некоторых фракций
 	new faction = PlayerInfo[playerid][pFaction];
-    if(IsGang(faction) || IsMafia(faction))	SetPlayerTeam(playerid, faction);
-    else if(faction == F_POLICE)			SetPlayerTeam(playerid, faction);
-    else 									SetPlayerTeam(playerid, NO_TEAM);
+	if(IsGang(faction) || IsMafia(faction))	SetPlayerTeam(playerid, faction);
+	else if(faction == F_POLICE)			SetPlayerTeam(playerid, faction);
+	else 									SetPlayerTeam(playerid, NO_TEAM);
 
 	//
 	Iter_Add(LoginPlayer, playerid);
-    UpdatePlayerData(playerid, "online", playerid);
+	UpdatePlayerData(playerid, "online", playerid);
 
 	//Check
 	new h = FoundHouse(PlayerInfo[playerid][pHousing]);
@@ -8754,12 +8628,12 @@ Public: OnPlayerLogged(playerid)
 			SetPVarInt(playerid, "RentCar", v);
 		}
 	}
-    //	in game params
-    EnablePlayerCameraTarget(playerid, true);
-    IFace.Load_Player(playerid);
+	//	in game params
+	EnablePlayerCameraTarget(playerid, true);
+	IFace.Load_Player(playerid);
 	UpdatePlayerColor(playerid);
 	SetPlayerScore(playerid, PlayerInfo[playerid][pLevel]);
-    UpdatePlayerGraffitiCP(playerid); 	//  toggle graffiti
+	UpdatePlayerGraffitiCP(playerid); 	//  toggle graffiti
 	UpdateGangZone(-1, playerid);		//	toggle gang zones
 	ToggleHouseIcons(playerid, PlayerInfo[playerid][pHouseIcon]);
 	UpdatePlayerHouseMapIcon(playerid);
@@ -8788,17 +8662,17 @@ Public: OnPlayerLogged(playerid)
 
 	//	Players Online Recorder
 	new players = Iter_Count(LoginPlayer);
-    if(CurrentPlayerRecords < players)
-    {
-    	new date[3];
-    	getdate(Arr3<date>);
-    	CurrentPlayerRecords = players;
-    	SendFormatMessageToAll(COLOR_ORANGE, string, "[NEWS]: Только что был зафиксирован новый рекорд онлайна: %d игрок(ов) (%02d/%02d/%04d)", CurrentPlayerRecords, date[2], date[1], date[0]);
-    	mysql_format(g_SQL, string, sizeof(string), "UPDATE "MAIN_DB".`servers` SET `record_online` = '%d', `date_record` = UNIX_TIMESTAMP() WHERE `id` = '%d'", CurrentPlayerRecords, SERVER_ID);
-    	mysql_query_ex(string);
-    }
+	if(CurrentPlayerRecords < players)
+	{
+		new date[3];
+		getdate(Arr3<date>);
+		CurrentPlayerRecords = players;
+		SendFormatMessageToAll(COLOR_ORANGE, string, "[NEWS]: Только что был зафиксирован новый рекорд онлайна: %d игрок(ов) (%02d/%02d/%04d)", CurrentPlayerRecords, date[2], date[1], date[0]);
+		mysql_format(g_SQL, string, sizeof(string), "UPDATE "MAIN_DB".`servers` SET `record_online` = '%d', `date_record` = UNIX_TIMESTAMP() WHERE `id` = '%d'", CurrentPlayerRecords, SERVER_ID);
+		mysql_query_ex(string);
+	}
 
-    PreloadAnimLibs(playerid);
+	PreloadAnimLibs(playerid);
 	SetPlayerSpawn(playerid);
 	UpdatePlayerSkin(playerid);
 	MySpawnPlayer(playerid);
@@ -9846,7 +9720,8 @@ public OnVehicleSpawn(vehicleid)
 	#endif
 
 	// Машина праведника, перекрас
-	if(vehicleid == TruthCar) ChangeVehiclePaintjob(TruthCar, 0);
+	if(vehicleid == TruthCar)
+		ChangeVehiclePaintjob(TruthCar, 0);
 	return 1;
 }
 
@@ -9988,61 +9863,7 @@ public OnEnterExitModShop(playerid, enterexit, interiorid)
     return 1;
 }
 
-//---	Drifting
-public OnDriftStart(playerid)
-{
-	if(showDebug[playerid])
-	{
-		SendClientMessage(playerid, COLOR_WHITE, "Drifting start");
-	}
-}
-
-public OnDriftUpdate(playerid, Float:drift_angle, Float:speed)
-{
-	if(showDebug[playerid])
-	{
-		new string[128];
-		SendFormatMessage(playerid, COLOR_WHITE, string, "Drifting end: [angle: %.2f | speed: %f]", drift_angle, speed);
-	}
-}
-
-public OnDriftEnd(playerid, reason, Float:distance, time)
-{
-	if(showDebug[playerid])
-	{
-		new string[128];
-		SendFormatMessage(playerid, COLOR_WHITE, string, "Drifting end: [reason: %d | dist: %.2f | time: %d]", reason, distance, time);
-	}
-}
-
 //------
-_strfind(const string[], const sub[], pos = 0)
-{
-	for(new i = pos, len = strlen(string), sublen = strlen(sub), startpos, curpos; i < len; i++)
-	{
-		if((65 <= string[i] <= 90 || 192 <= string[i] <= 223)
-			&& (string[i] == sub[curpos] || (string[i] + 32) == sub[curpos]))	// большие русские и английские
-		{
-			curpos++;
-		}
-		else if((97 <= string[i] <= 122 || 224 <= string[i] <= 255)
-			&& (string[i] == sub[curpos] || (string[i] - 32) == sub[curpos]))	//	маленькие русские и английские
-		{
-			curpos++;
-		}
-		else if(string[i] == sub[curpos])	curpos++;
-		else if(curpos)
-		{
-			curpos = 0;
-			startpos = (-1);
-			i--;
-		}
-		if(curpos == 1)			startpos = i;
-		if(curpos == sublen)	return startpos;
-	}
-	return -1;
-}
-
 public OnPlayerText(playerid, text[])
 {
 	if(IsPlayerLogged(playerid) == 0)
@@ -10733,13 +10554,13 @@ public OnPlayerEnterDynamicArea(playerid, areaid)
 	}
 
 	#if defined	_job_job_theft_included
-		Callback:Theft_OnPlayerEnterDynamicArea(playerid, areaid);
+		Callback: Theft_OnPlayerEnterDynamicArea(playerid, areaid);
 	#endif
 	#if defined	_job_part_farmer_included
-		Callback:Farmer_OnPlayerEnterDynamicArea(playerid, areaid);
+		Callback: Farmer_OnPlayerEnterDynamicArea(playerid, areaid);
 	#endif
 	#if defined	_job_part_loader_included
-		Callback:Loader_OnPlayerEnterDynamicArea(playerid, areaid);
+		Callback: Loader_OnPlayerEnterDynamicArea(playerid, areaid);
 	#endif
 
 	new string[128];
@@ -10954,7 +10775,7 @@ public OnPlayerEnterDynamicRaceCP(playerid, checkpointid)
 	}
 
 	#if defined	_job_job_busdriver_included
-		Callback:BusDriver_OnPlayerEnterDRaceCP(playerid, checkpointid);
+		Callback: BusDriver_OnPlayerEnterDRaceCP(playerid, checkpointid);
 	#endif
 
 	return 1;
@@ -11318,7 +11139,7 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid)
     }
 
 	#if defined	_job_part_farmer_included
-	    Callback:Farmer_OnPlayerPickUpDPickup(playerid, pickupid);
+		Callback:Farmer_OnPlayerPickUpDPickup(playerid, pickupid);
 	#endif
 	#if defined	_job_part_delivery_included
 		Callback:Delivery_OnPlayerPickUpDPickup(playerid, pickupid);
@@ -13317,7 +13138,6 @@ Public: OnPlayerClickEnter(playerid)
 		{
 			return true;
 		}
-
 
         // Открытие дверей
 		if(IsPlayerInRangeOfPoint(playerid, 1.5, 320.41678,1023.88660,1951.0))
@@ -28889,105 +28709,105 @@ public OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
 	return true;
 }
 
-public OnPlayerPhoneCall(playerid, number)
+public	OnPlayerPhoneCall(playerid, number)
 {
 	switch(number)
 	{
 		case 911:
 		{
 			SetPVarInt(playerid, "Player:Call911", 1);
-		    SendClientMessage(playerid, COLOR_BLUE, "Оператор 911 говорит: Здравствуйте, вы позвонили в службу 911.");
-		    SendClientMessage(playerid, COLOR_BLUE, "Оператор 911 говорит: Кто вам нужен: полиция или медики?");
-		    return false;
+			SendClientMessage(playerid, COLOR_BLUE, "Оператор 911 говорит: Здравствуйте, вы позвонили в службу 911.");
+			SendClientMessage(playerid, COLOR_BLUE, "Оператор 911 говорит: Кто вам нужен: полиция или медики?");
+			return (1);
 		}
 	#if defined	_job_job_taxi_included
 		case 555:
 		{
 			if(Taxi_PlayerUsed(playerid))
 			{
-		        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы уже едете в такси.");
-		        return false;
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы уже едете в такси.");
+				return (1);
 			}
-		    if(Job.GetPlayerNowWork(playerid) == JOB_TAXI)
-		    {
-		        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете вызывать такси находясь на дежурстве.");
-		        return false;
-		    }
-		    if(TaxiCall != -1)
-		    {
-		        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Кто-то уже ожидает ответа, попробуйте позже.");
-		        return false;
-		    }
-		    new bool:founded;
+			if(Job.GetPlayerNowWork(playerid) == JOB_TAXI)
+			{
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете вызывать такси находясь на дежурстве.");
+				return (1);
+			}
+			if(TaxiCall != -1)
+			{
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Кто-то уже ожидает ответа, попробуйте позже.");
+				return (1);
+			}
+			new bool:founded;
 			foreach(LoginPlayer, i)
 			{
-			    if(Job.GetPlayerNowWork(i) == JOB_TAXI)
-			    {
-			        founded = true;
-			        break;
-			    }
+				if(Job.GetPlayerNowWork(i) == JOB_TAXI)
+				{
+					founded = true;
+					break;
+				}
 			}
 			if(founded == false)
 			{
-			    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На дежурстве нет ни одного таксиста, попробуйте позже.");
-			    return false;
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На дежурстве нет ни одного таксиста, попробуйте позже.");
+				return (1);
 			}
 			new string[128];
-		    format(string, sizeof(string), "[Диспетчер]: %s [тел: %d] вызывает такси. {FFFFFF}(принять: Y)", ReturnPlayerName(playerid), PlayerInfo[playerid][pPhoneNumber]);
-	    	SendJobMessage(JOB_TAXI, COLOR_LIGHTBLUE, string);
-	    	SendClientMessage(playerid, COLOR_LIGHTBLUE, "* Вы позвонили в таксопарк, ожидайте ответа в ближайшее время");
+			format(string, sizeof(string), "[Диспетчер]: %s [тел: %d] вызывает такси. {FFFFFF}(принять: Y)", ReturnPlayerName(playerid), PlayerInfo[playerid][pPhoneNumber]);
+			SendJobMessage(JOB_TAXI, COLOR_LIGHTBLUE, string);
+			SendClientMessage(playerid, COLOR_LIGHTBLUE, "* Вы позвонили в таксопарк, ожидайте ответа в ближайшее время");
 
-	    	TaxiCall = playerid;
-	    	TaxiCallTime = 60;
-	    	return false;
+			TaxiCall = playerid;
+			TaxiCallTime = 60;
+			return (1);
 		}
 	#endif 	
 		case 600:
 		{
-		    if(GetPVarInt(playerid, "Player:AtWork") == JOB_MECHANIC)
-		    {
-		        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете вызывать механика находясь на дежурстве.");
-		        return false;
-		    }
-		    if(MechanicCall != -1)
-		    {
-		        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Кто-то уже ожидает ответа, попробуйте позже.");
-		        return false;
-		    }
-		    new founded;
+			if(GetPVarInt(playerid, "Player:AtWork") == JOB_MECHANIC)
+			{
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете вызывать механика находясь на дежурстве.");
+				return (1);
+			}
+			if(MechanicCall != -1)
+			{
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Кто-то уже ожидает ответа, попробуйте позже.");
+				return (1);
+			}
+			new founded;
 			foreach(LoginPlayer, i)
 			{
-			    if(GetPVarInt(i, "Player:AtWork") == JOB_MECHANIC)
-			    {
-			    	if(MechanicClientid[i] == playerid)
-			    	{
-			    		founded = 2;
-			    		break;
-			    	}
-			        founded = 1;
-			    }
+				if(GetPVarInt(i, "Player:AtWork") == JOB_MECHANIC)
+				{
+					if(MechanicClientid[i] == playerid)
+					{
+						founded = 2;
+						break;
+					}
+					founded = 1;
+				}
 			}
 			if(founded == 0)
 			{
-			    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На дежурстве нет ни одного механика, попробуйте позже.");
-			    return false;
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На дежурстве нет ни одного механика, попробуйте позже.");
+				return (1);
 			}
 			if(founded == 2)
 			{
-			    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Ваш вызов уже приняли.");
-			    return false;
+				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Ваш вызов уже приняли.");
+				return (1);
 			}
 			new string[128];
-		    format(string, sizeof(string), "[Диспетчер]: %s [тел: %d] вызывает механика. {FFFFFF}(Чтобы принять, нажмите 2)", ReturnPlayerName(playerid), PlayerInfo[playerid][pPhoneNumber]);
-	    	SendJobMessage(JOB_MECHANIC, COLOR_LIGHTBLUE, string);
-	    	SendClientMessage(playerid, COLOR_LIGHTBLUE, "* Вы позвонили в службу дорожной помощи, ожидайте ответа в ближайшее время");
+			format(string, sizeof(string), "[Диспетчер]: %s [тел: %d] вызывает механика. {FFFFFF}(Чтобы принять, нажмите 2)", ReturnPlayerName(playerid), PlayerInfo[playerid][pPhoneNumber]);
+			SendJobMessage(JOB_MECHANIC, COLOR_LIGHTBLUE, string);
+			SendClientMessage(playerid, COLOR_LIGHTBLUE, "* Вы позвонили в службу дорожной помощи, ожидайте ответа в ближайшее время");
 
-	    	MechanicCall = playerid;
-	    	MechanicCallTime = 60;
-	    	return false;
+			MechanicCall = playerid;
+			MechanicCallTime = 60;
+			return (1);
 		}
 	}
-	return true;
+	return (0);
 }
 
 //	Copyright © Silver Break 2017

@@ -56,6 +56,19 @@ stock CensoreProxDetector(playerid, Float:rad, const string[], color1 = 0xFFFFFF
 	return ProxDetector(playerid, rad, string, color1, color2, color3, color4, color5, true);
 }
 
+stock PlayerAction(playerid, action[], censore = false)
+{
+	if(SpectateID[playerid] != INVALID_PLAYER_ID)
+		return true;
+
+	new string[128];
+	format(string, 128, "* %s %s", ReturnPlayerName(playerid), action);
+	ProxDetector(playerid, 30.0, string, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, censore);
+	SetPlayerChatBubble(playerid, action, COLOR_PURPLE, 30.0, 10000);
+	printf("[chat] %s", string);
+	return true;
+}
+
 stock SendRadiusMessage(playerid, Float:range, color, string[])
 {
 	new Float:X, Float:Y, Float:Z;
@@ -170,6 +183,36 @@ stock SendLocalMessage(playerid, targetid, const message[], anim = true)
 Public: ChatClearFreezeAnim(playerid)
 {
 	MyApplyAnimation(playerid, "MISC", "Idle_Chat_02", 4.1, 0, 0, 0, 0, 100);
+}
+
+static	_strfind(const string[], const sub[], pos = 0)
+{
+	for(new i = pos, len = strlen(string), sublen = strlen(sub), startpos, curpos; i < len; i++)
+	{
+		if((65 <= string[i] <= 90 || 192 <= string[i] <= 223)
+			&& (string[i] == sub[curpos] || (string[i] + 32) == sub[curpos]))	// большие русские и английские
+		{
+			curpos++;
+		}
+		else if((97 <= string[i] <= 122 || 224 <= string[i] <= 255)
+			&& (string[i] == sub[curpos] || (string[i] - 32) == sub[curpos]))	//	маленькие русские и английские
+		{
+			curpos++;
+		}
+		else if(string[i] == sub[curpos])
+			curpos++;
+		else if(curpos)
+		{
+			curpos = 0;
+			startpos = (-1);
+			i--;
+		}
+		if(curpos == 1)
+			startpos = i;
+		if(curpos == sublen)
+			return startpos;
+	}
+	return (-1);
 }
 
 stock	RemoveBadWords(text[], bool:onlycount = false)
