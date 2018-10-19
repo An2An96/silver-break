@@ -27,7 +27,8 @@
 #include <a_samp>
 #include <a_http>
 
-//	Dependencies
+//	Sampctl dependencies
+	//	Libs for plugins
 #include <a_mysql>
 #include <sscanf2>
 #include <streamer>
@@ -35,40 +36,46 @@
 #include <Pawn.CMD>
 #include <FCNPC>
 #include <crashdetect>
+	//	Utils
+#include <mxINI>
+#include <foreach>
 
 //	Libs
 #include "lib/mapandreas"
 #include "lib/timerfix"
 
 //	Utils
-#include "utils/foreach"
-#include "utils/mdialog"
+#include "utils/extend_mdialog"
 #include "utils/fixes"
 #include "utils/t_time"
-#include "utils/mxINI"
 #include "utils/world_text"
 #include "utils/space_utils"
 
-_CancelSelectTextDraw(playerid)
+SB_CancelSelectTextDraw(playerid)
 {
 	SetPVarInt(playerid, "CancelSelectTD", true);
 	CancelSelectTextDraw(playerid);
 	return true;
 }
-#define CancelSelectTextDraw	_CancelSelectTextDraw
+#if defined _ALS_CancelSelectTextDraw
+	#undef CancelSelectTextDraw
+#else
+	#define _ALS_CancelSelectTextDraw
+#endif
+#define CancelSelectTextDraw	SB_CancelSelectTextDraw
 
 //	Core
 #include "core/colors"
 #include "core/const_data"
 #include "core/utils"
 #include "core/sa_zones"
-#include "core/config"
 #include "core/vw_list"
-
+#include "core/config"
 #include "core/global_scope"
 
 //	Modules
 #include "anticheat/core"
+#include "admin/core"
 
 //	System
 #include "system/gates"
@@ -79,27 +86,24 @@ _CancelSelectTextDraw(playerid)
 #tryinclude "system/ucp_news"
 
 //	Player
-#include "player/walk"
-#include "player/account"
-#include "player/register"
-#include "player/player_spawn"
-#include "player/interface"
+#include "player/core"
 #include "player/chat/core"
 #include "player/phone/core"
 #tryinclude "player/achieve"
 #tryinclude "player/chat_binds"
 
-#include	"inventory/core"	//	Inventory
-#include	"job/core"			//	Jobs
-#include	"faction/core"		//	Factions
-#include	"house/core"		//	House
-#include	"vehicle/core"		//	Vehicle
+#include "inventory/core"	//	Inventory
+#include "job/core"			//	Jobs
+#include "faction/core"		//	Factions
+#include "businesses/core"	//	Businesses
+#include "house/core"		//	House
+#include "vehicle/core"		//	Vehicle
 
 //	Service
 #tryinclude "service/casino"
 
 //	Events
-#include "events/races"
+#include "events/races/core"
 
 //	Interface
 #include "interface/fader"
@@ -114,12 +118,7 @@ _CancelSelectTextDraw(playerid)
 #include "interface/buy_menu"
 #include "interface/select_menu"
 #include "interface/selecter"
-#include "interface/core"
-
-stock isRus(playerid)
-{
-	return PlayerInfo[playerid][pRusifik];
-}	
+#include "interface/core"	
 
 //--- player anims
 stock BlockPlayerAnimation(playerid, bool:toggle)
@@ -156,10 +155,13 @@ stock MySetPlayerMarkerForPlayer(playerid, showplayerid, color, bool:oversee = f
 {
 	if(InMask[showplayerid])
 	{
-	    if(oversee)	SetPlayerMarkerForPlayer(playerid, showplayerid, color);                // Игрок скрывается, но его видно
-	    else        SetPlayerMarkerForPlayer(playerid, showplayerid, color & 0xFFFFFF00);   // Игрок скрывается и его не видно
+		if(oversee)
+			SetPlayerMarkerForPlayer(playerid, showplayerid, color);				// Игрок скрывается, но его видно
+		else
+			SetPlayerMarkerForPlayer(playerid, showplayerid, color & 0xFFFFFF00);	// Игрок скрывается и его не видно
 	}
-	else 			SetPlayerMarkerForPlayer(playerid, showplayerid, color);                // Игрок не скрывается и его видно
+	else
+		SetPlayerMarkerForPlayer(playerid, showplayerid, color);		// Игрок не скрывается и его видно
 }
 
 Public: MyGivePlayerParachute(playerid)
@@ -186,18 +188,6 @@ stock BlockPlayerAction(playerid, block)
 }
 
 //	FIX
-stock BlockVehicleEffect(vehicleid, time = 2)
-{
-	if(vehicleid < 1 || vehicleid > MAX_VEHICLES){
-		return false;
-	}
-	if(VehInfo[vehicleid][vDriver] >= 0)	EffectCheck{ VehInfo[vehicleid][vDriver] } = time;
-	if(VehInfo[vehicleid][vCoDriver] >= 0)	EffectCheck{ VehInfo[vehicleid][vCoDriver] } = time;
-	if(VehInfo[vehicleid][vLeftSeat] >= 0)	EffectCheck{ VehInfo[vehicleid][vLeftSeat] } = time;
-	if(VehInfo[vehicleid][vRightSeat] >= 0)	EffectCheck{ VehInfo[vehicleid][vRightSeat] } = time;
-	return true;
-}
-
 Public: MyFreezePlayer(playerid)
 {
 	return TogglePlayerControllable(playerid, false);
@@ -242,33 +232,39 @@ stock GetPlayerUsername(plid)
 
 GetPlayerCoins(playerid)
 {
-	new query[128];
-	mysql_format(g_SQL, query, sizeof query, "SELECT `coins` FROM "MAIN_DB".`ucp_account_links` WHERE `id` = '%d'", PlayerInfo[playerid][pUserID]);
-	new Cache:result = mysql_query(g_SQL, query);
-	new coins;
+	new query[128],
+		Cache:result,
+		coins;
+
+	mysql_format(g_SQL, query, sizeof query, "SELECT `coins` FROM %s.`ucp_account_links` WHERE `id` = '%d'", MAIN_DB, PlayerInfo[playerid][pUserID]);
+	result = mysql_query(g_SQL, query);
 	cache_get_value_name_int(0, "coins", coins);
 	cache_delete(result);
-	return coins;
+	return (coins);
 }
 
 stock SetPlayerCoins(playerid, coins)
 {
     new query[128];
-	mysql_format(g_SQL, query, sizeof query, "UPDATE "MAIN_DB".`ucp_account_links` SET `coins` = '%d' WHERE `id` = '%d'", coins, PlayerInfo[playerid][pUserID]);
+	
+	mysql_format(g_SQL, query, sizeof query, "UPDATE %s.`ucp_account_links` SET `coins` = '%d' WHERE `id` = '%d'", MAIN_DB, coins, PlayerInfo[playerid][pUserID]);
 	mysql_query(g_SQL, query);
-	return cache_affected_rows() ? true : false;
+	return (cache_affected_rows() ? true : false);
 }
 
 stock GivePlayerCoins(playerid, coins)
 {
 	new query[128];
-	if(coins > 0)	format(query, 32, "~y~+%d coins", coins);
-	else 			format(query, 32, "~r~%d coins", coins);
+
+	if(coins > 0)
+		format(query, 32, "~y~+%d coins", coins);
+	else
+		format(query, 32, "~r~%d coins", coins);
 	GameTextForPlayer(playerid, query, 3000, 4);
-	mysql_format(g_SQL, query, sizeof query, "UPDATE "MAIN_DB".`ucp_account_links` SET `coins` = `coins` + '%d' WHERE `id` = '%d'", coins, PlayerInfo[playerid][pUserID]);
+	mysql_format(g_SQL, query, sizeof query, "UPDATE %s.`ucp_account_links` SET `coins` = `coins` + '%d' WHERE `id` = '%d'", MAIN_DB, coins, PlayerInfo[playerid][pUserID]);
 	mysql_query(g_SQL, query);
 	PlayerPlaySound(playerid, 30801, 0.0, 0.0, 0.0);
-	return cache_affected_rows() ? true : false;
+	return (cache_affected_rows() ? true : false);
 }
 
 stock UpdatePlayerCoins(playerid)
@@ -277,23 +273,6 @@ stock UpdatePlayerCoins(playerid)
 	format(string, sizeof(string), "Coins: %d", GetPlayerCoins(playerid));
 	return PlayerTextDrawSetString(playerid, StatusCoins, string);
 }
-
-stock UpdatePlayerLVL(playerid)
-{
-	new string[32];
-	SetPlayerScore(playerid, PlayerInfo[playerid][pLevel]);
-	format(string, 32, "LVL: %d", PlayerInfo[playerid][pLevel]);
-	//PlayerTextDrawSetString(playerid, StatusLVL, string);
-	return true;
-}
-
-//stock UpdatePlayerUpgrade(playerid)
-//{
-    //new string[32];
-	//format(string, 32, "UPGRADE: %d", PlayerInfo[playerid][pUpgrade]);
-	//PlayerTextDrawSetString(playerid, StatusUpgrade, string);
-//	return true;
-//}
 
 GetPlayerHunger(playerid)
 {
@@ -320,14 +299,15 @@ GivePlayerHunger(playerid, hunger)
 }
 
 //	Возвращает 1 - если просто поел, -1 - если рыгнул, 0 - если не поел так как заблокированы анимации (например в наручниках)
-EatPlayer(playerid, count, msg[] = "")
+EatPlayer(playerid, count, const msg[] = "")
 {
 	new hunger = GetPlayerHunger(playerid);
 	if(hunger < 100)
 	{
 		if(MyApplyAnimation(playerid, "FOOD", "EAT_Burger", 4.1, 0, 0, 0, 0, 0))
 		{
-			if(strlen(msg))	PlayerAction(playerid, msg);
+			if(strlen(msg))
+				PlayerAction(playerid, msg);
 			GivePlayerHunger(playerid, count);
 			count -= (100 - hunger);
 		}
@@ -359,98 +339,6 @@ stock ToggleNameTags(playerid, bool:toggle)
 	    GameTextForPlayer(playerid, "~w~Nametags ~r~off", 5000, 5);
 		// Помимо этого надо скрывать ники тех, кто зашел
     }
-}
-
-stock GivePlayerEXPInTime(playerid, Float:amount, time = 10)
-{//
-	gExpTime[playerid] = time;
-	gExpCount[playerid] += amount;
-}
-
-GivePlayerEXP(playerid, amount)
-{
-	new curlevel = PlayerInfo[playerid][pLevel],
-		curexp = PlayerInfo[playerid][pExp],
-		cur = PlayerInfo[playerid][pExp] + amount,
-		chlevel = 0, chlevelexp = 0;
-	if(amount < 0)
-	{
-		while(cur < 0)
-		{
-			chlevel++;
-			if(PlayerInfo[playerid][pLevel] - chlevel < 1)
-			{
-				chlevel = PlayerInfo[playerid][pLevel];
-				if(cur < 0)	cur = 0;
-				break;
-			}
-			chlevelexp = NextLvlExp(PlayerInfo[playerid][pLevel] - chlevel + 1);
-			cur += chlevelexp;
-		}
-		PlayerInfo[playerid][pExp] = cur;
-		PlayerInfo[playerid][pExpsum] -= amount;
-		if(PlayerInfo[playerid][pExpsum] < 0)	PlayerInfo[playerid][pExpsum] = 0;
-		if(chlevel)
-		{
-			PlayerInfo[playerid][pLevel] -= chlevel;
-			UpdatePlayerLVL(playerid);
-			SetTimerEx("LevelDownTimer", 3000, false, "dd", playerid, chlevel);
-		}
-	}
-	else
-	{
-		while(cur)
-		{
-	   	    chlevelexp = NextLvlExp(PlayerInfo[playerid][pLevel] + chlevel + 1);
-		    if(cur >= chlevelexp)
-		    {	// Level up
-				chlevel++;
-		        cur -= chlevelexp;
-		    }
-		    else
-		    {
-		    	break;
-		    }
-		}
-		PlayerInfo[playerid][pExp] = cur;
-		PlayerInfo[playerid][pExpsum] += cur;
-		if(chlevel)
-		{
-			PlayerInfo[playerid][pLevel] += chlevel;
-		    PlayerInfo[playerid][pUpgrade] += chlevel;
-			//UpdatePlayerUpgrade(playerid);
-			UpdatePlayerLVL(playerid);
-			SetTimerEx("LevelUpTimer", 3000, false, "dd", playerid, chlevel);
-		}
-	}
-	
-	#if defined _interface_exp_line_included
-		IFace.ToggleGroup(playerid, IFace.EXP_LINE, true);
-  		IFace.ExpLine_Update(playerid, curlevel, curexp, amount);
-	#endif
-	
-	return true;
-}
-
-Public: LevelUpTimer(playerid, newlevel)
-{
-	new string[32];
-	if(newlevel == 1)	strcat(string, "Level up!~n~~w~Upgrade +1");
-	else 				format(string, sizeof(string), "%d Level's up!~n~~w~Upgrade +%d", newlevel, newlevel);
-	GameTextForPlayer(playerid, string, 5000, 6);
-    //PlayerPlaySound(playerid, 31205, 0.0, 0.0, 0.0);// Пионерская труба
-    PlayerPlaySound(playerid, 36205, 0.0, 0.0, 0.0);// Ликуют и аплодируют
-    SuccesAnim(playerid);
-}
-
-Public: LevelDownTimer(playerid, newlevel)
-{
-	new string[32];
-	if(newlevel == 1)	strcat(string, "Level down!");
-	else 				format(string, sizeof(string), "%d Level's down!", newlevel);
-	GameTextForPlayer(playerid, string, 5000, 6);
-	PlayerPlaySound(playerid, 31202, 0.0, 0.0, 0.0);
-	LoseAnim(playerid);
 }
 
 //	Money
@@ -834,255 +722,6 @@ stock MySetPlayerPosFade(playerid, fadeid, Float:x, Float:y, Float:z, Float:a = 
 	return FadeColorForPlayer(playerid, 0, 0, 0, 0, 0, 0, 0, 255, 10, FADE_TELEPORT);
 }
 
-stock PlayerOpenVehicle(playerid, vehicleid)
-{
-    new dif1 = 20, dif2 = 35,
-		Float:carX, Float:carY, Float:carZ,
-        Float:carA, Float:plX, Float:plY, Float:plZ;
-
-	GetVehiclePos(vehicleid, carX, carY, carZ);
-	GetVehicleZAngle(vehicleid, carA);
-	GetPlayerPos(playerid, plX, plY, plZ);
-	new A = floatround(atan2(carX - plX, carY - plY) + carA);
-	if(A > 360) A -= 360;
-	if(A < 0)	A *= -1;
-	if(IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_PLANE && VehInfo[vehicleid][vModelType] != MTYPE_MOTO
-	&& VehInfo[vehicleid][vModelType] != MTYPE_RC && VehInfo[vehicleid][vModelType] != MTYPE_HELIC && VehInfo[vehicleid][vModelType] != MTYPE_BOAT)
-	{
-		if(180 - dif1 < A < 180 + dif1)
-	    {	// Капот
-			if(GetVehicleBonnet(vehicleid))
-			{
-			    SetVehicleBonnet(vehicleid, false);
-			}
-			else
-			{
-				if(VehInfo[vehicleid][vLocked])
-				{
-					//return GameTextForPlayer(playerid, "~w~Bonnet ~r~Locked", 3000, 4);
-					if(VehInfo[vehicleid][vLocked] != 999)
-						GameTextForPlayer(playerid, RusText("~r~Машина закрыта!", PlayerInfo[playerid][pRusifik]), 3000, 4);
-					return 1;
-	        	}
-
-				// Ремонт двигателя
-				new Float:health;
-				GetVehicleHealth(vehicleid, health);
-				if(Job.GetPlayerNowWork(playerid) == JOB_MECHANIC && 400.0 < health < 999.0)
-				{
-					ShowPlayerHint(playerid, "Используйте ~y~/fixveh ~w~для ремонта двигателя");
-				}
-				SetVehicleBonnet(vehicleid, true);
-			}
-			return true;
-	    }
-	    if(360 - dif1 < A < 360 + dif1 || 0 - dif1 < A < 0 + dif1)
-	    {	// Багажник
-	        if(GetVehicleBoot(vehicleid))
-	        {
-				if(CarInfo[vehicleid][cType] == C_TYPE_PARTJOB && CarInfo[vehicleid][cOwnerID] == PART_FARMER)
-				{   //  Ферма
-					#if defined	_job_part_farmer_included
-						if(Job.GetPlayerNowWork(playerid) == PART_FARMER && CarInfo[vehicleid][cModel] == 478)
-						{
-							if(g_FarmPlayerVID[playerid] == vehicleid)		FarmDeleteVPoint(playerid);
-							PlayerPlaySound(playerid, 1058, 0.0, 0.0, 0.0);
-						}
-					#endif
-				}
-				else SetVehicleBoot(vehicleid, false);
-	        }
-	        else
-	        {
-	        	if(VehInfo[vehicleid][vLocked] > 0)
-	        	{
-					if(VehInfo[vehicleid][vLocked] != 999)
-					{
-						GameTextForPlayer(playerid, RusText("~r~Машина закрыта!", PlayerInfo[playerid][pRusifik]), 3000, 4);
-					}
-	        	}
-	        	else
-	        	{
-					if(CarInfo[vehicleid][cType] == C_TYPE_PARTJOB && CarInfo[vehicleid][cOwnerID] == PART_FARMER)
-					{
-						#if defined	_job_part_farmer_included
-							if(Job.GetPlayerNowWork(playerid) == PART_FARMER && CarInfo[vehicleid][cModel] == 478)
-							{   //  Ферма
-					   	 		FarmCreateVPoint(playerid, vehicleid);
-								PlayerPlaySound(playerid, 1058, 0.0, 0.0, 0.0);
-							}
-						#endif	
-					}
-					else
-					{
-						SetVehicleBoot(vehicleid, true);
-					}
-	        	}
-	        }
-			return true;
-	    }
-    }
-    if(90 - dif2 < A < 90 + dif2 || 270 - dif2 < A < 270 + dif2)
-    {
-    	SetPVarInt(playerid, "VehicleMenu:VehicleID", vehicleid);
-		ShowDialog(playerid, DMODE_VMENU);
-    }
-	return true;
-}
-
-stock LockPlayerVehicle(playerid, v, bool:admin = false)
-{
-	if(!admin)
-	{
-	    if(CarInfo[v][cType] == C_TYPE_DEFAULT)
-	    {
-			SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Транспорт этого типа закрывать нельзя.");
-	        return false;
-	    }
-		if(IsAvailableVehicle(v, playerid) < VEH_AVAILABLE_CONTROL)
-		{
-			SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет ключей от этого авто.");
-			return false;
-		}
-	}
-    if(VehInfo[v][vLocked])
-    {
-    	GameTextForPlayer(playerid, RusText("~w~Машина ~g~Открыта", isRus(playerid)), 3000, 4);
-    	PlayerAction(playerid, "открывает машину.");
-    }
-	else
-	{
-		GameTextForPlayer(playerid, RusText("~w~Машина ~r~Закрыта", isRus(playerid)), 3000, 4);
-		PlayerAction(playerid, "закрывает машину.");
-	}
-	PlayerPlaySound(playerid, 1145, 0.0, 0.0, 0.0);
-	VehInfo[v][vLocked] = !VehInfo[v][vLocked];
-	UpdateVehicleParamsEx(v);
-	IFace.Veh_Update(playerid, 0);
-	return true;
-}
-
-stock GetNearVehicles(playerid, vehtype = 0)
-{   //  vehtype: 0 - любой транспорт, 1 - транспорт для взлома, 2 - только авто или грузовики
-    new Float:pos[ 3 ];
-    new vehicleid, Float:mindist, Float:Dist;
-    foreach(Vehicle, v)
-	{
-	    if(!IsVehicleStreamedIn(v, playerid) || !IsVehicleWithEngine(v)) continue;
-		GetVehiclePos(v, Arr3<pos>);
-		Dist = GetDistanceFromMeToPoint(playerid, Arr3<pos>);
-		if(IsPlayerInRangeOfPoint(playerid, 5, Arr3<pos>))
-		{
-		    if(vehicleid == 0 || mindist > Dist)
-		    {
-		        vehicleid = v;
-		        mindist = Dist;
-		    }
-		}
-    }
-    if(vehicleid == 0 || vehtype == 0)
-    {
-    	return vehicleid;
-    } 
-    else if(vehtype == 1 && VehInfo[vehicleid][vLocked] == 1 && IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_MOTO
-	&& VehInfo[vehicleid][vModelType] != MTYPE_BOAT && VehInfo[vehicleid][vModelType] != MTYPE_NODOOR)
-	{
-		return vehicleid;
-	} 
-	else if(vehtype == 2 && IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_NODOOR && VehInfo[vehicleid][vModelType] != MTYPE_PLANE
-	&& VehInfo[vehicleid][vModelType] != MTYPE_RC && VehInfo[vehicleid][vModelType] != MTYPE_HELIC && VehInfo[vehicleid][vModelType] != MTYPE_BOAT
-	&& VehInfo[vehicleid][vModelType] != MTYPE_MOTO) 
-	{
-		return vehicleid;
-    }
-    return 0;
-}
-
-UpdateVehInfo(vehicleid = -1)
-{
-	if(vehicleid == -1)
-	{
-		foreach(Vehicle, v)
-		{
-		    UpdateVehInfo(v);
-		}
-	}
-	else
-	{
-	 	VehInfo[vehicleid][vPlayers] = 0;
-	    VehInfo[vehicleid][vDriver] = -1;
-	    VehInfo[vehicleid][vCoDriver] = -1;
-	    VehInfo[vehicleid][vLeftSeat] = -1;
-	    VehInfo[vehicleid][vRightSeat] = -1;
-	    foreach(LoginPlayer, i)
-		{
-	        if(vehicleid == GetPlayerVehicleID(i))
-	        {
-				new seat = GetPlayerVehicleSeat(i);
-				VehInfo[vehicleid][vPlayers]++;
-				PlayerVehicle[i] = vehicleid;
-				if(seat == 0) VehInfo[vehicleid][vDriver] = i;
-				else if(seat == 1) VehInfo[vehicleid][vCoDriver] = i;
-				else if(seat == 2) VehInfo[vehicleid][vLeftSeat] = i;
-				else if(seat == 3) VehInfo[vehicleid][vRightSeat] = i;
-			}
-	    }
-	}
-}
-
-ExitVehicle(playerid)
-{
-    new v = PlayerVehicle[playerid];
-    if(VehInfo[v][vDriver] == playerid) 		VehInfo[v][vDriver] = -1;
-    else if(VehInfo[v][vCoDriver] == playerid) 	VehInfo[v][vCoDriver] = -1;
-    else if(VehInfo[v][vLeftSeat] == playerid) 	VehInfo[v][vLeftSeat] = -1;
-    else if(VehInfo[v][vRightSeat] == playerid) VehInfo[v][vRightSeat] = -1;
-    VehInfo[v][vPlayers]--;
-    PlayerVehicle[playerid] = 0;
-    //	Выключаем радио
-    if(VehInfo[v][vRadio] > 0 && GetPVarInt(playerid, "Thing:RadioID") == 0)
-    {
-		StopAudioStreamForPlayer(playerid);
-    }
-    //	Если вышел последний игрок и машину надо спавнить - запускаем счетчик
-    if(VehInfo[v][vPlayers] == 0 && VehInfo[v][vRespawn] != -1)
-    {
-		VehInfo[v][vRespawnTime] = VehInfo[v][vRespawn];
-    }
-}
-
-stock UpdateVehRadio(vehicleid)
-{
-	new string[128], playerid;
-	new radio = VehInfo[vehicleid][vRadio];
-	for(new x; x < 4; x++)
-	{
-	    switch(x)
-	    {
-			case 0: playerid = VehInfo[vehicleid][vDriver];
-			case 1: playerid = VehInfo[vehicleid][vCoDriver];
-			case 2: playerid = VehInfo[vehicleid][vLeftSeat];
-			case 3: playerid = VehInfo[vehicleid][vRightSeat];
-	    }
-	    if(playerid >= 0 && GetPVarInt(playerid, "Thing:RadioID") == 0)
-	    {
-			if(radio == 0)
-			{
-				string = "~r~Radio OFF";
-				StopAudioStreamForPlayer(playerid);
-		    }
-		    else
-		    {
-				format(string, 128, "~g~%s", RadioList[radio-1][RADIO_NAME]);
-				PlayAudioStreamForPlayer(playerid, RadioList[radio-1][RADIO_URL]);
-				PlayerPlaySound(playerid, 1069, 0.0, 0.0, 0.0);// fix
-		    }
-			GameTextForPlayer(playerid, string, 5000, 6);
-	    }
-	}
-	return true;
-}
-
 stock UpdatePlayerRadio(playerid)
 {
 	new string[128];
@@ -1109,86 +748,6 @@ stock UpdatePlayerRadio(playerid)
 		format(string, 128, "~g~%s", RadioList[radio - 1][RADIO_NAME]);
 		GameTextForPlayer(playerid, string, 5000, 6);
     }
-	return true;
-}
-
-Public: StartEngine(vehicleid, bool:status)
-{
-	if(vehicleid > 0)
-	{
-		new string[128],
-			playerid = VehInfo[vehicleid][vDriver];
-
-		if(InRace[playerid]) return 1;
-		if(status && playerid >= 0 && GetVehicleEngine(vehicleid) == false)
-		{
-			engine_timer[playerid] = 0;
-	        new Float:vHealth;
-	        GetVehicleHealth(vehicleid, vHealth);
-	        if(vHealth < 390)
-	        {
-	            GameTextForPlayer(playerid, "~w~Starting engine~n~~r~Broken", 1000, 4);
-				return true;
-	        }
-			if(VehInfo[vehicleid][vFuel] == 0)
-	        {
-			    GameTextForPlayer(playerid, "~w~Starting engine~n~~r~No Fuel", 1000, 4);
-				return true;
-	        }
-	        new RandomStart = random(12);
-	        switch(RandomStart)
-	        {
-	            case 0:
-	            {
-					GameTextForPlayer(playerid, "~w~Starting engine~n~~r~Fail", 1000, 4);
-					if(AS_ElementNumber[playerid] > 0)
-					{
-                        SendClientMessage(playerid, COLOR_SAYING, "- Инструктор: Эй, ты что, не можешь даже машину завести?");
-					}
-	            }
-	            default:
-	            {
-					SetVehicleEngine(vehicleid, true);
-
-					if(IsVehicleWithEngine(vehicleid))
-					{
-						IFace.ToggleGroup(playerid, IFace.SPEEDO, true);
-						IFace.Veh_Update(playerid, 0);
-					}
-
-					format(string, 128, "~w~Starting engine~n~~g~Done");
-					GameTextForPlayer(playerid, string, 1000, 4);
-					if(AS_ElementNumber[playerid] == 0)
-					{
-						PlayerAction(playerid, "заводит двигатель.");
-					}
-					else
-					{	// Прохождение элементов автошколы
-						ChangePlayerASStatus(playerid, AUTOSCHOOL_START);
-					}
-
-					// Заправочная станция
-					if(VehInfo[vehicleid][vWishFuel] > 0.0)
-					{
-						VehInfo[vehicleid][vWishFuel] = 0.0;
-						ShowPlayerHint(playerid, "Вы завели двигатель~n~Заказ на заправку обнулен");
-					}
-
-				#if defined	_job_job_theft_included
-					Theft_StartEngine(vehicleid, playerid);
-				#endif	
-	            }
-	        }
-		}
-		else if(status == false)
-		{
-			SetVehicleEngine(vehicleid, false);
-			if(IsVehicleWithEngine(vehicleid))
-			{
-				IFace.ToggleGroup(playerid, IFace.SPEEDO, false);
-			}
-		}
-	}
 	return true;
 }
 
@@ -2267,450 +1826,6 @@ ColorMenuHide(playerid)
 	return true;
 }
 
-//	BIZ
-stock FoundBiz(bizid)
-{
-	if(bizid > 0)
-	{
-		for(new b; b < MaxBiz; b++)
-		{
-			if(bizid == BizInfo[b][bID])
-			{
-				return b;
-			}
-		}
-	}
-	return -1;
-}
-
-SaveBiz(bizid = -1)
-{
-	// Сохранение всех бизнесов //
-	if(bizid == -1)
-	{
-		for(bizid = 0; bizid < MaxBiz; bizid++)
-		{
-			SaveBiz(bizid);
-		}
-		return true;
-	}
-
-	// Сохранение конкретного бизнеса //
-	if(0 <= bizid < sizeof(BizInfo) && BizInfo[bizid][bID] > 0)
-	{
-		new query[512];
-		format(query, sizeof(query), "UPDATE business SET \
-								name = '%s', type = '%d',\
-								owner = '%d', sell_price = '%d',\
-								bank = '%f', payment_days = '%d', price = '%d',\
-								max_prods = '%d', product = '%d',\
-								status = '%d',\
-								x = '%f', y = '%f', z = '%f', r = '%f',\
-								w_x = '%f', w_y = '%f', w_z = '%f',\
-								location = '%d', enter_price = '%d'\
-								WHERE id = '%d'",
-								BizInfo[bizid][bName], 		BizInfo[bizid][bType],
-								BizInfo[bizid][bOwnerID], 	BizInfo[bizid][bSellPrice],
-								BizInfo[bizid][bBank], 		BizInfo[bizid][bPaymentDays], BizInfo[bizid][bPrice],
-								BizInfo[bizid][bMaxProds], 	BizInfo[bizid][bProduct],
-								BizInfo[bizid][bStatus],
-								Arr4<BizInfo[bizid][bPos]>,
-								Arr3<BizInfo[bizid][bWorkPos]>,
-								BizInfo[bizid][bLocation], BizInfo[bizid][bEnterPrice],
-								BizInfo[bizid][bID]);
-		mysql_query_ex(query);
-	}
-	return true;
-}
-
-stock LoadBiz()
-{
-	new Cache:result = mysql_query(g_SQL, "SELECT * FROM `business` ORDER BY `id`");
-	new str[256], biz;
-	for(new i; i < cache_num_rows(); i++)
-	{
-		if(MaxBiz >= MAX_BUSINESSES)
-        {
-			printf( "  WARNING! Constant MAX_BUSINESSES(%d) is smaller then bus in database(%d)!", MAX_BUSINESSES, cache_num_rows());
-            break;
-        }
-		new field = 0;
-		cache_get_value_index_int(i, field++, BizInfo[i][bID]);
-		cache_get_value_index(i, field++, str);
-		format(BizInfo[i][bName], BIZ_NAME_SIZE, "%s", str);
-		cache_get_value_index_int(i, field++, BizInfo[i][bType]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bOwnerID]);
-		if(BizInfo[i][bOwnerID])	biz++;
-		cache_get_value_index_int(i, field++, BizInfo[i][bSellPrice]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bBank]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bPaymentDays]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bPrice]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bMaxProds]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bProduct]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bStatus]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bPos][0]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bPos][1]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bPos][2]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bPos][3]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bWorkPos][0]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bWorkPos][1]);
-		cache_get_value_index_float(i, field++, BizInfo[i][bWorkPos][2]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bLocation]);
-		cache_get_value_index_int(i, field++, BizInfo[i][bEnterPrice]);
-
-		//	Not load
-		BizInfo[i][bRobbery] = INVALID_PLAYER_ID;
-
-		MaxBiz++;
-	}
-	cache_delete(result);
-	if(MaxBiz == 0)
-	{
-	    return -1;
-	}
-	new interior, skin;
-	new Float:pos[3], Float:apos[4];
-	for(new i; i < MaxBiz; i++)
-	{
-		if(BizInfo[i][bLocation] > 0)
-		{
-		    format(str, sizeof(str), "SELECT `x`, `y`, `z`, `actor_skin`, `actor_x`, `actor_y`, `actor_z`, `actor_a`, `interior` FROM "MAIN_DB".`locations` WHERE `id` = '%d'", BizInfo[i][bLocation]);
-			result = mysql_query(g_SQL, str);
-			cache_get_value_name_float(0, "x", pos[0]);
-			cache_get_value_name_float(0, "y", pos[1]);
-			cache_get_value_name_float(0, "z", pos[2]);
-			cache_get_value_name_int(0, "actor_skin", skin);
-			cache_get_value_name_float(0, "actor_x", apos[0]);
-			cache_get_value_name_float(0, "actor_y", apos[1]);
-			cache_get_value_name_float(0, "actor_z", apos[2]);
-			cache_get_value_name_float(0, "actor_a", apos[3]);
-			cache_get_value_name_int(0, "interior", interior);
-			BizInfo[i][bExPickup] = CreateDynamicPickup(PICKUPID_ENTRY, 1, pos[0], pos[1], pos[2] + 0.5, VW_BIZ + i);
-			if(skin != 0)
-			{
-				BizInfo[i][bActor] = CreateActor(skin, Arr4<apos>);
-				SetActorVirtualWorld(BizInfo[i][bActor], VW_BIZ + i);
-    			CreateDynamic3DTextLabel("Продавец\n{AFAFAF}(прицелиться + y)", 0xFFFFFFFF, apos[0], apos[1], apos[2] + 1.2, 20.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 1, VW_BIZ + i);
-			}
-			cache_delete(result);
-		}
-		if(BizInfo[i][bType] == BUS_EATERY)
-		{
-			new icon;
-			switch(GetEateryType(interior))
-			{
-				case 1:		icon = 29;	//	Well stacked pizza
-				case 2:		icon = 14;	//	Cluckin Bell
-				case 3:		icon = 10;	//	Burger Shot
-				case 4:		icon = 17;	//	Ring Donuts
-				default:	icon = BizTypeData[ BizInfo[i][bType] ][btMapIcon];
-			}
-			BizInfo[i][bMapIcon] = CreateDynamicMapIcon(Arr3<BizInfo[i][bPos]>, icon, -1);
-		}
-		else
-		{
-			BizInfo[i][bMapIcon] = CreateDynamicMapIcon(Arr3<BizInfo[i][bPos]>, BizTypeData[ BizInfo[i][bType] ][btMapIcon], -1);
-		}
-		if(BizInfo[i][bType] == BUS_STRIP)
-		{
-			//	Стриптизерши
-			new strip = CreateActor(256, 1216.5, -6.6, 1001.3, 90.0);
-			SetActorVirtualWorld(strip, VW_BIZ + i);
-			ApplyActorAnimation(strip, "STRIP", "strip_G", 4.1, 1, 1, 1, 0, 0);
-			strip = CreateActor(257, 1221.0, 8.24, 1001.3, 130.0);
-			SetActorVirtualWorld(strip, VW_BIZ + i);
-			ApplyActorAnimation(strip, "STRIP", "strip_A", 4.1, 1, 1, 1, 0, 0);
-		}
-		else if(BizInfo[i][bType] == BUS_CASINO)
-		{
-			// Автомобили в казино (четыре дракона)
-			new cars[] = { 411, 415, 429, 451, 467, 541, 580 };
-			new vehid = MyCreateVehicle(cars[random(sizeof(cars))], 1954.3347, 919.8059, 992.5, 215.0, 3, 1);
-			LinkVehicleToInterior(vehid, 1);
-			SetVehicleVirtualWorld(vehid, VW_BIZ + i);
-			VehInfo[vehid][vLocked] = 999;
-			UpdateVehicleParamsEx(vehid);
-		}
-		BizInfo[i][bPickup] = CreateDynamicPickup(PICKUPID_SBIZ, 1, Arr3<BizInfo[i][bPos]>);
-		BizInfo[i][b3dText] = CreateDynamic3DTextLabel("_", COLOR_WHITE, BizInfo[i][bPos][0], BizInfo[i][bPos][1], BizInfo[i][bPos][2] + 1.0, 20.0);
-		UpdateBusinessText(i);
-	}
-	return biz;
-}
-
-stock UpdateBusinessText(id)
-{
-	if(id < 0 || id >= MAX_BUSINESSES || BizInfo[id][bID] == 0)
-	{
-		return false;
-	}
-	new mes[256];
-	if(BizInfo[id][bStatus])
-	{
-		if(BizInfo[id][bOwnerID])
-		{
-			format(mes, sizeof(mes),
-			"{4682B4}%s\n\
-			{4682B4}Владелец: {FFFFFF}%s\n\
-			{4682B4}Крыша: {FFFFFF}Нет", BizTypeData[ BizInfo[id][bType] ][btName], GetPlayerUsername(BizInfo[id][bOwnerID]));
-			Streamer_SetIntData(STREAMER_TYPE_PICKUP, BizInfo[id][bPickup], E_STREAMER_MODEL_ID, PICKUPID_BBIZ);
-			Streamer_SetFloatData(STREAMER_TYPE_PICKUP, BizInfo[id][bPickup], E_STREAMER_Z, BizInfo[id][bPos][2] - 0.8);
-		}
-		else
-		{
-			format(mes, sizeof(mes),
-			"{4682B4}%s\n\
-			{4682B4}Стоимость: {FFFFFF}$%d\n\
-			{4682B4}Крыша: {FFFFFF}Нет", BizTypeData[ BizInfo[id][bType] ][btName], BizInfo[id][bPrice]);
-			Streamer_SetIntData(STREAMER_TYPE_PICKUP, BizInfo[id][bPickup], E_STREAMER_MODEL_ID, PICKUPID_SBIZ);
-			Streamer_SetFloatData(STREAMER_TYPE_PICKUP, BizInfo[id][bPickup], E_STREAMER_Z, BizInfo[id][bPos][2]);
-		}
-		if(BizInfo[id][bEnterPrice])	format(mes, sizeof(mes), "%s\n{4682B4}Цена за вход: {FFFFFF}$%d", mes, BizInfo[id][bEnterPrice]);
-	}
-	else
-	{
-		strcat(mes, "\t\t\t{FF0000}ЗАКРЫТО\n{AFAFAF}(Информация недоступна)");
-	}
-	UpdateDynamic3DTextLabelText(BizInfo[id][b3dText], 0xFFFFFFFF, mes);
-	return true;
-}
-
-stock BuyPlayerBiz(playerid, b)
-{
-	if(GetPlayerBiz(playerid) > 0)
-	{
-	    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете иметь больше 1 бизнеса.");
-	    return false;
-	}
-	if(MyGetPlayerMoney(playerid) < BizInfo[b][bPrice])
-    {
-		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас не хватает денег, чтобы купить этот бизнес.");
-		return false;
-	}
-	new string[128];
-	MyGivePlayerMoney(playerid, -BizInfo[b][bPrice]);
-	BizInfo[b][bOwnerID] = PlayerInfo[playerid][pUserID];
-	BizInfo[b][bBank] = 0.0;
-	SaveBiz(b);
-	UpdateBusinessText(b);
-
-	SetPlayerCameraPos(playerid, BizInfo[b][bPos][0] + 15.0, BizInfo[b][bPos][1] + 35.0, BizInfo[b][bPos][2] + 15.0);
-	SetPlayerCameraLookAt(playerid, Arr3<BizInfo[b][bPos]>);
-	GameTextForPlayer(playerid, "~n~~w~PROPERTY PURCHASED", 5000, 3);
-	PlayAudioStreamForPlayer(playerid, AUDIOFILE_PATH "/complete.mp3");
-	SetTimerEx("PlayerCameraBehind", 5000, false, "d", playerid);
-	SendFormatMessageToAll(COLOR_ORANGE, string, "[NEWS]: {FFFFFF}%s{FF8300} покупает бизнес '{FFFFFF}%s{FF8300}'", ReturnPlayerName(playerid), BizInfo[b][bName]);
-	gPickupTime[playerid] = 5;
-
-	#if defined _system_ucp_news_included
-	    PushNews(playerid, NEWS_TYPE_BUSINESS_PURCHASE, BizInfo[b][bID]);
-	#endif
-
-	return true;
-}
-
-stock SellBiz(b, show = true)
-{
-	new owner = BizInfo[b][bOwnerID];
-	new playerid = GetPlayeridToUserID(owner);
-	new Float:price = float(BizInfo[b][bPrice]) * 0.8 + BizInfo[b][bBank];
-	if(playerid != INVALID_PLAYER_ID)
-	{
-		MyGivePlayerMoney(playerid, floatround(price));
-		if(show)
-		{
-			GameTextForPlayer(playerid, "~n~~n~~w~PROPERTY SALES", 5000, 3);
-			PlayerPlaySound(playerid, 36200, 0, 0, 0);
-			//HidePropertyMenu(playerid);
-		}
-	}
-	else
-	{
-		new query[128];
-		format(query, sizeof(query), "UPDATE `players` SET `money` = (`money` + '%d') WHERE `id` = '%d'", floatround(price), owner);
-		mysql_query_ex(query);
-	}
-	BizInfo[b][bBank] = 0.0;
-	BizInfo[b][bPaymentDays] = 0;
-	BizInfo[b][bOwnerID] = 0;
-	SaveBiz(b);
-	UpdateBusinessText(b);
-	return true;
-}
-
-stock GetPlayerClotheShop(playerid)
-{
-	switch(GetPlayerInterior(playerid))
-	{
-		case 15:	return 1;
-		case 14:	return 2;
-		case 3:		return 3;
-		case 1:		return 4;
-		case 5:		return 5;
-		case 18:	return 6;
-	}
-	return 0;
-}
-
-stock GetEateryType(interior)
-{
-	switch(interior)
-	{
-		case 5:		return 1;	//	Well stacked pizza
-		case 9:		return 2;	//	Cluckin Bell
-		case 10:	return 3;	//	Burger Shot
-		case 17:	return 4;	//	Ring Donuts
-	}
-	return 0;
-}
-
-stock IsPlayerInShop(playerid)
-{
-	new b = GetBizWhichPlayer(playerid);
-	if(b == INVALID_DATA)	return false;
-	return BizInfo[b][bType] == BUS_SHOP ? true : false;
-}
-
-GetPlayerBiz(playerid)
-{
-	new string[128], b = 0;
-	format(string, sizeof(string), "SELECT `id` FROM `business` WHERE `owner` = '%d'", PlayerInfo[playerid][pUserID]);
-	new Cache:result = mysql_query(g_SQL, string);
-	if(cache_num_rows())	cache_get_value_name_int(0, "id", b);
-	cache_delete(result);
-	return b;
-}
-
-stock PlayerEnterBiz(playerid, biz)
-{
-	//HidePropertyMenu(playerid);
-	if(BizInfo[biz][bEnterPrice] && BizInfo[biz][bOwnerID] != PlayerInfo[playerid][pUserID])
-	{
-		if(GetPlayerMoney(playerid) < BizInfo[biz][bEnterPrice])
-		{
-			PickupedBiz[playerid] = INVALID_DATA;
-			gPickupTime[playerid] = 5;
-			return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас недостаточно денег.");
-		}
-		MyGivePlayerMoney(playerid, -BizInfo[biz][bEnterPrice]);
-		BizInfo[biz][bBank] += float(BizInfo[biz][bEnterPrice]);
-	}
-	new string[128];
-    format(string, sizeof(string), "SELECT `x`, `y`, `z`, `a`, `interior` FROM "MAIN_DB".`locations` WHERE `id` = '%d'", BizInfo[biz][bLocation]);
-	new Cache:result = mysql_query(g_SQL, string);
-	new Float:pos[4], int;
-	cache_get_value_name_int(0, "interior", int);
-	cache_get_value_name_float(0, "x", pos[0]);
-	cache_get_value_name_float(0, "y", pos[1]);
-	cache_get_value_name_float(0, "z", pos[2]);
-	cache_get_value_name_float(0, "a", pos[3]);
-	//MySetPlayerPosFade(playerid, FT_BIZ, Arr3<pos>, pos[3] + 180, true, int, VW_BIZ + b);
-	MySetPlayerPos(playerid, Arr3<pos>, pos[3] + 180, int, VW_BIZ + biz);
-	SetCameraBehindPlayer(playerid);
-	cache_delete(result);
-	return true;
-}
-
-stock ShowBizMenu(playerid, biz)
-{
-	switch(BizInfo[biz][bType])
-	{
-		case BUS_SHOP:
-		{
-			ShowDialog(playerid, DMODE_SHOP);
-		}
-		case BUS_EATERY:
-		{
-			switch(GetEateryType( GetPlayerInterior(playerid) ))
-			{
-				case 1:	//	Well stacked pizza
-				{
-					TogglePlayerControllable(playerid, false);
-					ShowMenuForPlayer(PizzaMenu, playerid);
-				}
-				case 2:	//	Cluckin Bell
-				{
-					TogglePlayerControllable(playerid, false);
-					ShowMenuForPlayer(CluckinBellMenu, playerid);
-				}
-				case 3:	//	Burger Shot
-				{
-					TogglePlayerControllable(playerid, false);
-					ShowMenuForPlayer(BurgerShotMenu, playerid);
-				}
-				case 4:	//	Ring Donuts
-				{
-					TogglePlayerControllable(playerid, false);
-					ShowMenuForPlayer(KingRingMenu, playerid);
-				}
-			}
-		}
-		case BUS_GAS_STATION:
-		{
-			ShowDialog(playerid, DMODE_GAS);
-		}
-		case BUS_BAR, BUS_CLUB, BUS_STRIP:
-		{
-			if(GetPlayerDrunkLevel(playerid) >= 50000)
-	        	return ShowPlayerHint(playerid, "Вы слишком пьяны, чтобы выпить еще.");
-			CreatePlayerDrinkMenu(playerid);
-		}
-		case BUS_GYM:
-		{
-
-		}
-		case BUS_AMMO:
-		{
-			if(PlayerInfo[playerid][pGunLic] == 0)
-			{
-	            SendClientMessage(playerid, COLOR_SAYING, "- Продавец: Для покупки вам необходимо разрешение на оружие из полицейского участка");
-			}
-			else
-			{
-				SendClientMessage(playerid, COLOR_SAYING, "- Продавец: Для покупки подойдите к стойке с нужным оружием и нажмите {33AA33}H");
-			}
-		}
-		case BUS_CLOTHING:
-		{
-			if(IsPlayerLeader(playerid))
-		    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Лидер должен оставаться в своей одежде.");
-		    if(PlayerInfo[playerid][pFaction] == F_POLICE)
-		    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Полицейский не может покупать гражданскую одежду.");
-		    SetPVarInt(playerid, "Player:MenuBizID", biz);
-		    ClothesShopID[playerid] = GetPlayerClotheShop(playerid);
-			ChoosePlayerClothes(playerid, 1);
-		}
-		case BUS_CASINO:
-		{
-			if(GetPlayerDrunkLevel(playerid) >= 50000)
-	        	return ShowPlayerHint(playerid, "Вы слишком пьяны, чтобы выпить еще.");
-			CreatePlayerDrinkMenu(playerid);
-		}
-	}
-	return true;
-}
-
-stock BizSaleProds(biz, price, count)
-{
-	// Нормировка
-	if(BizInfo[biz][bProduct] < 0) BizInfo[biz][bProduct] = 0;
-	if(BizInfo[biz][bProduct] < count) count = BizInfo[biz][bProduct];
-
-	// Выполнение операции
-	if(BizInfo[biz][bOwnerID] > 0) BizInfo[biz][bBank] += float(price * count);
-	BizInfo[biz][bProduct] -= count;
-	SaveBiz(biz);
-	return true;
-}
-
-stock GetBizWhichPlayer(playerid, only_within = 1)
-{
-	if(only_within == 0 && PickupedBiz[playerid] != INVALID_DATA)
-		return PickupedBiz[playerid];
-	new vw = GetPlayerVirtualWorld(playerid) - VW_BIZ;
-	return (vw > 0 && vw < sizeof(BizInfo)) ? vw : INVALID_DATA;
-}
-
 //---
 stock	IsPlayerInGreenZoneVW(playerid)
 {
@@ -2815,362 +1930,6 @@ Public: OnPlayerRemoveAcsr(playerid, thing)
 		case THING_HAT:		//	панама
 		{
 			//PlayerAction(playerid, "снимает панаму.");
-		}
-	}
-	return true;
-}
-
-//	AS
-stock StartASElement(playerid, element)
-{
-	new obj, vw = playerid + 1;
-	if(element == 0)
-	{// Элемент '360 градусов'
-	    AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.39, -138.12, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.72, -133.20, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.20, -129.94, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.64, -137.70, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.67, -126.83, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2045.36, -124.25, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.03, -123.23, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2044.81, -135.77, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.82, -137.18, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.50, -134.78, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2054.56, -131.79, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2054.53, -128.16, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.20, -125.34, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2050.88, -123.41, 34.61, 0.0, 0.0, 0.0, vw, -1, playerid );
-	}
-	else if( element == 1 )
-	{// Элемент '180 градусов'
-	    AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2045.50, -124.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2045.50, -127.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2045.50, -121.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.50, -121.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.50, -121.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.50, -124.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.50, -200.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.50, -204.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.52, -208.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.50, -200.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.50, -204.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.50, -208.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.70, -216.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.50, -217.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.08, -214.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2040.50, -208.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2040.50, -204.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2040.50, -200.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2041.50, -212.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.50, -212.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.50, -127.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2054.04, -214.50, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2045.50, -216.5, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-
-	}
-	else if( element == 2 )
-	{
-	    AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -134.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2030.00, -134.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -134.00, 34.60, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -138.00, 34.60, 0.0, 0.0, -0.12, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -138.00, 34.64, 0.0, 0.0, -0.12, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -142.00, 34.62, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -146.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -142.00, 34.64,   0.0, 0.0, -0.12, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -150.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -146.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -154.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -158.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -150.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -154.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -158.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -162.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -166.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -170.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -162.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -166.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -170.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2039.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2025.00, -179.93, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2029.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2035.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2039.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2043.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.00, -174.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.00, -184.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2059.00, -176.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2059.00, -182.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2063.00, -182.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2067.00, -182.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2067.00, -176.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2067.00, -179.00, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2063.0, -176.0, 34.64, 0.0, 0.0, 16.32, vw, -1, playerid );
-	}
-	else if( element == 3 )
-	{
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 2899, -2049.1, -165.8, 34.4, 0.0, 0.0, 90.25, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.5, -167.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.5, -167.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -172.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -175.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -178.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -172.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -175.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -178.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.5, -182.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.5, -182.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -186.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.0, -186.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.0, -190.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -190.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -194.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.0, -194.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2054.0, -198.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.0, -198.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.0, -202.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -202.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -206.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -206.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -210.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -210.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -214.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -214.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2046.0, -218.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2052.0, -218.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -219.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-	}
-	else if( element == 4 )
-	{
-    	AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2050.0, -135.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2050.0, -138.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -135.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.0, -135.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.0, -138.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2050.0, -141.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2056.0, -141.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -155.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.0, -155.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -155.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.0, -155.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2055.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2057.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2059.0, -169.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -183.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.0, -183.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2049.0, -183.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.0, -183.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2053.0, -196.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2057.5, -203.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2054.5, -205.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2051.5, -205.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2048.5, -203.0, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2059.0, -199.5, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1238, -2047.0, -199.5, 34.6, 0.0, 0.0, 0.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1652, -2060.0, -155.0, 35.0, 0.0, 0.0, 90.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1652, -2060.0, -183.0, 35.0, 0.0, 0.0, 90.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1652, -2046.0, -155.0, 35.0, 0.0, 0.0, 90.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 1652, -2046.0, -183.0, 35.0, 0.0, 0.0, 90.0, vw, -1, playerid );
-	}
-	else if( element == 5 )
-	{
-        AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 3080, -2047.0 ,-180.0, 35.5, 0.0, 0.0, 180.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 13591, -2047.0, -200.0, 34.7 , 0.0, 0.0, 90.0, vw, -1, playerid );
-		AS_Objects[ playerid ][ obj++ ] = CreateDynamicObject( 13591, -2047.0, -230.0, 34.7, 0.0, 0.0, 270.0, vw, -1, playerid );
-	}
-
-	// StartASElement
-	new string[1024], str[64];
-	format(str, sizeof(str), ""MAIN_COLOR"Автошкола [%s]", AS_Mission[element][AS_Name]);
-	format(string, sizeof(string),	"\n{FFFFFF}%s\n\n\
-									"MAIN_COLOR"Для начала выполнения, заведите двигатель автомобиля!", AS_Mission[element][AS_Descrip]);
-	MyShowPlayerDialog(playerid, DMODE_NONE, DIALOG_STYLE_MSGBOX, str, string, "Закрыть");
-	PlayerBusy{playerid} = true;
-	AS_OldAngel[playerid] = AS_Mission[element][AS_StartPos][3];
-	AS_ElementNumber[playerid] = element + 1;
-	AS_Time[playerid] = AS_Mission[element][AS_RunTime] * 1000;
-	AS_Check[playerid] = 0;
-	AS_Vehicle[playerid] = MyCreateVehicle(AS_Mission[element][AS_Veh], Arr4<AS_Mission[element][AS_StartPos]>, 3, 3);
-	CarInfo[ AS_Vehicle[playerid] ][cOwnerID] = playerid;
-	SetVehicleVirtualWorld(AS_Vehicle[playerid], vw);
-	SetPlayerVirtualWorld(playerid, vw);
-	MyPutPlayerInVehicle(playerid, AS_Vehicle[playerid], 0);
-	SetPlayerInterior(playerid, 0);
-	SetPlayerWeather(playerid, 1);
-	return true;
-}
-
-Public: ChangePlayerASStatus(playerid, status)
-{
-	new element = AS_ElementNumber[playerid] - 1;
-	if(element < 0)
-	{
-		return GMError(playerid, "ChangePlayerASStatus #0");
-	}
-
-	//	При смерти скидываем ТАЙМЕР
-	if(GetPlayerState(playerid) == PLAYER_STATE_WASTED)
-	{
-		KillTimer(AS_Timer[playerid]), AS_Timer[playerid] = 0;
-		HidePlayerVisualTimer(playerid);
-		GameTextForPlayer(playerid, RusText("~r~Миссия провалена~n~", isRus(playerid)), 5000, 4);
-		return true;
-	}
-
-	// Начал выполнение
-	if(status == AUTOSCHOOL_START)
-	{
-		if(AS_Timer[playerid] == 0)
-		{
-			AS_Timer[playerid] = SetTimerEx("ChangePlayerASStatus", AS_TIMER_UPDATE, true, "ii", playerid, AUTOSCHOOL_PASSAGE);
-			if(AS_Mission[element][AS_CP])
-			{
-				MySetPlayerCheckpoint(playerid, CPMODE_NONE, Arr3<AS_Mission[element][AS_CheckPos]>, 3.0);
-			}
-		}
-	}
-
-	// Выполняет
-	else if(status == AUTOSCHOOL_PASSAGE)
-	{
-        new Float:angel;
-        GetVehicleZAngle(AS_Vehicle[playerid], angel);
-        if(AS_ElementNumber[playerid] == 1)	// Элемент '360 градусов'
-		{
-            if(AS_Check[playerid] == 0)	// Прошел половину
-			{
-				if(300.0 < AS_OldAngel[playerid] < 360.0 && 0.0 < angel < 60.0)			AS_Check[playerid] = 1;
-				else if(0.0 < AS_OldAngel[playerid] < 60.0 && 300.0 < angel < 360.0)	AS_Check[playerid] = 2;
-			}
-            else if(AS_Check[playerid] == 1 && AS_Mission[0][AS_FinishPos][3] <= angel < AS_Mission[0][AS_FinishPos][3] + 20.0 && AS_OldAngel[playerid] < AS_Mission[0][AS_FinishPos][3])
-			{
-                return ChangePlayerASStatus(playerid, AUTOSCHOOL_FINISH);
-			}
-			else if(AS_Check[playerid] == 2 && AS_Mission[0][AS_FinishPos][3] - 20.0 < angel <= AS_Mission[0][AS_FinishPos][3] && AS_OldAngel[playerid] > AS_Mission[0][AS_FinishPos][3])
-			{
-				return ChangePlayerASStatus(playerid, AUTOSCHOOL_FINISH);
-			}
-            AS_OldAngel[playerid] = angel;
-		}
-		else
-		{
-		    if(AS_Check[playerid] == 0 && GetDistanceFromMeToPoint(playerid, Arr3<AS_Mission[element][AS_CheckPos]>) <= 4.0)
-			{
-				if(AS_ElementNumber[playerid] == 4)	// Элемент 'Управляемый занос'
-				{
-					new vStatus[4]; // Прокалываем шины
-					GetVehicleDamageStatus(AS_Vehicle[playerid], Arr4<vStatus>);
-					UpdateVehicleDamageStatus(AS_Vehicle[playerid], Arr3<vStatus>, 0001);
-				}
-				AS_Check[playerid] = 1;	// Доехал до поворота
-				if(AS_Mission[element][AS_CP])
-				{
-					MySetPlayerCheckpoint(playerid, CPMODE_NONE, Arr3<AS_Mission[element][AS_FinishPos]>, 3.0);
-				}
-			}
-			if(AS_Check[playerid] > 0 && GetDistanceFromMeToPoint(playerid, Arr3<AS_Mission[element][AS_FinishPos]>) <= 4.0)
-			{
-				if(AS_Mission[element][AS_CheckSpeed] == false || GetVehicleSpeed(AS_Vehicle[playerid]) < 5)
-				{
-					if(AS_Mission[element][AS_CP])
-					{
-						MyDisablePlayerCheckpoint(playerid);
-					}
-					if(AS_Mission[element][AS_FinishPos][3] != 999.0)
-					{
-						if(angel < 180 && AS_Mission[element][AS_FinishPos][3] + 20 > 360)
-						{
-				    		angel += 360;
-						}
-						if(AS_Mission[element][AS_FinishPos][3] - 20 <= angel <= AS_Mission[element][AS_FinishPos][3] + 20)
-						{
-	                		return ChangePlayerASStatus(playerid, AUTOSCHOOL_FINISH);
-						}
-	                }
-					else
-					{
-						return ChangePlayerASStatus(playerid, AUTOSCHOOL_FINISH);
-					}
-				}
-			}
-		}
-		AS_Time[playerid] -= AS_TIMER_UPDATE;
-		SetPlayerVisualTimer(playerid, (AS_Time[playerid] / 1000 + 1), false);
-        if(AS_Time[playerid] <= 0)	// Вышло время
-        {
-            return ChangePlayerASStatus(playerid, AUTOSCHOOL_FINISH);
-        }
-	}
-
-	// Закончил выполнение
-	else if(status == AUTOSCHOOL_FINISH)
-	{
-		new Float:angel;
-        GetVehicleZAngle(AS_Vehicle[playerid], angel);
-        if(AS_ElementNumber[playerid] == 1
-        && ((AS_Check[playerid] == 1 && (angel < AS_Mission[0][AS_FinishPos][3] || AS_OldAngel[playerid] >= AS_Mission[0][AS_FinishPos][3]))
-		|| (AS_Check[playerid] == 2 && (angel > AS_Mission[0][AS_FinishPos][3] || AS_OldAngel[playerid] <= AS_Mission[0][AS_FinishPos][3]))))
-		{
-	        GameTextForPlayer(playerid, RusText("~r~Миссия провалена~n~~w~Задание не выполнено", isRus(playerid)), 2000, 4);
-		}
-		else if(AS_Check[playerid] == 0 || GetDistanceFromMeToPoint(playerid, Arr3<AS_Mission[element][AS_FinishPos]>) > 4.0)
-		{
-			GameTextForPlayer(playerid, RusText("~r~Миссия провалена~n~~w~Задание не выполнено", isRus(playerid)), 2000, 4);
-		}
-		else
-		{
-			new Float:health;
-	    	GetVehicleHealth(AS_Vehicle[playerid], health);
-			if(health < (990 - AS_Mission[element][AS_Damage]))
-			{
-			    GameTextForPlayer(playerid, RusText("~r~Миссия провалена~n~~w~Автомобиль поврежден", isRus(playerid)), 2000, 4);
-			}
-			else
-			{
-		    	GameTextForPlayer(playerid, RusText("~g~Миссия выполнена", isRus(playerid)), 2000, 4);
-				PlayerInfo[playerid][pASElement] |= 0x1 << AS_ElementNumber[playerid];
-				UpdatePlayerBitData(playerid, "as_element", PlayerInfo[playerid][pASElement]);
-			}
-		}
-		AS_ReturnInAS(playerid);
-	}
-	return true;
-}
-
-AS_ReturnInAS(playerid)
-{
-	HidePlayerVisualTimer(playerid);
-	KillTimer(AS_Timer[playerid]), AS_Timer[playerid] = 0;
-	SetVehicleSpeed(AS_Vehicle[playerid], 5.0);
-	MySetPlayerPosFade(playerid, FT_AUTOSCHOOL, -2026.77, -114.345, 1035.172, 1.0, false, 3, VW_AUTOSCHOOL);
-}
-
-AS_ClearVars(playerid)
-{
-	if(AS_ElementNumber[playerid])
-	{	// Обнуление значений
-		MyDisablePlayerCheckpoint(playerid);
-		SetCameraBehindPlayer(playerid);
-		MyDestroyVehicle(AS_Vehicle[playerid]), AS_Vehicle[playerid] = 0;
-		KillTimer(AS_Timer[playerid]), AS_Timer[playerid] = 0;
-		AS_ElementNumber[playerid] = 0;
-		AS_Time[playerid] = 0;
-		AS_Check[playerid] = 0;
-		AS_OldAngel[playerid] = 0.0;
-		PlayerBusy{playerid} = false;
-		for(new i = 0; i < sizeof(AS_Objects[]); i++)
-		{
-			DestroyDynamicObject(AS_Objects[playerid][i]), AS_Objects[playerid][i] = INVALID_STREAMER_ID;
 		}
 	}
 	return true;
@@ -5800,91 +4559,6 @@ public OnPlayerPressedButton(playerid, button)
 	return true;
 }
 
-stock CreateCutSceneDecor()
-{
-	new id;
-//	Печатающий бот при авторизации
-	//id = CreateActor(2, 364.3, 152.4, 1025.8, 3.0);
-	//SetActorVirtualWorld(id, VW_CUTSCENE);
-	//ApplyActorAnimation(id, "INT_OFFICE", "OFF_Sit_Bored_Loop", 4.1, 1, 0, 0, 0, 0);
-
-	//id = CreateActor(2, 1469.50, -1682.93, 14.04, 272.18);
-	//SetActorVirtualWorld(id, VW_CUTSCENE);
-	//ApplyActorAnimation(id, "PED", "SEAT_down", 4.1, 0, 0, 0, 1, 1);
-
-	id = CreateActor(111, 1483.37, -1765.19, 70.42, 342.76);
-	SetActorVirtualWorld(id, VW_LOGIN);
-	ApplyActorAnimation(id, "MISC", "Seat_talk_02", 4.1, 1, 0, 0, 0, 0);
-
-//	Кат сцена города
-	id = CreateWorldText("developed by", 1559.75, -1549.33, 15.95, 0.0, 0.0, -70.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 25);
-
-	id = CreateWorldText("Borog25 & Impereal", 1559.8, -1549.5, 15.85, 0.0, 0.0, -70.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 24);
-	SetWorldTextBold(id, true);
-
-//	Кат сцена с мафией
-	id = CreateWorldText("mafia", 1608.5, -1549.7, 14.6, 0.0, 0.0, 0.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 36);
-
-	id = CreateWorldText("Jacob Dickinson", 1608.32, -1551.57, 14.35, 0.0, 0.0, 5.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 36);
-	SetWorldTextBold(id, true);
-
-	id = CreateActor(112, 1607.8, -1549.8, 13.6, 0.0);
-	SetActorVirtualWorld(id, VW_CUTSCENE);
-	id = MyCreateVehicle(579, 1604.15, -1553.05, 13.52, 317.4, 0, 0);
-	SetVehicleVirtualWorld(id, VW_CUTSCENE);
-	VehInfo[id][vLights] = true;
-	UpdateVehicleParamsEx(id);
-
-//	Кат сцена в доме
-	id = CreateWorldText("governor", 2534.0, -1675.3, 1015.93, 0.0, 0.0, 90.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 24);
-
-	id = CreateWorldText("John Kerry", 2535.0, -1675.0, 1015.74, 0.0, 0.0, 90.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 36);
-	SetWorldTextBold(id, true);
-
-	id = CreateActor(147, 2533.15, -1674.5, 1015.5, 270.0);
-	SetActorVirtualWorld(id, VW_CUTSCENE);
-	ApplyActorAnimation(id, "ped", "SEAT_idle", 4.1, 1, 0, 0, 0, 0);
-
-//	Кат сцена с полицейским
-	id = CreateWorldText("Daniel Forster", 1420.459, -1348.445, 13.905, 0.0, 0.0, -20.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 32);
-	SetWorldTextBold(id, true);
-
-	id = CreateWorldText("detective", 1420.902, -1347.675, 14.164, 0.0, 0.0, -20.0, VW_CUTSCENE);
-	SetWorldTextFontface(id, "Tahoma");
-	SetWorldTextFontsize(id, 36);
-
-	CreateDynamicObject(19281, 1422.87, -1347.54, 13.20, 0.0, 0.0, 0.0, VW_CUTSCENE);//	свет фар
-	CreateDynamicObject(19281, 1421.14, -1347.59, 13.16, 0.0, 0.0, 0.0, VW_CUTSCENE);//	свет фар
-
-	//	Мигалка
-	CreateDynamicObject(19290, 1421.4, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
-	CreateDynamicObject(19292, 1421.8, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
-	CreateDynamicObject(19290, 1422.2, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
-	CreateDynamicObject(19292, 1422.7, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
-
-	id = CreateActor(288, 1422.0, -1346.2, 13.6, 357.0);
-	SetActorVirtualWorld(id, VW_CUTSCENE);
-	id = MyCreateVehicle(596, 1422.0, -1350.0, 13.6, 0.0, 0, 90);
-	SetVehicleVirtualWorld(id, VW_CUTSCENE);
-	VehInfo[id][vLights] = true;
-	UpdateVehicleParamsEx(id);
-	return true;
-}
-
 GameModeInit_Error(bool:reboot = false)
 {
 	print(" ");
@@ -5934,7 +4608,7 @@ MySQL_Load()
 	mysql_query_ex("UPDATE `players` SET `online` = '-1' WHERE `online` > '-1'");
 
 	////////////////////
-	mysql_format(g_SQL, query, sizeof(query), "SELECT `record_online` FROM "MAIN_DB".`servers` WHERE `id` = '%d' LIMIT 1", SERVER_ID);
+	mysql_format(g_SQL, query, sizeof(query), "SELECT `record_online` FROM %s.`servers` WHERE `id` = '%d' LIMIT 1", MAIN_DB, SERVER_ID);
 	result = mysql_query(g_SQL, query);
 	cache_get_value_name_int(0, "record_online", CurrentPlayerRecords);
 	cache_delete(result);
@@ -8209,7 +6883,7 @@ EveryHourTimer() // PayDay()
 	//---------	Списание средств с недвижимости, бизнесов, отелей ------------
 	new message[128];
 	//	Получаем дату последнего списания счетов
-	mysql_format(g_SQL, string, sizeof(string), "SELECT payment_day FROM "MAIN_DB".servers WHERE id = '%d'", SERVER_ID);
+	mysql_format(g_SQL, string, sizeof(string), "SELECT payment_day FROM %s.servers WHERE id = '%d'", MAIN_DB, SERVER_ID);
 	new Cache:result = mysql_query(g_SQL, string);
 	new payment_day;
 	cache_get_value_name_int(0, "payment_day", payment_day);
@@ -8320,13 +6994,15 @@ EveryHourTimer() // PayDay()
 					SaveBiz(b);
 					continue;
 				}
-				if(i == INVALID_PLAYER_ID)	SendOfflineMessage(BizInfo[b][bOwnerID], message);
-				else 						SendClientMessage(i, COLOR_LIGHTRED, message);
+				if(i == INVALID_PLAYER_ID)
+					SendOfflineMessage(BizInfo[b][bOwnerID], message);
+				else
+					SendClientMessage(i, COLOR_LIGHTRED, message);
 			}
 		}
 
 	//	Обновляем дату списания
-		mysql_format(g_SQL, string, sizeof(string), "UPDATE "MAIN_DB".servers SET payment_day = '%d' WHERE id = '%d'", cur_day, SERVER_ID);
+		mysql_format(g_SQL, string, sizeof(string), "UPDATE %s.servers SET payment_day = '%d' WHERE id = '%d'", MAIN_DB, cur_day, SERVER_ID);
 		mysql_query_ex(string);
 	}
 
@@ -8668,7 +7344,7 @@ Public: OnPlayerLogged(playerid)
 		getdate(Arr3<date>);
 		CurrentPlayerRecords = players;
 		SendFormatMessageToAll(COLOR_ORANGE, string, "[NEWS]: Только что был зафиксирован новый рекорд онлайна: %d игрок(ов) (%02d/%02d/%04d)", CurrentPlayerRecords, date[2], date[1], date[0]);
-		mysql_format(g_SQL, string, sizeof(string), "UPDATE "MAIN_DB".`servers` SET `record_online` = '%d', `date_record` = UNIX_TIMESTAMP() WHERE `id` = '%d'", CurrentPlayerRecords, SERVER_ID);
+		mysql_format(g_SQL, string, sizeof(string), "UPDATE %s.`servers` SET `record_online` = '%d', `date_record` = UNIX_TIMESTAMP() WHERE `id` = '%d'", MAIN_DB, CurrentPlayerRecords, SERVER_ID);
 		mysql_query_ex(string);
 	}
 
@@ -9363,7 +8039,8 @@ stock OnPlayerSpawnFinish(playerid)
 {
 	if(GetPVarInt(playerid, "RegCutSceneState") == 0)
 	{
-		//if(PlayerInfo[playerid][pJailTime] == 0)				Inv.LoadPlayerUsedWeapon(playerid);	//	MyChangePlayerWeapon(playerid, false);
+		// if(PlayerInfo[playerid][pJailTime] == 0)
+		//	Inv.LoadPlayerUsedWeapon(playerid);	//	MyChangePlayerWeapon(playerid, false);
 		Inv.GetPlayerUsingItem(playerid);
 
 	#if defined _player_achieve_included	
@@ -11698,7 +10375,7 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 			else if(pickupid == BizInfo[b][bExPickup])
 			{
 				new query[128], Float:a;
-			    format(query, sizeof(query), "SELECT `a` FROM "MAIN_DB".`locations` WHERE `id` = '%d'", BizInfo[b][bLocation]);
+			    format(query, sizeof(query), "SELECT `a` FROM %s.`locations` WHERE `id` = '%d'", MAIN_DB, BizInfo[b][bLocation]);
 				new Cache:result = mysql_query(g_SQL, query);
 				cache_get_value_name_float(0, "a", a);
 				if(floatdif(a, angle) < 90.0)
@@ -13164,7 +11841,7 @@ Public: OnPlayerClickEnter(playerid)
 
 				// Эффект камеры
 				new string[128];
-				mysql_format(g_SQL, string, sizeof(string), "SELECT `cam_x`, `cam_y`, `cam_z` FROM "MAIN_DB".`locations` WHERE `id` = '%d'", BizInfo[b][bLocation]);
+				mysql_format(g_SQL, string, sizeof(string), "SELECT `cam_x`, `cam_y`, `cam_z` FROM %s.`locations` WHERE `id` = '%d'", MAIN_DB, BizInfo[b][bLocation]);
 				new Cache:result = mysql_query(g_SQL, string);
 				new Float:cam_x, Float:cam_y, Float:cam_z;
 			  	cache_get_value_index_float(0, 0, cam_x);
@@ -24379,28 +23056,6 @@ COMMAND:gpe(playerid, params[])
 	return GivePlayerEXP(giveplayerid, amount);
 }
 
-flags:setlvl(CMD_DEVELOPER);
-COMMAND:setlvl(playerid, params[])
-{
-    new targetid, amount;
-	if(sscanf(params, "ri", targetid, amount)){
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /setlvl [playerid/playername] [amount]");
-	}
-    if(!IsPlayerLogged(targetid)){
-        return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-    }
-    new string[256];
-	PlayerInfo[targetid][pLevel] = amount;
-	PlayerInfo[targetid][pExp] = 0;
-	//UpdatePlayerEXP(targetid);
-	UpdatePlayerLVL(targetid);
-	format(string, sizeof(string), "[AdmCmd]: %s %s[%d] изменил уровень %s[%d]: %d lvl",
-		GetPlayerAdminStatus(playerid), ReturnPlayerName(playerid), playerid, ReturnPlayerName(targetid), targetid, amount);
-	SendAdminMessage(COLOR_ADMIN, string);
-	SendFormatMessage(targetid, COLOR_LIGHTBLUE, string, "%s %s[%d] изменил ваш уровень: %d lvl", GetPlayerAdminStatus(playerid), ReturnPlayerName(playerid), playerid, amount);
-	return true;
-}
-
 flags:botinfo(CMD_DEVELOPER);
 COMMAND:botinfo(playerid, params[])
 {
@@ -25642,7 +24297,7 @@ COMMAND:setskin(playerid, params[])
 	else
 	{
 		MySetPlayerSkin(giveplayerid, skinid, false);
-		SetTimerEx("FixVehicleAnim", 1000, false, "i", giveplayerid);
+		//SetTimerEx("FixVehicleAnim", 1000, false, "i", giveplayerid);
 	}
 	format(string, 128, "[AdmCmd]: %s %s[%d] выдал игроку %s[%d] %s #%d",
 		GetPlayerAdminStatus(playerid), ReturnPlayerName(playerid), playerid, ReturnPlayerName(giveplayerid), giveplayerid, skinname, skinid);
@@ -26471,44 +25126,6 @@ COMMAND:house(playerid, params[])
 	    format(string, 128, "Дом #%d: {FFFFFF}Интерьер дома изменен: %d", HouseInfo[h][hID], HouseInfo[h][hInt]);
 	    SendClientMessage(playerid, COLOR_GREEN, string);
 	    return 1;
-	}
-	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Такого действия в этой команде не существует.");
-}
-
-flags:abiz(CMD_DEVELOPER);
-COMMAND:abiz(playerid, params[])
-{
-	new const b = PickupedBiz[playerid];
-	if(b == INVALID_DATA)
-	{
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подойдите к бизнесу чтобы использовать эту команду.");
-	}
-	if(b < 0 || b >= sizeof(BizInfo) || BizInfo[b][bID] == 0)
-	{
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот бизнес нельзя редактировать - его не существует в базе.");
-	}
-    new string[152];
-    if(sscanf(params, "s[32] ", string))
-    {
-        return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /abiz [owner]");
-    }
-	if(strcheck(string, "owner"))
-	{
-		new owner;
-		if(sscanf(params, "{s[32]}i", owner))
-		    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /abiz owner [userid]");
-		BizInfo[b][bOwnerID] = owner;
-		UpdateBusinessText(b);
-		SaveBiz(b);
-		if(owner != 0)
-		{
-			SendFormatMessage(playerid, COLOR_GREEN, string, "Бизнес #%d: {FFFFFF}Новый владелец: %s", BizInfo[b][bID], GetPlayerUsername(BizInfo[b][bOwnerID]));
-		}
-		else
-		{
-			SendFormatMessage(playerid, COLOR_GREEN, string, "Бизнес #%d: {FFFFFF}Владелец бизнеса обнулен", BizInfo[b][bID]);
-		}
-	    return true;
 	}
 	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Такого действия в этой команде не существует.");
 }

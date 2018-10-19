@@ -5,26 +5,30 @@
 #define _vehicle_core_included
 
 #include "vehicle/header"
+#include "events/races/header"
 
 #include "vehicle/load"
 #include "vehicle/interface"
 
 stock MyCreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1 = -1, color2 = -1, respawn_delay = VEH_SPAWNTIME, addsiren = 0)
 {
-	if(modelid != -1 && (modelid < 400 || modelid > 611)) return false;
-
-	if(modelid == -1)	modelid = GetRandomModel();
-	if(color1 == -1)	color1 = random(126) + 1;
-	if(color2 == -1)	color2 = random(126) + 1;
-
 	new vehid;
-	new mtype = VehParams[modelid - 400][VEH_MTYPE];
-	if(mtype == MTYPE_TRAIN) 	vehid = AddStaticVehicle(modelid, x, y, z, rotation, color1, color2);
-	else if(modelid != 0)		vehid = CreateVehicle(modelid, x, y, z, rotation, color1, color2, -1, addsiren);
+	new mtype;
+
+	if(modelid != -1 && (modelid < 400 || modelid > 611))
+		return (0);
+
+	modelid = (modelid == -1) ? (GetRandomModel()) : (modelid);
+	color1 = (color1 == -1) ? (random(126) + 1) : (color1);
+	color2 = (color2 == -1) ? (random(126) + 1) : (color2);
+
+	mtype = VehParams[modelid - 400][VEH_MTYPE];
+	if(mtype == MTYPE_TRAIN)
+		vehid = AddStaticVehicle(modelid, x, y, z, rotation, color1, color2);
+	else if(modelid != 0)
+		vehid = CreateVehicle(modelid, x, y, z, rotation, color1, color2, -1, addsiren);
 	if(vehid == 0 || vehid == INVALID_VEHICLE_ID)
-	{
-		return false;
-	}
+		return (0);
 
 	Iter_Add(Vehicle, vehid); //  add for foreach
 	MySetVehicleHealth(vehid, 999.0); // 1000 not allowed
@@ -100,7 +104,7 @@ stock MyCreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1
 		SetDynamicObjectMaterial(VehInfo[vehid][vObject][1], 0, 3068, "cargo_rear", "cargo_gir3", 0);
 		VehInfo[vehid][vText3D] = CreateDynamic3DTextLabel("Прыжок запрещен!", 0xFF0000FF, 315.8, 1029.5, 1949.5, 20.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 1, vehid);
 	}
-	return vehid;
+	return (vehid);
 }
 
 stock MyDestroyVehicle(vehicleid)
@@ -176,6 +180,18 @@ UpdateVehicleLabel(vehicleid)
 			}
 		}
 	}
+	return true;
+}
+
+stock BlockVehicleEffect(vehicleid, time = 2)
+{
+	if(vehicleid < 1 || vehicleid > MAX_VEHICLES){
+		return false;
+	}
+	if(VehInfo[vehicleid][vDriver] >= 0)	EffectCheck{ VehInfo[vehicleid][vDriver] } = time;
+	if(VehInfo[vehicleid][vCoDriver] >= 0)	EffectCheck{ VehInfo[vehicleid][vCoDriver] } = time;
+	if(VehInfo[vehicleid][vLeftSeat] >= 0)	EffectCheck{ VehInfo[vehicleid][vLeftSeat] } = time;
+	if(VehInfo[vehicleid][vRightSeat] >= 0)	EffectCheck{ VehInfo[vehicleid][vRightSeat] } = time;
 	return true;
 }
 
@@ -549,4 +565,334 @@ stock IsPlayerHaveLicThisVehicle(playerid, modelid)
     	}
     }
     return true;
+}
+
+stock PlayerOpenVehicle(playerid, vehicleid)
+{
+    new dif1 = 20, dif2 = 35,
+		Float:carX, Float:carY, Float:carZ,
+        Float:carA, Float:plX, Float:plY, Float:plZ;
+
+	GetVehiclePos(vehicleid, carX, carY, carZ);
+	GetVehicleZAngle(vehicleid, carA);
+	GetPlayerPos(playerid, plX, plY, plZ);
+	new A = floatround(atan2(carX - plX, carY - plY) + carA);
+	if(A > 360) A -= 360;
+	if(A < 0)	A *= -1;
+	if(IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_PLANE && VehInfo[vehicleid][vModelType] != MTYPE_MOTO
+	&& VehInfo[vehicleid][vModelType] != MTYPE_RC && VehInfo[vehicleid][vModelType] != MTYPE_HELIC && VehInfo[vehicleid][vModelType] != MTYPE_BOAT)
+	{
+		if(180 - dif1 < A < 180 + dif1)
+	    {	// Капот
+			if(GetVehicleBonnet(vehicleid))
+			{
+			    SetVehicleBonnet(vehicleid, false);
+			}
+			else
+			{
+				if(VehInfo[vehicleid][vLocked])
+				{
+					//return GameTextForPlayer(playerid, "~w~Bonnet ~r~Locked", 3000, 4);
+					if(VehInfo[vehicleid][vLocked] != 999)
+						GameTextForPlayer(playerid, RusText("~r~Машина закрыта!", PlayerInfo[playerid][pRusifik]), 3000, 4);
+					return 1;
+	        	}
+
+				// Ремонт двигателя
+				new Float:health;
+				GetVehicleHealth(vehicleid, health);
+				if(Job.GetPlayerNowWork(playerid) == JOB_MECHANIC && 400.0 < health < 999.0)
+				{
+					ShowPlayerHint(playerid, "Используйте ~y~/fixveh ~w~для ремонта двигателя");
+				}
+				SetVehicleBonnet(vehicleid, true);
+			}
+			return true;
+	    }
+	    if(360 - dif1 < A < 360 + dif1 || 0 - dif1 < A < 0 + dif1)
+	    {	// Багажник
+	        if(GetVehicleBoot(vehicleid))
+	        {
+				if(CarInfo[vehicleid][cType] == C_TYPE_PARTJOB && CarInfo[vehicleid][cOwnerID] == PART_FARMER)
+				{   //  Ферма
+					#if defined	_job_part_farmer_included
+						if(Job.GetPlayerNowWork(playerid) == PART_FARMER && CarInfo[vehicleid][cModel] == 478)
+						{
+							if(g_FarmPlayerVID[playerid] == vehicleid)		FarmDeleteVPoint(playerid);
+							PlayerPlaySound(playerid, 1058, 0.0, 0.0, 0.0);
+						}
+					#endif
+				}
+				else SetVehicleBoot(vehicleid, false);
+	        }
+	        else
+	        {
+	        	if(VehInfo[vehicleid][vLocked] > 0)
+	        	{
+					if(VehInfo[vehicleid][vLocked] != 999)
+					{
+						GameTextForPlayer(playerid, RusText("~r~Машина закрыта!", PlayerInfo[playerid][pRusifik]), 3000, 4);
+					}
+	        	}
+	        	else
+	        	{
+					if(CarInfo[vehicleid][cType] == C_TYPE_PARTJOB && CarInfo[vehicleid][cOwnerID] == PART_FARMER)
+					{
+						#if defined	_job_part_farmer_included
+							if(Job.GetPlayerNowWork(playerid) == PART_FARMER && CarInfo[vehicleid][cModel] == 478)
+							{   //  Ферма
+					   	 		FarmCreateVPoint(playerid, vehicleid);
+								PlayerPlaySound(playerid, 1058, 0.0, 0.0, 0.0);
+							}
+						#endif	
+					}
+					else
+					{
+						SetVehicleBoot(vehicleid, true);
+					}
+	        	}
+	        }
+			return true;
+	    }
+    }
+    if(90 - dif2 < A < 90 + dif2 || 270 - dif2 < A < 270 + dif2)
+    {
+    	SetPVarInt(playerid, "VehicleMenu:VehicleID", vehicleid);
+		ShowDialog(playerid, DMODE_VMENU);
+    }
+	return true;
+}
+
+stock LockPlayerVehicle(playerid, v, bool:admin = false)
+{
+	if(!admin)
+	{
+	    if(CarInfo[v][cType] == C_TYPE_DEFAULT)
+	    {
+			SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Транспорт этого типа закрывать нельзя.");
+	        return false;
+	    }
+		if(IsAvailableVehicle(v, playerid) < VEH_AVAILABLE_CONTROL)
+		{
+			SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет ключей от этого авто.");
+			return false;
+		}
+	}
+    if(VehInfo[v][vLocked])
+    {
+    	GameTextForPlayer(playerid, RusText("~w~Машина ~g~Открыта", isRus(playerid)), 3000, 4);
+    	PlayerAction(playerid, "открывает машину.");
+    }
+	else
+	{
+		GameTextForPlayer(playerid, RusText("~w~Машина ~r~Закрыта", isRus(playerid)), 3000, 4);
+		PlayerAction(playerid, "закрывает машину.");
+	}
+	PlayerPlaySound(playerid, 1145, 0.0, 0.0, 0.0);
+	VehInfo[v][vLocked] = !VehInfo[v][vLocked];
+	UpdateVehicleParamsEx(v);
+	IFace.Veh_Update(playerid, 0);
+	return true;
+}
+
+stock GetNearVehicles(playerid, vehtype = 0)
+{   //  vehtype: 0 - любой транспорт, 1 - транспорт для взлома, 2 - только авто или грузовики
+    new Float:pos[ 3 ];
+    new vehicleid, Float:mindist, Float:Dist;
+    foreach(Vehicle, v)
+	{
+	    if(!IsVehicleStreamedIn(v, playerid) || !IsVehicleWithEngine(v)) continue;
+		GetVehiclePos(v, Arr3<pos>);
+		Dist = GetDistanceFromMeToPoint(playerid, Arr3<pos>);
+		if(IsPlayerInRangeOfPoint(playerid, 5, Arr3<pos>))
+		{
+		    if(vehicleid == 0 || mindist > Dist)
+		    {
+		        vehicleid = v;
+		        mindist = Dist;
+		    }
+		}
+    }
+    if(vehicleid == 0 || vehtype == 0)
+    {
+    	return vehicleid;
+    } 
+    else if(vehtype == 1 && VehInfo[vehicleid][vLocked] == 1 && IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_MOTO
+	&& VehInfo[vehicleid][vModelType] != MTYPE_BOAT && VehInfo[vehicleid][vModelType] != MTYPE_NODOOR)
+	{
+		return vehicleid;
+	} 
+	else if(vehtype == 2 && IsVehicleWithEngine(vehicleid) && VehInfo[vehicleid][vModelType] != MTYPE_NODOOR && VehInfo[vehicleid][vModelType] != MTYPE_PLANE
+	&& VehInfo[vehicleid][vModelType] != MTYPE_RC && VehInfo[vehicleid][vModelType] != MTYPE_HELIC && VehInfo[vehicleid][vModelType] != MTYPE_BOAT
+	&& VehInfo[vehicleid][vModelType] != MTYPE_MOTO) 
+	{
+		return vehicleid;
+    }
+    return 0;
+}
+
+UpdateVehInfo(vehicleid = -1)
+{
+	if(vehicleid == -1)
+	{
+		foreach(Vehicle, v)
+		{
+		    UpdateVehInfo(v);
+		}
+	}
+	else
+	{
+	 	VehInfo[vehicleid][vPlayers] = 0;
+	    VehInfo[vehicleid][vDriver] = -1;
+	    VehInfo[vehicleid][vCoDriver] = -1;
+	    VehInfo[vehicleid][vLeftSeat] = -1;
+	    VehInfo[vehicleid][vRightSeat] = -1;
+	    foreach(LoginPlayer, i)
+		{
+	        if(vehicleid == GetPlayerVehicleID(i))
+	        {
+				new seat = GetPlayerVehicleSeat(i);
+				VehInfo[vehicleid][vPlayers]++;
+				PlayerVehicle[i] = vehicleid;
+				if(seat == 0) VehInfo[vehicleid][vDriver] = i;
+				else if(seat == 1) VehInfo[vehicleid][vCoDriver] = i;
+				else if(seat == 2) VehInfo[vehicleid][vLeftSeat] = i;
+				else if(seat == 3) VehInfo[vehicleid][vRightSeat] = i;
+			}
+	    }
+	}
+}
+
+ExitVehicle(playerid)
+{
+    new v = PlayerVehicle[playerid];
+    if(VehInfo[v][vDriver] == playerid) 		VehInfo[v][vDriver] = -1;
+    else if(VehInfo[v][vCoDriver] == playerid) 	VehInfo[v][vCoDriver] = -1;
+    else if(VehInfo[v][vLeftSeat] == playerid) 	VehInfo[v][vLeftSeat] = -1;
+    else if(VehInfo[v][vRightSeat] == playerid) VehInfo[v][vRightSeat] = -1;
+    VehInfo[v][vPlayers]--;
+    PlayerVehicle[playerid] = 0;
+    //	Выключаем радио
+    if(VehInfo[v][vRadio] > 0 && GetPVarInt(playerid, "Thing:RadioID") == 0)
+    {
+		StopAudioStreamForPlayer(playerid);
+    }
+    //	Если вышел последний игрок и машину надо спавнить - запускаем счетчик
+    if(VehInfo[v][vPlayers] == 0 && VehInfo[v][vRespawn] != -1)
+    {
+		VehInfo[v][vRespawnTime] = VehInfo[v][vRespawn];
+    }
+}
+
+stock UpdateVehRadio(vehicleid)
+{
+	new string[128], playerid;
+	new radio = VehInfo[vehicleid][vRadio];
+	for(new x; x < 4; x++)
+	{
+	    switch(x)
+	    {
+			case 0: playerid = VehInfo[vehicleid][vDriver];
+			case 1: playerid = VehInfo[vehicleid][vCoDriver];
+			case 2: playerid = VehInfo[vehicleid][vLeftSeat];
+			case 3: playerid = VehInfo[vehicleid][vRightSeat];
+	    }
+	    if(playerid >= 0 && GetPVarInt(playerid, "Thing:RadioID") == 0)
+	    {
+			if(radio == 0)
+			{
+				string = "~r~Radio OFF";
+				StopAudioStreamForPlayer(playerid);
+		    }
+		    else
+		    {
+				format(string, 128, "~g~%s", RadioList[radio-1][RADIO_NAME]);
+				PlayAudioStreamForPlayer(playerid, RadioList[radio-1][RADIO_URL]);
+				PlayerPlaySound(playerid, 1069, 0.0, 0.0, 0.0);// fix
+		    }
+			GameTextForPlayer(playerid, string, 5000, 6);
+	    }
+	}
+	return true;
+}
+
+Public: StartEngine(vehicleid, bool:status)
+{
+	if(vehicleid > 0)
+	{
+		new string[128],
+			playerid = VehInfo[vehicleid][vDriver];
+
+		if(InRace[playerid])
+			return (1);
+		if(status && playerid >= 0 && GetVehicleEngine(vehicleid) == false)
+		{
+			engine_timer[playerid] = 0;
+	        new Float:vHealth;
+	        GetVehicleHealth(vehicleid, vHealth);
+	        if(vHealth < 390)
+	        {
+	            GameTextForPlayer(playerid, "~w~Starting engine~n~~r~Broken", 1000, 4);
+				return true;
+	        }
+			if(VehInfo[vehicleid][vFuel] == 0)
+	        {
+			    GameTextForPlayer(playerid, "~w~Starting engine~n~~r~No Fuel", 1000, 4);
+				return true;
+	        }
+	        new RandomStart = random(12);
+	        switch(RandomStart)
+	        {
+	            case 0:
+	            {
+					GameTextForPlayer(playerid, "~w~Starting engine~n~~r~Fail", 1000, 4);
+					if(AS_ElementNumber[playerid] > 0)
+					{
+                        SendClientMessage(playerid, COLOR_SAYING, "- Инструктор: Эй, ты что, не можешь даже машину завести?");
+					}
+	            }
+	            default:
+	            {
+					SetVehicleEngine(vehicleid, true);
+
+					if(IsVehicleWithEngine(vehicleid))
+					{
+						IFace.ToggleGroup(playerid, IFace.SPEEDO, true);
+						IFace.Veh_Update(playerid, 0);
+					}
+
+					format(string, 128, "~w~Starting engine~n~~g~Done");
+					GameTextForPlayer(playerid, string, 1000, 4);
+					if(AS_ElementNumber[playerid] == 0)
+					{
+						PlayerAction(playerid, "заводит двигатель.");
+					}
+					else
+					{	// Прохождение элементов автошколы
+						ChangePlayerASStatus(playerid, AUTOSCHOOL_START);
+					}
+
+					// Заправочная станция
+					if(VehInfo[vehicleid][vWishFuel] > 0.0)
+					{
+						VehInfo[vehicleid][vWishFuel] = 0.0;
+						ShowPlayerHint(playerid, "Вы завели двигатель~n~Заказ на заправку обнулен");
+					}
+
+				#if defined	_job_job_theft_included
+					Theft_StartEngine(vehicleid, playerid);
+				#endif	
+	            }
+	        }
+		}
+		else if(status == false)
+		{
+			SetVehicleEngine(vehicleid, false);
+			if(IsVehicleWithEngine(vehicleid))
+			{
+				IFace.ToggleGroup(playerid, IFace.SPEEDO, false);
+			}
+		}
+	}
+	return true;
 }

@@ -1,6 +1,6 @@
 
-//	Р Р°Р·РЅРёС†Р° С‚РѕС‡РµРє РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ СЌС‚Р°Р»РѕРЅРЅРѕР№ РґР»СЏ РїСЂРёРєСЂРµРїР»РµРЅРёСЏ (0 - СЃРєРёРЅ СЃРёРґРѕРґР¶Рё) РїРѕР·РёС†РёРё РґР»СЏ Р°С‚С‚Р°С‡Р° РѕР±СЉРµРєС‚РѕРІ
-	//	Р”Р»СЏ Р»РёС†Р° (bone = 2)
+//	Разница точек относительно эталонной для прикрепления (0 - скин сидоджи) позиции для аттача объектов
+	//	Для лица (bone = 2)
 static const Float:AttachSkinOffSet[312][3] = {
 	{ 0.0,			0.0,		0.0 },			//	0
 
@@ -317,9 +317,13 @@ static const Float:AttachSkinOffSet[312][3] = {
 	{ -0.014770, -0.010773, -0.001664 }	//	311
 };
 
-SetPlayerAttachedObjectEx(playerid, slot, objectid, bone, Float:x, Float:y, Float:z, Float:rx, Float:ry, Float:rz, Float:sx = 1.0, Float:sy = 1.0, Float:sz = 1.0)
+SetPlayerAttachedObjectEx(playerid, slot, objectid, bone,
+	Float:x, Float:y, Float:z, Float:rx, Float:ry, Float:rz,
+	Float:sx = 1.0, Float:sy = 1.0, Float:sz = 1.0)
 {
-	new skin = GetPlayerSkin(playerid);
+	new skin;
+	
+	skin = GetPlayerSkin(playerid);
 	if(bone == 2)
 	{
 		x += AttachSkinOffSet[skin][0];
@@ -327,5 +331,5 @@ SetPlayerAttachedObjectEx(playerid, slot, objectid, bone, Float:x, Float:y, Floa
 		z += AttachSkinOffSet[skin][2];
 	}
 	SetPlayerAttachedObject(playerid, slot, objectid, bone, x, y, z, rx, ry, rz, sx, sy, sz);
-	return true;
+	return (1);
 }

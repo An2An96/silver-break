@@ -1,3 +1,8 @@
+#if defined _player_walk_included
+	#endinput
+#endif
+#define _player_walk_included
+
 enum
 {
 	WALK_DEFAULT,

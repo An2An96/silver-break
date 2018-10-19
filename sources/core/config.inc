@@ -18,26 +18,32 @@
 //-------------[MySQL Date Base]----------//
 #define MYSQL_LOG			(ERROR | WARNING)
 
-//#define MYSQL_LOCAL
-#if defined MYSQL_LOCAL
-	//	Для входа:	127.0.0.1/phpmyadmin/
-	#define MYSQL_HOST		"127.0.0.1"
-	#define MYSQL_USER 		"root"
-	#define MYSQL_PASS 		""
-	#define MAIN_DB 		"sb_main"
-	// #define MYSQL_HOST		"51.68.137.210"
-	// #define MYSQL_USER 		"root"
-	// #define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
-	// #define MAIN_DB 		"samp_main"
-#else
-	//	Для входа:	http://213.32.88.126/phpmyadmin
-	#define MYSQL_HOST		"127.0.0.1"
-	#define MYSQL_USER 		"root"
-	#define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
-	#define MAIN_DB 		"samp_main"
-#endif
+// #define MYSQL_LOCAL
+// #if defined MYSQL_LOCAL
+// 	//	Для входа:	127.0.0.1/phpmyadmin/
+// 	#define MYSQL_HOST		"127.0.0.1"
+// 	#define MYSQL_USER 		"root"
+// 	#define MYSQL_PASS 		""
+// 	#define MAIN_DB 		"sb_main"
+// 	// #define MYSQL_HOST		"51.68.137.210"
+// 	// #define MYSQL_USER 		"root"
+// 	// #define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
+// 	// #define MAIN_DB 		"samp_main"
+// #else
+// 	//	Для входа:	http://213.32.88.126/phpmyadmin
+// 	#define MYSQL_HOST		"127.0.0.1"
+// 	#define MYSQL_USER 		"root"
+// 	#define MYSQL_PASS 		"(Z=y,i7_Gj4UBK$6an"
+// 	#define MAIN_DB 		"samp_main"
+// #endif
 
 new SERVER_ID = INVALID_DATA;
+
+new MYSQL_HOST[32];
+new MYSQL_USER[32];
+new MYSQL_PASS[32];
+new MAIN_DB[32];
+
 new ADMIN_PASS[24];		// Админ пароль для админ-деружства
 new bool:ANTICHEAT;		// Включен ли античит по умолчанию
 new bool:HEADSHOT;		// Хедшоты (0 выкл, 1 вкл)
@@ -55,6 +61,12 @@ LoadSettings()
 		return false;
 	}
 	ini_getInteger(File, "server_id", SERVER_ID);
+
+	ini_getString(File, "mysql_host",	MYSQL_HOST);
+	ini_getString(File, "mysql_user",	MYSQL_USER);
+	ini_getString(File, "mysql_pass",	MYSQL_PASS);
+	ini_getString(File, "mysql_db",		MAIN_DB);
+
 	ini_getString(File, "aduty_pass", ADMIN_PASS);
 	ini_getInteger(File, "anticheat", ANTICHEAT);
 	ini_getInteger(File, "headshot", HEADSHOT);

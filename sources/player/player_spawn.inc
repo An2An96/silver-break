@@ -1,9 +1,9 @@
 /*
-	Р‘РёР±Р»РёРѕС‚РµРєР° СЃ РјРµС…Р°РЅРёР·РјР°РјРё СЂРµР°Р»РёР·СѓСЋС‰РёРјРё РїСЂР°РІРёР»СЊРЅСѓСЋ СЂР°Р±РѕС‚Сѓ СЃ РёРіСЂРѕРІС‹РјРё С„СѓРЅРєС†РёСЏРјРё РёРіСЂРѕРєР°
+	Библиотека с механизмами реализующими правильную работу с игровыми функциями игрока
 
-		* РЎРёСЃС‚РµРјР° СѓСЃС‚Р°РЅРѕРІРєРё СЃРїР°РІРЅР° РёРіСЂРѕРєР°
-		* РЎРёСЃС‚РµРјР° СѓРїСЂР°РІР»РµРЅРёСЏ СЃРєРёРЅР°РјРё РёРіСЂРѕРєР°
-		* Р¤СѓРЅРєС†РёРё РёР·РјРµРЅРµРЅРёСЏ РїРѕРіРѕРґС‹ Рё РІСЂРµРјРµРЅРё
+		* Система установки спавна игрока
+		* Система управления скинами игрока
+		* Функции изменения погоды и времени
 */
 
 #include "faction/header"
@@ -23,33 +23,50 @@ enum E_SPAWN
 new g_SpawnInfo[MAX_PLAYERS][E_SPAWN];
 
 //---	Spawn System
-stock MySpawnPlayer(playerid)
+stock	MySpawnPlayer(playerid)
 {
 	TogglePlayerSpectating(playerid, 1);
 	TogglePlayerSpectating(playerid, 0);
 }
 
-stock _SetSpawnInfo(playerid, teamid, modelid, Float:x, Float:y, Float:z, Float:a, weapon1, ammo1, weapon2, ammo2, weapon3, ammo3)
+stock	SB_SetSpawnInfo(playerid, teamid, modelid,
+	Float:x, Float:y, Float:z, Float:a,
+	weapon1, ammo1, weapon2, ammo2, weapon3, ammo3)
 {
 	g_SpawnInfo[playerid][S_TEAMID] = teamid;
 	g_SpawnInfo[playerid][S_SKINID] = modelid;
-	g_SpawnInfo[playerid][S_POS][0] = x;	g_SpawnInfo[playerid][S_POS][1] = y;	g_SpawnInfo[playerid][S_POS][2] = z;
+	g_SpawnInfo[playerid][S_POS][0] = x;
+	g_SpawnInfo[playerid][S_POS][1] = y;
+	g_SpawnInfo[playerid][S_POS][2] = z;
 	g_SpawnInfo[playerid][S_POS][3] = a;
-	g_SpawnInfo[playerid][S_WEAPON][0] = weapon1;	g_SpawnInfo[playerid][S_AMMO][0] = ammo1;
-	g_SpawnInfo[playerid][S_WEAPON][1] = weapon2;	g_SpawnInfo[playerid][S_AMMO][1] = ammo2;
-	g_SpawnInfo[playerid][S_WEAPON][2] = weapon3;	g_SpawnInfo[playerid][S_AMMO][2] = ammo3;
-	return SetSpawnInfo(playerid, teamid, modelid, Float:x, Float:y, Float:z, Float:a, weapon1, ammo1, weapon2, ammo2, weapon3, ammo3);
+	g_SpawnInfo[playerid][S_WEAPON][0] = weapon1;
+	g_SpawnInfo[playerid][S_AMMO][0] = ammo1;
+	g_SpawnInfo[playerid][S_WEAPON][1] = weapon2;
+	g_SpawnInfo[playerid][S_AMMO][1] = ammo2;
+	g_SpawnInfo[playerid][S_WEAPON][2] = weapon3;
+	g_SpawnInfo[playerid][S_AMMO][2] = ammo3;
+	return (SetSpawnInfo(playerid, teamid, modelid, x, y, z, a, weapon1, ammo1, weapon2, ammo2, weapon3, ammo3));
 }
-#define SetSpawnInfo 	_SetSpawnInfo
+#if defined _ALS_SetSpawnInfo
+	#undef	SetSpawnInfo
+#else
+	#define	_ALS_SetSpawnInfo
+#endif
+#define		SetSpawnInfo	SB_SetSpawnInfo
 
-stock _SetPlayerTeam(playerid, teamid)
+stock	SB_SetPlayerTeam(playerid, teamid)
 {
 	g_SpawnInfo[playerid][S_TEAMID] = teamid;
-	return SetPlayerTeam(playerid, teamid);
+	return (SetPlayerTeam(playerid, teamid));
 }
-#define SetPlayerTeam 	_SetPlayerTeam
+#if defined _ALS_SetPlayerTeam
+	#undef	SetPlayerTeam
+#else
+	#define	_ALS_SetPlayerTeam
+#endif
+#define		SetPlayerTeam	SB_SetPlayerTeam
 
-stock GetSpawnInfo(playerid, &teamid, &modelid, &Float:x, &Float:y, &Float:z, &Float:a, &weapon1, &ammo1, &weapon2, &ammo2, &weapon3, &ammo3)
+stock	GetSpawnInfo(playerid, &teamid, &modelid, &Float:x, &Float:y, &Float:z, &Float:a, &weapon1, &ammo1, &weapon2, &ammo2, &weapon3, &ammo3)
 {
 	teamid = g_SpawnInfo[playerid][S_TEAMID];
 	modelid = g_SpawnInfo[playerid][S_SKINID];
@@ -57,24 +74,27 @@ stock GetSpawnInfo(playerid, &teamid, &modelid, &Float:x, &Float:y, &Float:z, &F
 	y = g_SpawnInfo[playerid][S_POS][1];	
 	z = g_SpawnInfo[playerid][S_POS][2];
 	a = g_SpawnInfo[playerid][S_POS][3];
-	weapon1 = g_SpawnInfo[playerid][S_WEAPON][0];	ammo1 = g_SpawnInfo[playerid][S_AMMO][0];
-	weapon2 = g_SpawnInfo[playerid][S_WEAPON][1];	ammo2 = g_SpawnInfo[playerid][SA_AMMO][1];
-	weapon3 = g_SpawnInfo[playerid][S_WEAPON][1];	ammo3 = g_SpawnInfo[playerid][S_AMMO][2];
-	return true;
+	weapon1 = g_SpawnInfo[playerid][S_WEAPON][0];
+	ammo1 = g_SpawnInfo[playerid][S_AMMO][0];
+	weapon2 = g_SpawnInfo[playerid][S_WEAPON][1];
+	ammo2 = g_SpawnInfo[playerid][SA_AMMO][1];
+	weapon3 = g_SpawnInfo[playerid][S_WEAPON][1];
+	ammo3 = g_SpawnInfo[playerid][S_AMMO][2];
+	return (1);
 }
 
-stock GetSpawnPos(playerid, &Float:x, &Float:y, &Float:z, &Float:a, &interior = 0, &vw = 0)
+stock	GetSpawnPos(playerid, &Float:x, &Float:y, &Float:z, &Float:a, &interior = 0, &vw = 0)
 {
-	x 			= g_SpawnInfo[playerid][S_POS][0];	
-	y 			= g_SpawnInfo[playerid][S_POS][1];	
-	z 			= g_SpawnInfo[playerid][S_POS][2];
-	a 			= g_SpawnInfo[playerid][S_POS][3];
-	interior	= g_SpawnInfo[playerid][S_INT];
-	vw 			= g_SpawnInfo[playerid][S_VW];
-	return true;
+	x = g_SpawnInfo[playerid][S_POS][0];	
+	y = g_SpawnInfo[playerid][S_POS][1];	
+	z = g_SpawnInfo[playerid][S_POS][2];
+	a = g_SpawnInfo[playerid][S_POS][3];
+	interior = g_SpawnInfo[playerid][S_INT];
+	vw = g_SpawnInfo[playerid][S_VW];
+	return (1);
 }
 
-stock MySetPlayerSpawnPos(playerid, Float:x, Float:y, Float:z, Float:a, interior = 0, vw = 0)
+stock	MySetPlayerSpawnPos(playerid, Float:x, Float:y, Float:z, Float:a, interior = 0, vw = 0)
 {
 	SetSpawnInfo(playerid,
 		g_SpawnInfo[playerid][S_TEAMID], g_SpawnInfo[playerid][S_SKINID],
@@ -84,30 +104,34 @@ stock MySetPlayerSpawnPos(playerid, Float:x, Float:y, Float:z, Float:a, interior
 		g_SpawnInfo[playerid][S_WEAPON][1], g_SpawnInfo[playerid][S_AMMO][2]);
 	g_SpawnInfo[playerid][S_INT] = interior;
 	g_SpawnInfo[playerid][S_VW] = vw;
-	return true;
+	return (1);
 }
 
-stock SetRandPos(&Float:x, &Float:y, Float:radius)
+stock	SetRandPos(&Float:x, &Float:y, Float:radius)
 {
-	new rand = random(100);
-	new Float:bias = radius * (float(rand) / 100.0);
-	new Float:angel = float(random(360));
+	new rand,
+		Float:bias,
+		Float:angel;
+
+	rand = random(100);
+	bias = radius * (float(rand) / 100.0);
+	angel = float(random(360));
 	x += bias * floatsin(angel, degrees);
 	y += bias * floatcos(angel, degrees);
 }
 
 /*
-	РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРєРёРЅ РёРіСЂРѕРєР°:
-	constant - СѓРєР°Р·С‹РІР°РµС‚ РЅР° РїРѕСЃС‚РѕСЏРЅСЃС‚РІРѕ СЃРєРёРЅР° (РґРѕ РІС‹С…РѕРґР° РёР· РёРіСЂС‹)
-		true - РґРѕ РІС‹С…РѕРґР° РёР· РёРіСЂС‹ СЃРєРёРЅ РјРµРЅСЏС‚СЊСЃСЏ РЅРµ Р±СѓРґРµС‚, false - СЃР±СЂРѕСЃРёС‚СЃСЏ РїСЂРё Р±Р»РёР¶Р°Р№С€РµРј СЃРїР°РІРЅРµ
-	set - СѓРєР°Р·С‹РІР°РµС‚, РЅР°РґРѕ Р»Рё РІ РјРѕРјРµРЅС‚ РІС‹Р·РѕРІР° С„СѓРЅРєС†РёРё Р·Р°РґР°С‚СЊ СЃРєРёРЅ РёРіСЂРѕРєСѓ 
-	(РЅР°РїСЂРёРјРµСЂ РµСЃР»Рё РїРѕСЃР»Рµ РІС‹Р·РѕРІР° С„СѓРЅРєС†РёРё РїСЂРѕРёСЃС…РѕРґРёС‚ СЃРїР°РІРЅ, РјРѕР¶РЅРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ false, РґР°Р±С‹ РЅРµ РґРµР»Р°С‚СЊ Р»РёС€РЅРёС… РґРµР№СЃС‚РІРёР№
-	С‚Р°Рє РєР°Рє РїСЂРё СЃРїР°РІРЅРµ РІСЃРµ СЂР°РІРЅРѕ РІС‹СЃС‚Р°РІРёС‚СЃСЏ РЅСѓР¶РЅС‹Р№ СЃРєРёРЅ)
-		true - РІС‹СЃС‚Р°РІРёС‚ СЃРєРёРЅ, false - РїСЂРѕСЃС‚Рѕ РёР·РјРµРЅРёС‚ РґР°РЅРЅС‹Рµ РІ SpawnInfo 
+	Устанавливает скин игрока:
+	constant - указывает на постоянство скина (до выхода из игры)
+		true - до выхода из игры скин меняться не будет, false - сбросится при ближайшем спавне
+	set - указывает, надо ли в момент вызова функции задать скин игроку 
+	(например если после вызова функции происходит спавн, можно установить false, дабы не делать лишних действий
+	так как при спавне все равно выставится нужный скин)
+		true - выставит скин, false - просто изменит данные в SpawnInfo 
 */
-stock MySetPlayerSkin(playerid, skinid, constant = true, set = true)
+stock	MySetPlayerSkin(playerid, skinid, constant = true, set = true)
 {
-	if(constant)
+	if (constant)
 	{
 		SetSpawnInfo(playerid,
 			g_SpawnInfo[playerid][S_TEAMID], skinid, Arr4<g_SpawnInfo[playerid][S_POS]>,
@@ -115,73 +139,73 @@ stock MySetPlayerSkin(playerid, skinid, constant = true, set = true)
 			g_SpawnInfo[playerid][S_WEAPON][1], g_SpawnInfo[playerid][S_AMMO][1],
 			g_SpawnInfo[playerid][S_WEAPON][1], g_SpawnInfo[playerid][S_AMMO][2]);
 	}
-	if(set)
+	if (set)
 	{
-		if(!gPlayerDeath[playerid])
+		if (!gPlayerDeath[playerid])
 		{
 			SetPlayerSkin(playerid, skinid);
 
-			if(IsPlayerInAnyVehicle(playerid))	SetTimerEx("FixVehicleAnim", 2000, false, "i", playerid);
-			//else 								SetTimerEx("FixPlayerFreeze", 500, false, "i", playerid);
+			if (IsPlayerInAnyVehicle(playerid))
+				SetTimerEx("FixVehicleAnim", 2000, false, "i", playerid);
+			// else
+			// 	SetTimerEx("FixPlayerFreeze", 500, false, "i", playerid);
 		}
 		CallLocalFunction("OnPlayerChangeSkin", "dd", playerid, skinid);
 	}
-	return true;
+	return (1);
 }
 
-
 /*
-	Р’С‹РґР°РµС‚ РёРіСЂРѕРєСѓ РїРѕСЃС‚РѕСЏРЅРЅС‹Р№ СЃРєРёРЅ (СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ РІ SpawnInfo)
-	РџСЂРёРјРµРЅСЏРµС‚СЃСЏ РґР»СЏ РІРѕР·РІСЂР°С‚Р° Рє РѕСЃРЅРѕРІРЅРѕРјСѓ СЃРєРёРЅСѓ РёРіСЂРѕРєР°, РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёР№ СЃРєРёРЅР° РІ Р»РѕРєР°Р»СЊРЅС‹С… СЃРёСЃС‚РµРјР°С…
-	(РЅР°РїСЂРёРјРµСЂ РїСЂРѕСЃРјРѕС‚СЂ СЃРєРёРЅРѕРІ РІ РјР°РіР°Р·РёРЅРµ РѕРґРµР¶РґС‹, Р±РѕРєСЃРµСЂСЃРєРёР№ РїРѕРµРґРёРЅРѕРє Рё С‚ Рґ)
+	Выдает игроку постоянный скин (сохраненный в SpawnInfo)
+	Применяется для возврата к основному скину игрока, после изменений скина в локальных системах
+	(например просмотр скинов в магазине одежды, боксерский поединок и т д)
 */
-stock ReloadPlayerSkin(playerid)
+stock	ReloadPlayerSkin(playerid)
 {
 	SetPlayerSkin(playerid, g_SpawnInfo[playerid][S_SKINID]);
-	if(IsPlayerInAnyVehicle(playerid))	SetTimerEx("FixVehicleAnim", 2000, false, "i", playerid);
-	//else 								SetTimerEx("FixPlayerFreeze", 500, false, "i", playerid);
+	if (IsPlayerInAnyVehicle(playerid))
+		SetTimerEx("FixVehicleAnim", 2000, false, "i", playerid);
+	// else
+	// 	SetTimerEx("FixPlayerFreeze", 500, false, "i", playerid);
 	CallLocalFunction("OnPlayerChangeSkin", "dd", playerid, g_SpawnInfo[playerid][S_SKINID]);
-	return true;
+	return (1);
 }
 
 /*
-	РЈСЃС‚Р°РЅРѕРІРёС‚ РёРіСЂРѕРєСѓ РЅСѓР¶РЅС‹Р№ СЃРєРёРЅ, РЅР° РѕСЃРЅРѕРІР°РЅРёР№ С‚РѕРіРѕ, СЃРѕСЃС‚РѕРёС‚ Р»Рё РѕРЅ РІРѕ С„СЂР°РєС†РёРё РёР»Рё РЅРµС‚
+	Установит игроку нужный скин, на оснований того, состоит ли он во фракции или нет
 */
 UpdatePlayerSkin(playerid, set = true)
 {
-	new skinid, faction = PlayerInfo[playerid][pFaction];
-	//	Р•СЃР»Рё СЃРµР№С‡Р°СЃ РєР°РєРѕР№-С‚Рѕ РІСЂРµРјРµРЅРЅС‹Р№ СЃРєРёРЅ, С‚Рѕ РЅРµ РЅР°РґРѕ РјРµРЅСЏС‚СЊ 	
-	if(set)	
-	{
+	new skinid,
+		faction;
+		
+	faction = PlayerInfo[playerid][pFaction];
+	//	Если сейчас какой-то временный скин, то не надо менять 	
+	if (set)
 		set = (GetPlayerSkin(playerid) != g_SpawnInfo[playerid][S_SKINID]) ? false : true;
-	}
-
-	//	Р’ С‚СЋСЂСЊРјРµ
-	if(PlayerInfo[playerid][pJailTime] >= unixtime())
-	{
+	//	В тюрьме
+	if (PlayerInfo[playerid][pJailTime] >= unixtime())
 		skinid = JailSkins[random(sizeof(JailSkins))];
-	}
-	//	Р’Рѕ С„СЂР°РєС†РёРё
-	else if(0 < faction < MAX_FACTIONS)
+	//	Во фракции
+	else if (0 < faction < MAX_FACTIONS)
 	{
-		skinid = (0 < PlayerInfo[playerid][pRank] <= FactionRankMax[faction]) 
-			?	FactionSkins[faction][ PlayerInfo[playerid][pRank] - 1 ]
-			:	FactionSkins[faction][0];
+		if (0 < PlayerInfo[playerid][pRank] <= FactionRankMax[faction])
+			skinid = FactionSkins[faction][ PlayerInfo[playerid][pRank] - 1 ];
+		else
+			skinid = FactionSkins[faction][0];
 	}
-	//	РЎРѕР±СЃС‚РІРµРЅРЅС‹Р№ СЃРєРёРЅ
+	//	Собственный скин
 	else	
-	{
 		skinid = PlayerInfo[playerid][pSkin];
-	}
 	MySetPlayerSkin(playerid, skinid, true, set);
-	return true;
+	return (1);
 }
 
 Public: FixVehicleAnim(playerid)
 {
-	if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
+	if (GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
 		MyApplyAnimation(playerid, "PED", "CAR_SIT", 4.1, 1, 0, 0, 0, 0, 1);
-	else if(GetPlayerState(playerid) == PLAYER_STATE_PASSENGER)
+	else if (GetPlayerState(playerid) == PLAYER_STATE_PASSENGER)
 		MyApplyAnimation(playerid, "PED", "CAR_SITP", 4.1, 1, 0, 0, 0, 0, 1);
 	//else FixPlayerFreeze(playerid);
 }

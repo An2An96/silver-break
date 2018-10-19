@@ -56,12 +56,20 @@ static bool:pAchieves[MAX_PLAYERS][E_ACHIEVES];
 
 Public: Achieve_OnGameModeInit()
 {
-	new Cache:result = mysql_query(g_SQL, "SELECT `id`, `title`, `description`, `bounty_type`, `bounty_value`, `inform` FROM "MAIN_DB".`achievements_data`");
-	new i = 0;
+	new i,
+		query[256],
+		Cache:result;
+
+	mysql_format(g_SQL, query, sizeof(query),
+		"SELECT `id`, `title`, `description`, `bounty_type`, `bounty_value`, `inform` \
+		FROM %s.`achievements_data`", MAIN_DB);
+	result = mysql_query(g_SQL, query);
+	i = 0;
 	for(new E_ACHIEVES:aid; i < cache_num_rows(); i++)
 	{ 
 		cache_get_value_name_int(i, "id",			_:aid);
-		if(_:aid < 0 || aid > E_ACHIEVES)	continue;
+		if(_:aid < 0 || aid > E_ACHIEVES)
+			continue;
 		cache_get_value_name(i,		"title",		Achievements[aid][A_NAME]);
 	    cache_get_value_name(i,		"description",	Achievements[aid][A_DESCRIP]);
 	    cache_get_value_name_int(i, "bounty_type",	Achievements[aid][A_BONUS_TYPE]);
@@ -70,23 +78,25 @@ Public: Achieve_OnGameModeInit()
 	}
 	cache_delete(result);
 	printf("  Loaded achievements : %d.", i);
-
-	return CONTINUE;
+	return (CONTINUE);
 }
 
 Achieve_LoadPlayer(playerid)
 {
-	new string[64];
+	new string[64],
+		Cache:result;
+
 	mysql_format(g_SQL, string, sizeof(string), "SELECT `aid` FROM `achievements` WHERE `uid` = '%d'", PlayerInfo[playerid][pUserID]);
-    new Cache:result = mysql_query(g_SQL, string);
+    result = mysql_query(g_SQL, string);
 	for(new i = 0, E_ACHIEVES:aid; i < cache_num_rows(); i++)
 	{
 		cache_get_value_name_int(i, "aid", _:aid);
-		if(_:aid < 0 || aid > E_ACHIEVES)	continue;
+		if(_:aid < 0 || aid > E_ACHIEVES)
+			continue;
 		pAchieves[playerid][aid] = true;
 	}
 	cache_delete(result);
-	return true;
+	return (true);
 }
 
 Achieve_ZeroVars(playerid)

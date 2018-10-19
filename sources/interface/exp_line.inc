@@ -1,7 +1,6 @@
 #if defined _interface_exp_line_included
 	#endinput
 #endif
-
 #define _interface_exp_line_included
 
 #define EXP_LINE_POS			370.0

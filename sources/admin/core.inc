@@ -1,4 +1,7 @@
-IsAdminsOnline()
+#include "admin/header"
+#include "player/header"
+
+stock IsAdminsOnline()
 {
 	foreach(LoginPlayer, i)
 	{
@@ -44,8 +47,10 @@ stock GetPlayerAdmin(playerid)
 {
 	if(AdminDuty[playerid])
 	{
-		if(IsPlayerAdmin(playerid))		return ADMIN_RCON;
-		else							return PlayerInfo[playerid][pAdmin];
+		if(IsPlayerAdmin(playerid))
+			return (ADMIN_RCON);
+		else
+			return (PlayerInfo[playerid][pAdmin]);
 	}
-	else 								return 0;
+	return (0);
 }

@@ -4,6 +4,8 @@
 
 #define _ac_core_included
 
+#include "admin/header"
+#include "player/header"
 #include "interface/header"
 #include "vehicle/header"
 #include "player/chat/header"

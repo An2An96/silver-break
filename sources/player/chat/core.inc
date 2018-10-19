@@ -56,7 +56,7 @@ stock CensoreProxDetector(playerid, Float:rad, const string[], color1 = 0xFFFFFF
 	return ProxDetector(playerid, rad, string, color1, color2, color3, color4, color5, true);
 }
 
-stock PlayerAction(playerid, action[], censore = false)
+stock PlayerAction(playerid, const action[], censore = false)
 {
 	if(SpectateID[playerid] != INVALID_PLAYER_ID)
 		return true;

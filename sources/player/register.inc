@@ -4,6 +4,8 @@
 
 #define _player_register_included
 
+#include "player/walk"
+
 new const Float:RegActorPos[][4] = {
 	{ 1999.0, -1230.0, 20.8, 180.0 },
 	{ 2000.5, -1230.0, 20.8, 180.0 },
@@ -208,15 +210,17 @@ Reg_DownAnim(playerid)
 	new anim_type	= GetPVarInt(playerid, "Player:Reg:Step");
 	if(anim_type == 2)
 	{
-		new anim	= PlayerInfo[playerid][pWalk] - 1;
-		if(anim < 1)	anim = sizeof(WalkAnims) - 1;
+		new anim = PlayerInfo[playerid][pWalk] - 1;
+		if(anim < 1)
+			anim = sizeof(WalkAnims) - 1;
 		PlayerInfo[playerid][pWalk] = anim;
 		Reg_WalkAnim(playerid);
 	}
 	else if(anim_type == 3)
 	{
-		new anim	= PlayerInfo[playerid][pAnim] - 1;
-		if(anim < 1)	anim = sizeof(PlayerAnims) - 1;
+		new anim = PlayerInfo[playerid][pAnim] - 1;
+		if(anim < 1)
+			anim = sizeof(PlayerAnims) - 1;
 		PlayerInfo[playerid][pAnim] = anim;
 		Reg_MyAnim(playerid);
 	}
@@ -585,5 +589,90 @@ Reg_IFace_Create_Base()
 	TextDrawBoxColor(Reg_IFace_TD[4], 404431103);
 	TextDrawTextSize(Reg_IFace_TD[4], 10.000000, 105.000000);
 	TextDrawSetSelectable(Reg_IFace_TD[4], true);
+	return true;
+}
+
+stock CreateCutSceneDecor()
+{
+	new id;
+//	Печатающий бот при авторизации
+	//id = CreateActor(2, 364.3, 152.4, 1025.8, 3.0);
+	//SetActorVirtualWorld(id, VW_CUTSCENE);
+	//ApplyActorAnimation(id, "INT_OFFICE", "OFF_Sit_Bored_Loop", 4.1, 1, 0, 0, 0, 0);
+
+	//id = CreateActor(2, 1469.50, -1682.93, 14.04, 272.18);
+	//SetActorVirtualWorld(id, VW_CUTSCENE);
+	//ApplyActorAnimation(id, "PED", "SEAT_down", 4.1, 0, 0, 0, 1, 1);
+
+	id = CreateActor(111, 1483.37, -1765.19, 70.42, 342.76);
+	SetActorVirtualWorld(id, VW_LOGIN);
+	ApplyActorAnimation(id, "MISC", "Seat_talk_02", 4.1, 1, 0, 0, 0, 0);
+
+//	Кат сцена города
+	id = CreateWorldText("developed by", 1559.75, -1549.33, 15.95, 0.0, 0.0, -70.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 25);
+
+	id = CreateWorldText("Borog25 & Impereal", 1559.8, -1549.5, 15.85, 0.0, 0.0, -70.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 24);
+	SetWorldTextBold(id, true);
+
+//	Кат сцена с мафией
+	id = CreateWorldText("mafia", 1608.5, -1549.7, 14.6, 0.0, 0.0, 0.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 36);
+
+	id = CreateWorldText("Jacob Dickinson", 1608.32, -1551.57, 14.35, 0.0, 0.0, 5.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 36);
+	SetWorldTextBold(id, true);
+
+	id = CreateActor(112, 1607.8, -1549.8, 13.6, 0.0);
+	SetActorVirtualWorld(id, VW_CUTSCENE);
+	id = MyCreateVehicle(579, 1604.15, -1553.05, 13.52, 317.4, 0, 0);
+	SetVehicleVirtualWorld(id, VW_CUTSCENE);
+	VehInfo[id][vLights] = true;
+	UpdateVehicleParamsEx(id);
+
+//	Кат сцена в доме
+	id = CreateWorldText("governor", 2534.0, -1675.3, 1015.93, 0.0, 0.0, 90.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 24);
+
+	id = CreateWorldText("John Kerry", 2535.0, -1675.0, 1015.74, 0.0, 0.0, 90.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 36);
+	SetWorldTextBold(id, true);
+
+	id = CreateActor(147, 2533.15, -1674.5, 1015.5, 270.0);
+	SetActorVirtualWorld(id, VW_CUTSCENE);
+	ApplyActorAnimation(id, "ped", "SEAT_idle", 4.1, 1, 0, 0, 0, 0);
+
+//	Кат сцена с полицейским
+	id = CreateWorldText("Daniel Forster", 1420.459, -1348.445, 13.905, 0.0, 0.0, -20.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 32);
+	SetWorldTextBold(id, true);
+
+	id = CreateWorldText("detective", 1420.902, -1347.675, 14.164, 0.0, 0.0, -20.0, VW_CUTSCENE);
+	SetWorldTextFontface(id, "Tahoma");
+	SetWorldTextFontsize(id, 36);
+
+	CreateDynamicObject(19281, 1422.87, -1347.54, 13.20, 0.0, 0.0, 0.0, VW_CUTSCENE);//	свет фар
+	CreateDynamicObject(19281, 1421.14, -1347.59, 13.16, 0.0, 0.0, 0.0, VW_CUTSCENE);//	свет фар
+
+	//	Мигалка
+	CreateDynamicObject(19290, 1421.4, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
+	CreateDynamicObject(19292, 1421.8, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
+	CreateDynamicObject(19290, 1422.2, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
+	CreateDynamicObject(19292, 1422.7, -1350.3, 14.2, 0.0, 0.0, 0.0, VW_CUTSCENE);
+
+	id = CreateActor(288, 1422.0, -1346.2, 13.6, 357.0);
+	SetActorVirtualWorld(id, VW_CUTSCENE);
+	id = MyCreateVehicle(596, 1422.0, -1350.0, 13.6, 0.0, 0, 90);
+	SetVehicleVirtualWorld(id, VW_CUTSCENE);
+	VehInfo[id][vLights] = true;
+	UpdateVehicleParamsEx(id);
 	return true;
 }

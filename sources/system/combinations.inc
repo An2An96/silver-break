@@ -4,6 +4,8 @@
 
 #define _system_combinations_included					
 
+#include "player/header"
+
 forward OnPlayerSelectComb(playerid, source, bool:comb);
 forward OnPlayerCombFinish(playerid, source, bool:fail);
 

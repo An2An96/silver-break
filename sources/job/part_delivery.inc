@@ -7,6 +7,8 @@
 #endif
 #define _job_part_delivery_included
 
+#include "businesses/header"
+
 #define DELIVERY_MENU_ITEMS		10		//	Количество пунктов на странице со списком бизнесов
 
 enum
@@ -154,7 +156,8 @@ Delivery_StartUnload(playerid, oldstate)
     	new Float:pos[3];
 		for(new i = 0; i < MaxBiz; i++)
 		{
-			if(BizInfo[i][bID] == 0)	continue;
+			if(BizInfo[i][bID] == 0)
+				continue;
 			if(GetDistanceFromMeToPoint(playerid, Arr3<BizInfo[i][bPos]>) < 20.0)
 			{
 				pos[0] = BizInfo[i][bPos][0];
