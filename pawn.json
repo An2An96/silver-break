@@ -14,7 +14,8 @@
 		"maddinat0r/sscanf",
 		"Open-GTO/mxINI",
 		"Open-GTO/mdialog",
-		"karimcambridge/SAMP-foreach"
+		"karimcambridge/SAMP-foreach",
+		"ziggi/samp-plugin-timerfix"
 	],
 	"runtime": {
 		"version": "0.3.7",

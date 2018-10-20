@@ -36,13 +36,13 @@
 #include <Pawn.CMD>
 #include <FCNPC>
 #include <crashdetect>
+#include <timerfix>
 	//	Utils
 #include <mxINI>
 #include <foreach>
 
 //	Libs
 #include "lib/mapandreas"
-#include "lib/timerfix"
 
 //	Utils
 #include "utils/extend_mdialog"
