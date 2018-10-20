@@ -78,10 +78,10 @@ COMMAND:invite(playerid, params[])
 		    }
 		}
 	}
-	if(AskPlayer(playerid, giveplayerid, ASK_INVITE))
+	if(AskPlayer(playerid, giveplayerid, ASK_INVITE, 30, PlayerInfo[playerid][pFaction]))
 	{
 		new string[192];
-		AskAmount[giveplayerid] = PlayerInfo[playerid][pFaction];
+		// AskAmount[giveplayerid] = PlayerInfo[playerid][pFaction];
 		SendFormatMessage(giveplayerid, COLOR_LIGHTBLUE, string, "%s приглашает вступить в организацию %s "ASK_CONFIRM_INFO, ReturnPlayerName(playerid), GetFactionName(PlayerInfo[playerid][pFaction]));
 		SendFormatMessage(playerid, COLOR_LIGHTBLUE, string, "Вы пригласили %s вступить в свою организацию %s", ReturnPlayerName(giveplayerid), GetFactionName(PlayerInfo[playerid][pFaction]));
 		if(!IsAvailableJob(playerid, Job.GetPlayerJob(giveplayerid))) SendClientMessage(giveplayerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");

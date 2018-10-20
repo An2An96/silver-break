@@ -896,3 +896,33 @@ Public: StartEngine(vehicleid, bool:status)
 	}
 	return true;
 }
+
+IsPlayerAtGasStation(playerid)
+{
+    for(new i = 0; i < sizeof(FillPos); i++)
+    {
+    	if(IsPlayerInRangeOfPoint(playerid, 10.0, Arr3<FillPos[i]>))
+    	{
+    		return true;
+    	}
+    }
+    return false;
+}
+
+IsAtCarSellPlace(playerid)
+{
+	if(IsPlayerInRangeOfPoint(playerid, 25.0, -1786.7600,1205.1584,24.8255) // Bonus place - high price
+	|| IsPlayerInRangeOfPoint(playerid, 25.0, 2131.8499,-1150.9371,24.1029) || IsPlayerInRangeOfPoint(playerid, 35.0, 541.3572,-1293.3917,17.2422)
+	|| IsPlayerInRangeOfPoint(playerid, 25.0, -1649.2346,1209.3027,7.2500) || IsPlayerInRangeOfPoint(playerid, 25.0, -1961.7168,288.5224,35.4688))
+		return true;
+	else return false;
+}
+
+IsPlayerAtParkPlace(playerid)
+{
+	if(GetPVarInt(playerid, "Player:InGreenZone") || IsAtCarSellPlace(playerid) || IsPlayerInRangeOfPoint(playerid, 25.0, -217.0, 1211.8, 19.9))
+	{
+		return false;
+	}
+	return true;
+}

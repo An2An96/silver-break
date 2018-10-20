@@ -40,6 +40,7 @@
 	//	Utils
 #include <mxINI>
 #include <foreach>
+#include <easy_keys>
 
 //	Libs
 #include "lib/mapandreas"
@@ -119,37 +120,6 @@ SB_CancelSelectTextDraw(playerid)
 #include "interface/select_menu"
 #include "interface/selecter"
 #include "interface/core"	
-
-//--- player anims
-stock BlockPlayerAnimation(playerid, bool:toggle)
-{
-	SetPVarInt(playerid, "System:Player:BlockAnim", toggle);
-	return true;
-}
-
-stock MyApplyAnimation(playerid, const lib[], const name[], Float:fDelta, loop, lockx, locky, freeze, time, forcesync = 1)
-{
-	if(GetPVarInt(playerid, "System:Player:BlockAnim"))	return false;
-	if(gPlayerUsingLoopingAnim[playerid])	StopLoopingAnim(playerid);
-	return ApplyAnimation(playerid, lib, name, fDelta, loop, lockx, locky, freeze, time, forcesync);
-}
-
-stock LoopingAnim(playerid, const lib[], const name[], Float:fDelta, loop, lockx, locky, freeze, time, forcesync = 1)
-{
-	if(MyApplyAnimation(playerid, lib, name, fDelta, loop, lockx, locky, freeze, time, forcesync))
-	{
-		ShowPlayerHint(playerid, "Используйте ~y~пробел ~w~чтобы остановить анимацию");
-    	gPlayerUsingLoopingAnim[playerid] = true;
-    	return true;
-	}
-	return false;
-}
-
-stock StopLoopingAnim(playerid)
-{
-	gPlayerUsingLoopingAnim[playerid] = false;
-	return ClearAnimations(playerid);
-}
 
 stock MySetPlayerMarkerForPlayer(playerid, showplayerid, color, bool:oversee = false)
 {
@@ -325,22 +295,6 @@ EatPlayer(playerid, count, const msg[] = "")
 	return 1;
 }
 
-stock ToggleNameTags(playerid, bool:toggle)
-{
-    pNameTags[playerid] = toggle;
-    if(toggle)
-    {// Показать ники всех
-		foreach(LoginPlayer, i) if(!InMask[i]) ShowPlayerNameTagForPlayer(playerid, i, true);
-	    GameTextForPlayer(playerid, "~w~Nametags ~g~on", 5000, 5);
-    }
-    else
-    {// Скрыть
-		foreach(LoginPlayer, i) ShowPlayerNameTagForPlayer(playerid, i, false); // Скрыть ники всех
-	    GameTextForPlayer(playerid, "~w~Nametags ~r~off", 5000, 5);
-		// Помимо этого надо скрывать ники тех, кто зашел
-    }
-}
-
 //	Money
 stock GivePlayerBank(playerid, Float:amount)
 {
@@ -353,31 +307,6 @@ stock GivePlayerCrimeWage(playerid, Float:amount)
 }
 
 //	============================================
-
-stock AskPlayer(playerid, giveplayerid, asktype, waittime = 30)
-{
-	if(AskWhat[giveplayerid] != ASK_NONE && AskPrimory[asktype] <= AskPrimory[ AskWhat[giveplayerid] ]){
-		return false;
-	}
-	strput(AskOffer[giveplayerid], ReturnPlayerName(playerid));
-	AskOfferID[giveplayerid] = playerid;
-	AskTime[giveplayerid] = waittime;
-	AskWhat[giveplayerid] = asktype;
-	return true;
-}
-
-StopAsking(giveplayerid)
-{
-	AskOffer[giveplayerid] = "";
-	AskOfferID[giveplayerid] = -1;
-	AskAmount[giveplayerid] = 0;
-	AskAmount2[giveplayerid] = 0;
-	AskAmount3[giveplayerid] = 0;
-	AskAmount4[giveplayerid] = 0;
-	AskTime[giveplayerid] = 0;
-	AskWhat[giveplayerid] = ASK_NONE;
-	return 1;
-}
 
 stock RestartServer(time = 0)
 {
@@ -420,7 +349,7 @@ stock GetWeekDay(day = 0, month = 0, year = 0)
 	//-
 	new dayM = 2, monthM = 1, yearM = 2012;
 	new days = GetDaysFromDate(dayM, monthM, yearM, day, month, year);
-	return days%7 + 1;
+	return days % 7 + 1;
 }
 
 stock GetDaysFromDate(dayM, monthM, yearM, day = 0, month = 0, year = 0)
@@ -748,37 +677,6 @@ stock UpdatePlayerRadio(playerid)
 		format(string, 128, "~g~%s", RadioList[radio - 1][RADIO_NAME]);
 		GameTextForPlayer(playerid, string, 5000, 6);
     }
-	return true;
-}
-
-//---
-IsPlayerAtGasStation(playerid)
-{
-    for(new i = 0; i < sizeof(FillPos); i++)
-    {
-    	if(IsPlayerInRangeOfPoint(playerid, 10.0, Arr3<FillPos[i]>))
-    	{
-    		return true;
-    	}
-    }
-    return false;
-}
-
-IsAtCarSellPlace(playerid)
-{
-	if(IsPlayerInRangeOfPoint(playerid, 25.0, -1786.7600,1205.1584,24.8255) // Bonus place - high price
-	|| IsPlayerInRangeOfPoint(playerid, 25.0, 2131.8499,-1150.9371,24.1029) || IsPlayerInRangeOfPoint(playerid, 35.0, 541.3572,-1293.3917,17.2422)
-	|| IsPlayerInRangeOfPoint(playerid, 25.0, -1649.2346,1209.3027,7.2500) || IsPlayerInRangeOfPoint(playerid, 25.0, -1961.7168,288.5224,35.4688))
-		return true;
-	else return false;
-}
-
-IsPlayerAtParkPlace(playerid)
-{
-	if(GetPVarInt(playerid, "Player:InGreenZone") || IsAtCarSellPlace(playerid) || IsPlayerInRangeOfPoint(playerid, 25.0, -217.0, 1211.8, 19.9))
-	{
-		return false;
-	}
 	return true;
 }
 
@@ -2742,9 +2640,9 @@ stock OnActorReaction(playerid, targetid)
 	}
 	else if(targetid == ACTOR[A_HOTDOGER] || targetid == ACTOR[A_HOTDOGER2] || targetid == ACTOR[A_HOTDOGER3])
 	{
-		if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_BUY_HOTDOG))
+		if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_BUY_HOTDOG, 30, targetid))
 		{
-			AskAmount[playerid] = targetid;
+			//AskAmount[playerid] = targetid;
 			SendFormatMessage(playerid, COLOR_WHITE, string, "Продавец предлагает вам купить хот дог за 5$ "ASK_CONFIRM_INFO, ReturnPlayerName(playerid));
 			return true;
 		}
@@ -5674,7 +5572,6 @@ Public: PlayerEverySecondTimer(i)
 	if(p_PrisonTimer{i})					SetPlayerVisualTimer(i, PrisonStatusTime, false);	//	Update Prison Timer
 	if(EffectCheck{i} > 0)					EffectCheck{i}--;									//  Effect
 	if(gPickupTime[i] > 0)					gPickupTime[i]--;									// Счетчик обновления возможности входа/выхода
-	if(AskTime[i] > 0 && --AskTime[i] == 0)	OnPlayerYNStateChange(i, AskWhat[i], false);		// Автоматический отказ по истечении времени предложения
 	if(p_ShootingCountdown{i} > 0 && --p_ShootingCountdown{i} == 0)	StartPlayerTirShooting(i);	//	начало стрельбы в тире
 	if(PlayerInfo[i][pMuteTime] > 0 && --PlayerInfo[i][pMuteTime] <= 0)	// Счетчик молчанки
 	{
@@ -7147,11 +7044,6 @@ ZeroVars(playerid, source = 0)
 		MarkINT[playerid] 				= 0;
 		MarkVW[playerid] 				= 0;
 		////////////////////////////////////////
-		AskAmount[playerid] 			= 0;
-		AskAmount2[playerid] 			= 0;
-		AskTime[playerid] 				= 0;
-		AskWhat[playerid] 				= ASK_NONE;
-		////////////////////////////////////////
 		HouseNum[playerid]				= 0;
 		HouseZone[playerid] 			= 0;
 		HouseClass[playerid] 			= 0;
@@ -7184,7 +7076,6 @@ ZeroVars(playerid, source = 0)
 		p_PrisonTimer{playerid} 		= false;
 		DialogTimeleft[playerid] 		= 0;
 		JailTime[playerid] 				= 0;
-		gPlayerUsingLoopingAnim[playerid] = false;
 		PlayerBusy{playerid} 			= false;
 		weaponid_new[playerid] 			= 0;
 		gExpTime[playerid] 				= 0;
@@ -7192,7 +7083,6 @@ ZeroVars(playerid, source = 0)
 	    WantedTime[playerid] 			= 0;
 	    gBlockAction[playerid] 			= BLOCK_NONE;
 
-	    //strdel(AskOffer[playerid], 0, sizeof(AskOffer[]));
 		strdel(jail_numer[playerid], 0, sizeof(jail_numer[]));
 
 		//////////	Enumerations	//////////
@@ -7233,9 +7123,12 @@ ZeroVars(playerid, source = 0)
 		Phone_ZeroVars(playerid);
     #endif
 
+	#if defined _player_ask_included
+		StopAsking(playerid);
+	#endif
+
 	FirstSpawn[playerid] 			= true;
 	pNameTags[playerid] 			= true;
-	AskOfferID[playerid] 			= -1;
 	gPickupID[playerid] 			= -1;
 	PickupedHouse[playerid] 		= -1;
 	InGangZone[playerid] 			= -1;
@@ -7582,7 +7475,11 @@ public OnPlayerDisconnect(playerid, reason)
 	if(PlayerVehicle[playerid])					BlockVehicleEffect(PlayerVehicle[playerid]);						//	FIX: урон при выходе игрока сидя в авто (резкая остановка)
 	if(PlayerInfo[playerid][pJailTime])			Iter_Remove(Prisoners, playerid);									// Очистка зека из списка
 	if(PlayerVehicle[playerid])					ExitVehicle(playerid);												// Система контроля авто
-    if(AskWhat[playerid] == ASK_POLICE_FINE)	PlayerInfo[playerid][pJailTime] = -GetPlayerWantedLevel(playerid);	// Выход с неоплаченной квитанцией
+    
+	// Выход с неоплаченной квитанцией
+	if(GetPlayerAsk(playerid) == ASK_POLICE_FINE)
+		PlayerInfo[playerid][pJailTime] = -GetPlayerWantedLevel(playerid);
+	
     if(GetPVarInt(playerid, "EditAdID"))		gAdvert[GetPVarInt(playerid, "EditAdID") - 1][adStatus] = 0;
     if(GetPVarType(playerid, "Admin:InTicket") != PLAYER_VARTYPE_NONE)
     {
@@ -8232,7 +8129,6 @@ public OnPlayerDeath(playerid, killerid, reason)
 	PlayerInfo[playerid][pDeaths]++;
 	gExpTime[playerid] = 0; gExpCount[playerid] = 0;
 	PM_Type[playerid] = 0;	PM_Place[playerid] = 0;	// Очистка полицейской миссии
-	gPlayerUsingLoopingAnim[playerid] = false;
 	DeletePVar(playerid, "Player:Attack:Attacker");
 	DeletePVar(playerid, "Player:JobPartner");
 
@@ -11004,7 +10900,7 @@ Public: OnPlayerAimVehicle(playerid, vehicleid)
 }
 
 //	Keys
-Public: OnPlayerClickSubmission(playerid)
+public OnPlayerClickSubmission(playerid)
 {
 	#if defined	_job_job_taxi_included
 		Callback: Taxi_OnPlayerClickSubmission(playerid);
@@ -11404,20 +11300,21 @@ Public: OnPlayerClickSubmission(playerid)
 	return true;
 }
 
-Public: OnPlayerClickY(playerid)
+public	OnPlayerClickY(playerid)
 {
 	new newkeys, tmp;
 	GetPlayerKeys(playerid, newkeys, tmp, tmp);
-	if(HOLDING(KEY_SPRINT))		//	Пробел + Y
-	{
-		// Система запроса
-		if(AskWhat[playerid])
-		{
-			OnPlayerYNStateChange(playerid, AskWhat[playerid], true);
-			return true;
-		}
-	}
-	else if(HOLDING(KEY_AIM))	//	Прицел + Y
+	// if(HOLDING(KEY_SPRINT))		//	Пробел + Y
+	// {
+	// 	// Система запроса
+	// 	// if(AskWhat[playerid])
+	// 	// {
+	// 	// 	OnPlayerYNStateChange(playerid, AskWhat[playerid], true);
+	// 	// 	return true;
+	// 	// }
+	// }
+	// else 
+	if(HOLDING(KEY_AIM))	//	Прицел + Y
 	{
 		// Меню взаимодействия
 		new targetid = GetPlayerTargetPlayer(playerid);
@@ -11632,32 +11529,32 @@ Public: OnPlayerClickY(playerid)
 	return true;
 }
 
-Public: OnPlayerClickN(playerid)
+public	OnPlayerClickN(playerid)
 {
 	new newkeys, tmp;
 	GetPlayerKeys(playerid, newkeys, tmp, tmp);
-	if(HOLDING(KEY_SPRINT))	//	Пробел+N
-	{
-		if(AskWhat[playerid])
-		{	// Система запроса
-			OnPlayerYNStateChange(playerid, AskWhat[playerid], false);
+	// if(HOLDING(KEY_SPRINT))	//	Пробел+N
+	// {
+	// 	// if(AskWhat[playerid])
+	// 	// {	// Система запроса
+	// 	// 	OnPlayerYNStateChange(playerid, AskWhat[playerid], false);
+	// 	// }
+	// }
+	// else
+	// {
+	#if defined _player_phone_included
+		if(Phone_GetStatus(playerid) != PHONE_OFF)
+		{
+			return callcmd::h(playerid, "");	//  cancel call
 		}
-	}
-	else
-	{
-		#if defined _player_phone_included
-			if(Phone_GetStatus(playerid) != PHONE_OFF)
-			{
-		 		return callcmd::h(playerid, "");	//  cancel call
-			}
-		#endif
-	
-		CancelPlayerBerth(playerid);
-	}
+	#endif
+
+	CancelPlayerBerth(playerid);
+	// }
 	return true;
 }
 
-Public: OnPlayerClickH(playerid)
+public	OnPlayerClickH(playerid)
 {
 	new pState = GetPlayerState(playerid);
 	if(pState == PLAYER_STATE_ONFOOT)
@@ -11707,7 +11604,7 @@ Public: OnPlayerClickH(playerid)
     return true;
 }
 
-Public: OnPlayerClickAlt(playerid)
+public	OnPlayerClickAlt(playerid)
 {
 	new pState = GetPlayerState(playerid);
 	if(pState == PLAYER_STATE_ONFOOT)
@@ -11773,7 +11670,7 @@ Public: OnPlayerClickAlt(playerid)
 	return true;
 }
 
-Public: OnPlayerClickEnter(playerid)
+public	OnPlayerClickEnter(playerid)
 {
 	new pState = GetPlayerState(playerid);
 	if(pState == PLAYER_STATE_ONFOOT)
@@ -12274,12 +12171,12 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	    }
     }
     //---
-    if(PRESSED(KEY_WALK))
-    {
-    	OnPlayerClickAlt(playerid);
-    	return true;
-    }
-    else if(RELEASED(KEY_WALK))
+    // if(PRESSED(KEY_WALK))
+    // {
+    // 	OnPlayerClickAlt(playerid);
+    // 	return true;
+    // }
+    if(RELEASED(KEY_WALK))
 	{
 		/*if(PursuitArest[playerid])
 		{
@@ -12308,11 +12205,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	 	{
 			RegisterCutScene(playerid, 22, 0, 0);	//	отмена заставки
         }
-		else if(gPlayerUsingLoopingAnim[playerid])
-		{
-			//if(GetPlayerState(playerid) != PLAYER_STATE_ONFOOT) return true;
-			return StopLoopingAnim(playerid);
-		}
 
 		//  Тренажеры
 		if(playerBenchUsed{playerid} && GymBlockKey{playerid} == false)
@@ -12330,16 +12222,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 		{
 			callcmd::lights(playerid, ""); // Фары
 		}
-   	}
-    else if(PRESSED(KEY_YES))
-    {
-		OnPlayerClickY(playerid);
-    	return true;
-	}
-	else if(PRESSED(KEY_NO))
-	{
-		OnPlayerClickN(playerid);
-		return true;
 	}
 	else if(RELEASED(KEY_FIRE))
     {
@@ -12502,11 +12384,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			if(--playerSmokeCount{playerid} == 0)	SetTimerEx("ClearPlayerSmoke", 2600, false, "d", playerid);
 			if(MyGetPlayerHealth(playerid) + 1.0 < 100.0)	MySetPlayerHealth(playerid, MyGetPlayerHealth(playerid) + 1.0);
 		}
-    }
-    else if(PRESSED(KEY_SECONDARY_ATTACK)) // KEY_F
-    {
-    	OnPlayerClickEnter(playerid);
-    	return true;
     }
 	else if(RELEASED(KEY_SECONDARY_ATTACK))
     {
@@ -12778,11 +12655,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			return true;
 		}
     }
-	else if(PRESSED(KEY_CTRL_BACK))	// H
-	{
-		OnPlayerClickH(playerid);
-		return true;
-	}
 	else if(RELEASED(KEY_CTRL_BACK))
 	{
 		/*if(PursuitReinforc[playerid])
@@ -12790,11 +12662,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			PursuitReinforc[playerid] = 0;
 			ProgressBarHide(playerid);
 		}*/
-	}
-	else if(PRESSED(KEY_SUBMISSION))
-	{
-		OnPlayerClickSubmission(playerid);
-		return true;
 	}
 	else if(PRESSED(KEY_ANALOG_DOWN))
 	{
@@ -12805,20 +12672,19 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	return true;
 }
 
-OnPlayerYNStateChange(playerid, askid, response)
+public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 {
 	new string[256];
-	new offerid = AskOfferID[playerid];
-	if(response)// KEY_YES
+	if (response)	// KEY_YES
 	{
-		new ammount = AskAmount[playerid];
-		if(offerid == INVALID_PLAYER_ID || (IsPlayerLogged(offerid) && strcheck(AskOffer[playerid], ReturnPlayerName(offerid))))
-        {
+		//new ammount = amount[0]; //AskAmount[playerid];
+		if(offerid == INVALID_PLAYER_ID || IsPlayerLogged(offerid))
+		{
 		    switch(askid)
 		    {
 		        case ASK_INVITE:
 		        {
-					SetPlayerFaction(playerid, ammount);
+					SetPlayerFaction(playerid, amount[0]);
 
 					SendFormatMessage(playerid, COLOR_LIGHTBLUE, string, "Вы приняты в организацию %s", GetFactionName(PlayerInfo[playerid][pFaction]));
 					SendFormatMessage(offerid, COLOR_LIGHTBLUE, string, "%s был принят в организацию %s", ReturnPlayerName(playerid), GetFactionName(PlayerInfo[playerid][pFaction]));
@@ -12828,7 +12694,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 		        }
 		        case ASK_INVITE_JOB:
 				{
-				    switch(ammount)
+				    switch(amount[0])
 				    {
 						/*case JOB_GUNDEAL: // Торговец оружием
 						{
@@ -12870,33 +12736,33 @@ OnPlayerYNStateChange(playerid, askid, response)
 				        	else PlayerInfo[playerid][pDrugDealLic] = 0;
 						}*/
 				    }
-					SendFormatMessage(playerid, COLOR_WHITE, string, "Поздравляем, вы устроились на работу: {44B2FF}%s.", GetJobName(ammount));
+					SendFormatMessage(playerid, COLOR_WHITE, string, "Поздравляем, вы устроились на работу: {44B2FF}%s.", GetJobName(amount[0]));
 					SendClientMessage(playerid, COLOR_WHITE, PREFIX_HINT "Место работы отображено на вашей карте в виде грузовичка.");
-	        		Job.SetPlayerJob(playerid, ammount, CONTRACT_TIME);
+	        		Job.SetPlayerJob(playerid, amount[0], CONTRACT_TIME);
 				}
 				case ASK_POLICE_FINE:
 				{
-					if(MyGetPlayerMoney(playerid) < ammount)
+					if(MyGetPlayerMoney(playerid) < amount[0])
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас недостаточно денег.");
 						goto no_ask;
 					}
-				    MyGivePlayerMoney(playerid, -ammount);
+				    MyGivePlayerMoney(playerid, -amount[0]);
 					CancelPlayerPursuit(playerid, 2);
 					MySetPlayerWantedLevel(playerid, 0);
-					SendFormatMessage(playerid, COLOR_DBLUE, string, "Вы оплатили штраф в размере %d$, счастливого пути", ammount);
+					SendFormatMessage(playerid, COLOR_DBLUE, string, "Вы оплатили штраф в размере %d$, счастливого пути", amount[0]);
 					SendFormatMessage(offerid, COLOR_DBLUE, string, "%s оплатил штраф, теперь он свободен", ReturnPlayerName(playerid));
 				}
 				case ASK_CAR_SELLTO:
 				{
-					new vehicleid = AskAmount2[playerid];
+					new vehicleid = amount[1]; //AskAmount2[playerid];
 					//if(PlayerInfo[playerid][pCarLic] == 0)
 					if(IsPlayerHaveLicThisVehicle(playerid, GetVehicleModel(vehicleid)))
 					{
 					    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет лицензии на этот транспорт.");
 					    goto stop_ask;
 					}
-				    if(MyGetPlayerMoney(playerid) < ammount)
+				    if(MyGetPlayerMoney(playerid) < amount[0])
 				    {
 				        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас не хватает денег для покупки.");
 				        goto stop_ask;
@@ -12912,8 +12778,8 @@ OnPlayerYNStateChange(playerid, askid, response)
 				        goto stop_ask;
 					}
   					// Перекидываем деньги
-				    MyGivePlayerMoney(playerid, -ammount);
-				    MyGivePlayerMoney(offerid, ammount);
+				    MyGivePlayerMoney(playerid, -amount[0]);
+				    MyGivePlayerMoney(offerid, amount[0]);
 					// Перезаписываем владельца
 					CarInfo[vehicleid][cOwnerID] = PlayerInfo[playerid][pUserID];
 					UpdateVehicleStatics(vehicleid);
@@ -12922,14 +12788,14 @@ OnPlayerYNStateChange(playerid, askid, response)
 					RemovePlayerFromVehicle(offerid);
 					// Уведомляем стороны и окружающих
 					PlayerAction(playerid, "подписывает договор на покупку транспорта.");
-					format(string, 128, "* Вы приняли предложение от {B1C8FB}%s{88AA88}, транспорт ваш!", AskOffer[playerid]);
+					format(string, 128, "* Вы приняли предложение от {B1C8FB}%s{88AA88}, транспорт ваш!", ReturnPlayerName(offerid));
 					SendClientMessage(playerid, COLOR_SPECIAL, string);
 					format(string, 128, "* {B1C8FB}%s{88AA88} принял ваше предложение", ReturnPlayerName(playerid));
 					SendClientMessage(offerid, COLOR_SPECIAL, string);
 				}
 				case ASK_HI:
 				{
-			    	callcmd::hi(playerid, AskOffer[playerid]);
+			    	callcmd::hi(playerid, ReturnPlayerName(offerid));
 				}
 				case ASK_GIVE_MONEY:
 				{
@@ -12938,25 +12804,25 @@ OnPlayerYNStateChange(playerid, askid, response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
 						goto stop_ask;
 					}
-					if(ammount > 0 && MyGetPlayerMoney(offerid) < ammount)
+					if(amount[0] > 0 && MyGetPlayerMoney(offerid) < amount[0])
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока нет столько денег.");
 						goto stop_ask;
 					}
-					if(ammount > 10000)
+					if(amount[0] > 10000)
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете передавать за раз более $10.000.");
 						goto stop_ask;
 					}
 					if(GetPlayerState(playerid) == 1)	MyApplyAnimation(playerid, "GANGS", "Invite_Yes", 4.1, 0, 0, 0, 0, 0);
 
-					MyGivePlayerMoney(offerid, -ammount);
-					MyGivePlayerMoney(playerid, ammount);
-					SendFormatMessage(offerid, COLOR_GREEN, string, "Вы передали %d$ игроку %s[%d]", ammount, ReturnPlayerName(playerid), playerid);
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %d$ от %s[%d]", ammount, AskOffer[playerid], offerid);
+					MyGivePlayerMoney(offerid, -amount[0]);
+					MyGivePlayerMoney(playerid, amount[0]);
+					SendFormatMessage(offerid, COLOR_GREEN, string, "Вы передали %d$ игроку %s[%d]", amount[0], ReturnPlayerName(playerid), playerid);
+					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %d$ от %s[%d]", amount[0], ReturnPlayerName(offerid), offerid);
 					format(string, sizeof(string), "передает деньги %s'у.", ReturnPlayerName(playerid));
 					PlayerAction(offerid, string);
-					format(string, sizeof(string), "%s -> %s : %d$", AskOffer[playerid], ReturnPlayerName(playerid), ammount);
+					format(string, sizeof(string), "%s -> %s : %d$", ReturnPlayerName(offerid), ReturnPlayerName(playerid), amount[0]);
 					log("Pay", string);
 				}
 				case ASK_GIVE_THING:
@@ -12966,14 +12832,14 @@ OnPlayerYNStateChange(playerid, askid, response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
 						goto stop_ask;
 					}
-					if(ammount > 0 && MyGetPlayerMoney(playerid) < ammount)
+					if(amount[0] > 0 && MyGetPlayerMoney(playerid) < amount[0])
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет столько денег.");
 						goto stop_ask;
 					}
-					new count 	= AskAmount2[playerid];
-					new thing 	= AskAmount3[playerid];
-					new option 	= AskAmount4[playerid];
+					new count = amount[1]; // AskAmount2[playerid];
+					new thing = amount[2]; // AskAmount3[playerid];
+					new option = amount[3]; // AskAmount4[playerid];
 					if(Inv.GetThing(offerid, thing, option) < count)
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока уже нет этого предмета.");
@@ -12984,18 +12850,18 @@ OnPlayerYNStateChange(playerid, askid, response)
 						goto stop_ask;
 					}
 					Inv.PlayerDeleteThing(offerid, thing, option, count);
-					if(ammount)
+					if(amount[0])
 					{
-						SendFormatMessage(offerid, COLOR_GREEN, string, "Вы передали %s (%d шт.) игроку %s[%d] за %d$", GetThingName(thing, option), count, ReturnPlayerName(playerid), playerid, ammount);
-						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %s (%d шт.) от %s[%d] за %d$", GetThingName(thing, option), count, AskOffer[playerid], offerid, ammount);
+						SendFormatMessage(offerid, COLOR_GREEN, string, "Вы передали %s (%d шт.) игроку %s[%d] за %d$", GetThingName(thing, option), count, ReturnPlayerName(playerid), playerid, amount[0]);
+						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %s (%d шт.) от %s[%d] за %d$", GetThingName(thing, option), count, ReturnPlayerName(offerid), offerid, amount[0]);
 
-						MyGivePlayerMoney(playerid, -ammount);
-						MyGivePlayerMoney(offerid, ammount);
+						MyGivePlayerMoney(playerid, -amount[0]);
+						MyGivePlayerMoney(offerid, amount[0]);
 					}
 					else
 					{
 						SendFormatMessage(offerid, COLOR_GREEN, string, "Вы передали %s (%d шт.) игроку %s[%d]", GetThingName(thing, option), count, ReturnPlayerName(playerid), playerid);
-						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %s (%d шт.) от %s[%d]", GetThingName(thing, option), count, AskOffer[playerid], offerid);
+						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы получили %s (%d шт.) от %s[%d]", GetThingName(thing, option), count, ReturnPlayerName(offerid), offerid);
 					}
 					if(GetPlayerState(playerid) == 1)	MyApplyAnimation(playerid, "GANGS", "Invite_Yes", 4.1, 0, 0, 0, 0, 0);
 					format(string, sizeof(string), "передает что-то %s'у.", ReturnPlayerName(playerid));
@@ -13011,7 +12877,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
 						goto stop_ask;
 					}
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились дать интервью %s'у в прямом эфире", AskOffer[playerid]);
+					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились дать интервью %s'у в прямом эфире", ReturnPlayerName(offerid));
 					SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился дать вам интервью в прямом эфире", ReturnPlayerName(playerid));
 				    SendClientMessage(playerid, COLOR_LIGHTBLUE, "Вы заморожены до окончания интервью.");
 					SendClientMessage(offerid, COLOR_LIGHTBLUE, "Вы заморожены до окончания интервью (Используйте: /live повторно).");
@@ -13080,7 +12946,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 					BoxingRing[ring][RING_STATE] = 1;
 					BoxingRing[ring][RING_TIME] = 15;
 
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на боксерский поединок против %s'а", AskOffer[playerid]);
+					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на боксерский поединок против %s'а", ReturnPlayerName(offerid));
 					SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился на боксерский поединок против вас", ReturnPlayerName(playerid));
 				}
 				case ASK_BUY_HOTDOG:
@@ -13095,7 +12961,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не голодны.");
 						goto stop_ask;
 					}
-					new actor = ammount;
+					new actor = amount[0];
 					new Float:pos[3];
 					GetActorPos(actor, Arr3<pos>);
 					if(GetDistanceFromMeToPoint(playerid, Arr3<pos>) > 5.0)
@@ -13129,7 +12995,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 						goto stop_ask;
 					}
 					SetPVarInt(playerid, "Player:JobPartner", PlayerInfo[offerid][pUserID]);
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились поработать с %s'ом", AskOffer[playerid]);
+					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились поработать с %s'ом", ReturnPlayerName(offerid));
 					SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился поработать с вами", ReturnPlayerName(playerid));
 				}
 				case ASK_REPAIR:
@@ -13147,15 +13013,15 @@ OnPlayerYNStateChange(playerid, askid, response)
 						goto stop_ask;
 			    	}
 
-			    	if(MyGetPlayerMoney(playerid) < ammount)
-			    	{
-			    		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет столько денег.");
+					if(MyGetPlayerMoney(playerid) < amount[0])
+					{
+						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас нет столько денег.");
 						goto stop_ask;
-			    	}
+					}
 
-				    new dif = 20,
+					new dif = 20,
 						Float:carX, Float:carY, Float:carZ,
-				        Float:carA, Float:plX, Float:plY, Float:plZ;
+						Float:carA, Float:plX, Float:plY, Float:plZ;
 
 					GetVehiclePos(v, carX, carY, carZ);
 					GetVehicleZAngle(v, carA);
@@ -13180,10 +13046,10 @@ OnPlayerYNStateChange(playerid, askid, response)
 						PlayerAction(offerid, "ковыряется под капотом.");
 						MyApplyAnimation(offerid, "GANGS","shake_cara", 4.1, 0, 0, 0, 0, 0, 1);
 
-						Job.GivePlayerWage(offerid, ammount);
-						MyGivePlayerMoney(playerid, -ammount);
+						Job.GivePlayerWage(offerid, amount[0]);
+						MyGivePlayerMoney(playerid, -amount[0]);
 
-						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на ремонт %s'а", AskOffer[playerid]);
+						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на ремонт %s'а", ReturnPlayerName(offerid));
 						SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился на ремонт своего авто", ReturnPlayerName(playerid));
 				    }
 				}
@@ -13218,61 +13084,61 @@ OnPlayerYNStateChange(playerid, askid, response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Для заправки, механик должен быть рядом с вашим автомобилем.");
 						goto stop_ask;
 			    	}
-					if(VehInfo[vehicleid][vFuel] < ammount)
+					if(VehInfo[vehicleid][vFuel] < amount[0])
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У механика уже нет столько топлива.");
 						goto stop_ask;
 					}
-					if(VehInfo[v][vFuel] + ammount > GetVehicleMaxFuel(v))
+					if(VehInfo[v][vFuel] + amount[0] > GetVehicleMaxFuel(v))
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "К вам не влезет столько топлива.");
 						goto stop_ask;
 					}
 
-					if(MyGetPlayerMoney(playerid) < AskAmount2[playerid])
+					if(MyGetPlayerMoney(playerid) < amount[1])
 					{
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас недостаточно денег.");
 						goto stop_ask;
 					}
-					VehInfo[v][vFuel] += float(ammount);
-					VehInfo[vehicleid][vFuel] -= float(ammount);
-					Job.GivePlayerWage(offerid, AskAmount2[playerid]);
-					MyGivePlayerMoney(playerid, -AskAmount2[playerid]);
+					VehInfo[v][vFuel] += float(amount[0]);
+					VehInfo[vehicleid][vFuel] -= float(amount[0]);
+					Job.GivePlayerWage(offerid, amount[1]);
+					MyGivePlayerMoney(playerid, -amount[1]);
 
 					IFace.Veh_Update(VehInfo[v][vDriver], 0);
 					UpdateVehicleLabel(vehicleid);
 
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на заправку от %s'а", AskOffer[playerid]);
+					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на заправку от %s'а", ReturnPlayerName(offerid));
 					SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился на заправку своего авто", ReturnPlayerName(playerid));
 					format(string, sizeof(string), "заправляет автомобиль %s'а.", ReturnPlayerName(playerid));
 					PlayerAction(offerid, string);
 				}
 			}
 		}
-        else
+		else
 		{
-			SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "%s вышел с сервера - запрос не актуален.", AskOffer[playerid]);
+			SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "%s вышел с сервера - запрос не актуален.", ReturnPlayerName(offerid));
 		}
 	}
 	else // KEY_NO // OnPlayerYNStateChange
 	{
 	no_ask:
-        if(AskWhat[playerid] != 0)
+        if(GetPlayerAsk(playerid) != 0)
 		{
-			if(offerid == INVALID_PLAYER_ID || (IsPlayerLogged(offerid) && strcheck(AskOffer[playerid], ReturnPlayerName(offerid))))
+			if(offerid == INVALID_PLAYER_ID || IsPlayerLogged(offerid))
 			{
-			    switch(AskWhat[playerid])
-			    {
-			    	case ASK_INVITE_JOB:
+				switch(GetPlayerAsk(playerid))
+				{
+					case ASK_INVITE_JOB:
 					{
-		        		SendClientMessage(playerid, COLOR_LIGHTRED, "Вы отказались устраиваться на работу");
+						SendClientMessage(playerid, COLOR_LIGHTRED, "Вы отказались устраиваться на работу");
 					}
-				    case ASK_POLICE_FINE:
-				    {
-				    	SendClientMessage(playerid, COLOR_LIGHTRED, "Вы отказались от оплаты штрафа");
-				    	SendFormatMessage(offerid, COLOR_LIGHTRED, string, "%s отказался от оплаты штрафа. {FFFFFF}Арестуйте его!", ReturnPlayerName(playerid));
-				    	if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
-				    	{
+					case ASK_POLICE_FINE:
+					{
+						SendClientMessage(playerid, COLOR_LIGHTRED, "Вы отказались от оплаты штрафа");
+						SendFormatMessage(offerid, COLOR_LIGHTRED, string, "%s отказался от оплаты штрафа. {FFFFFF}Арестуйте его!", ReturnPlayerName(playerid));
+						if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
+						{
 							format(string, sizeof(string), "- %s %s говорит: Выйдите из машины с поднятыми руками! (( %s ))", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(offerid));
 							ProxDetector(playerid, 30.0, string, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 0xE6E6E6E6, 0xC8C8C8C8);
 							PlayerPlaySound(playerid, 34403, 0, 0, 0);
@@ -13291,7 +13157,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 				    	}
 				    	else
 				    	{
-				    		SendFormatMessage(playerid, COLOR_LIGHTRED, string, "Вы отклонили предложение от %s", AskOffer[playerid]);
+				    		SendFormatMessage(playerid, COLOR_LIGHTRED, string, "Вы отклонили предложение от %s", ReturnPlayerName(offerid));
 							SendFormatMessage(offerid, COLOR_LIGHTRED, string, "%s отклонил ваше предложение", ReturnPlayerName(playerid));
 				    	}
 
@@ -13300,7 +13166,7 @@ OnPlayerYNStateChange(playerid, askid, response)
 			}
 			else
 			{
-				SendFormatMessage(playerid, COLOR_LIGHTRED, string, "%s вышел с сервера - запрос не актуален", AskOffer[playerid]);
+				SendClientMessage(playerid, COLOR_LIGHTRED, "Игрок вышел с сервера - запрос не актуален");
 			}
 		}
 	}
@@ -16760,10 +16626,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						new wl = GetPlayerWantedLevel(targetid);
 						if(0 < wl < 4)
 						{	//	выписать штраф
-			    			if(AskPlayer(playerid, targetid, ASK_POLICE_FINE))
-			    			{
-								new finecash = wl * FINE_PER_WANTED;
-								AskAmount[targetid] = finecash;
+							new finecash = wl * FINE_PER_WANTED;
+							if(AskPlayer(playerid, targetid, ASK_POLICE_FINE, 30, finecash))
+							{
+								//AskAmount[targetid] = finecash;
 								//PursuitCount[targetid] = 40;	//	ожидаем оплату штрафа
 								SendFormatMessage(playerid, COLOR_DBLUE, string, "Нарушителю %s выписана квитанция со штрафом, ожидайте оплату!", ReturnPlayerName(targetid));
 								SendFormatMessage(targetid, COLOR_DBLUE, string, "%s %s выписал вам штраф на %d$. Оплатить? "ASK_CONFIRM_INFO, GetPlayerRank(playerid), ReturnPlayerName(playerid), finecash);
@@ -17185,10 +17051,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 	    		}
 	    		DeletePVar(playerid, "Mechanic:Refill:VehicleID");
 	    		DeletePVar(playerid, "Mechanic:Refill:Count");
-	    		if(AskPlayer(playerid, targetid, ASK_REFILL))
+	    		if(AskPlayer(playerid, targetid, ASK_REFILL, 30, count, cost))
     			{
-					AskAmount[targetid] = count;
-					AskAmount2[targetid] = cost;
+					// AskAmount[targetid] = count;
+					// AskAmount2[targetid] = cost;
 					SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s заправить его авто на %d литров за $%d", ReturnPlayerName(targetid), count, cost);
 					SendFormatMessage(targetid, COLOR_WHITE, string, "%s предложил вам заправить ваш авто на %d литров за $%d "ASK_CONFIRM_INFO, ReturnPlayerName(playerid), count, cost);
 					return true;
@@ -17602,9 +17468,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Эта работа доступна только с 2 уровня.");
 						        return ShowDialog(playerid, dialogid);
 					        }
-							if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB))
+							if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 30, JOB_TAXI))
 							{
-								AskAmount[playerid] = JOB_TAXI;
+								//AskAmount[playerid] = JOB_TAXI;
 								SendClientMessage(playerid, COLOR_WHITE, "Вы собрались устроиться {44B2FF}таксистом "ASK_CONFIRM_INFO);
 								if(Job.GetPlayerJob(playerid) != JOB_NONE) SendClientMessage(playerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");
 							}
@@ -17620,9 +17486,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Эта работа доступна только с 2 уровня.");
 						        return ShowDialog(playerid, dialogid);
 					        }
-							if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB))
+							if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 30, JOB_BUSDRIVER))
 							{
-								AskAmount[playerid] = JOB_BUSDRIVER;
+								//AskAmount[playerid] = JOB_BUSDRIVER;
 								SendClientMessage(playerid, COLOR_WHITE, "Вы собрались устроиться {44B2FF}водителем автобуса "ASK_CONFIRM_INFO);
 								if(Job.GetPlayerJob(playerid) != JOB_NONE) SendClientMessage(playerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");
 							}
@@ -17638,9 +17504,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Эта работа доступна только с 3 уровня.");
 						        return ShowDialog(playerid, dialogid);
 					        }
-					        if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB))
+					        if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 30, JOB_TRUCKER))
 					        {
-								AskAmount[playerid] = JOB_TRUCKER;
+								//AskAmount[playerid] = JOB_TRUCKER;
 								SendClientMessage(playerid, COLOR_WHITE, "Вы собрались устроиться {44B2FF}дальнобойщиком "ASK_CONFIRM_INFO);
 								if(Job.GetPlayerJob(playerid) != JOB_NONE) SendClientMessage(playerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");
 							}
@@ -17656,9 +17522,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						        SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Эта работа доступна только с 4 уровня.");
 						        return ShowDialog(playerid, dialogid);
 					        }
-					        if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB))
+					        if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 30, JOB_MECHANIC))
 					        {
-								AskAmount[playerid] = JOB_MECHANIC;
+								//AskAmount[playerid] = JOB_MECHANIC;
 								SendClientMessage(playerid, COLOR_WHITE, "Вы собрались устроиться {44B2FF}механиком "ASK_CONFIRM_INFO);
 								if(Job.GetPlayerJob(playerid) != JOB_NONE) SendClientMessage(playerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");
 							}
@@ -17871,11 +17737,11 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						{
 							if(0 < GetPlayerWantedLevel(targetid) < 4)
 							{
-								if(AskPlayer(playerid, targetid, ASK_POLICE_FINE))
+								new wl = GetPlayerWantedLevel(targetid);
+								new finecash = wl * FINE_PER_WANTED;
+								if(AskPlayer(playerid, targetid, ASK_POLICE_FINE, 30, finecash))
 								{
-									new wl = GetPlayerWantedLevel(targetid);
-									new finecash = wl * FINE_PER_WANTED;
-									AskAmount[targetid] = finecash;
+									//AskAmount[targetid] = finecash;
 									PursuitCount[targetid] = 40;	//	ожидаем оплату штрафа
 									SendFormatMessage(playerid, COLOR_DBLUE, string, "Нарушителю %s выписана квитанция со штрафом, ожидайте оплату!", ReturnPlayerName(targetid));
 									SendFormatMessage(targetid, COLOR_DBLUE, string, "%s %s выписал вам штраф на %d$. Оплатить? "ASK_CONFIRM_INFO, GetPlayerRank(playerid), ReturnPlayerName(playerid), finecash);
@@ -26124,7 +25990,8 @@ COMMAND:live(playerid, params[])
 	if(TalkingLive[giveplayerid] != INVALID_PLAYER_ID){
 		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок уже дает интервью.");
 	}
-	if(AskPlayer(playerid, giveplayerid, ASK_INTERVIEW)){
+	if(AskPlayer(playerid, giveplayerid, ASK_INTERVIEW))
+	{
 		SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s'у дать вам интервью в прямом эфире", ReturnPlayerName(giveplayerid));
 		SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s хочет взять у вас интервью в прямом эфире "ASK_CONFIRM_INFO, ReturnPlayerName(playerid));
 	}
@@ -26205,7 +26072,7 @@ COMMAND:hi(playerid, params[])
 	GetPlayerPos(playerid, Arr3<pos>);
 	new Float:dist = GetDistanceFromPointToPoint(Arr3<tpos>, Arr3<pos>);
     new string[128];
-	if(AskWhat[playerid] == ASK_HI && AskOfferID[playerid] == giveplayerid)
+	if(GetPlayerAsk(playerid) == ASK_HI && GetPlayerAskOfferid(playerid) == giveplayerid)
     {	//  Подтверждение действий
     	if(dist > max_dist)
     		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
@@ -26253,7 +26120,8 @@ COMMAND:hi(playerid, params[])
 		if(dist > 5.0)
 			return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
 
-		if(AskPlayer(playerid, giveplayerid, ASK_HI)){
+		if(AskPlayer(playerid, giveplayerid, ASK_HI))
+		{
 			SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s хочет поздороваться с вами "ASK_CONFIRM_INFO, ReturnPlayerName(playerid));
 			SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s поздороваться с вами", ReturnPlayerName(giveplayerid));
 		}
@@ -26330,7 +26198,8 @@ COMMAND:box(playerid, params[])
 		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока слишком мало здоровья.");
 	}
 	new string[128];
-    if(AskPlayer(playerid, giveplayerid, ASK_BOX)){
+    if(AskPlayer(playerid, giveplayerid, ASK_BOX))
+	{
 		SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s вызывает вас на боксерский поединок "ASK_CONFIRM_INFO, ReturnPlayerName(playerid));
 		SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s боксерский поединок", ReturnPlayerName(giveplayerid));
 	}
@@ -26376,12 +26245,12 @@ COMMAND:pay(playerid, params[])
 	{
 		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете передавать за раз более $10.000.");
 	}
-	if(AskPlayer(playerid, giveplayerid, ASK_GIVE_MONEY))
+	if(AskPlayer(playerid, giveplayerid, ASK_GIVE_MONEY, 30, money))
 	{
 		new string[128];
 		SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s хочет передать вам %d$ "ASK_CONFIRM_INFO, ReturnPlayerName(playerid), money);
 		SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s взять от вас %d$", ReturnPlayerName(giveplayerid), money);
-		AskAmount[giveplayerid] = money;
+		//AskAmount[giveplayerid] = money;
 	}
 	else
 	{
@@ -26502,10 +26371,10 @@ COMMAND:fixveh(playerid, params[])
 		    {
 		    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Для ремонта в машине должен сидеть водитель.");
 		    }
-		    if(AskPlayer(playerid, giveplayerid, ASK_REPAIR))
+		    if(AskPlayer(playerid, giveplayerid, ASK_REPAIR, 30, price))
 		    {
 		    	new string[128];
-		    	AskAmount[giveplayerid] = price;
+		    	//AskAmount[giveplayerid] = price;
 				SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s хочет отремонтировать ваш авто за $%d "ASK_CONFIRM_INFO, ReturnPlayerName(playerid), price);
 				SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s отремонтировать его авто за $%d", ReturnPlayerName(giveplayerid), price);
 			}
@@ -26872,10 +26741,10 @@ COMMAND:veh(playerid, params[])
 	    if(price < 0)
 	        return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете указывать отрицательную цену.");
 
-        if(AskPlayer(playerid, giveplayerid, ASK_CAR_SELLTO))
+        if(AskPlayer(playerid, giveplayerid, ASK_CAR_SELLTO, 30, price, vehicleid))
         {
-			AskAmount[giveplayerid] = price;
-			AskAmount2[giveplayerid] = vehicleid;
+			// AskAmount[giveplayerid] = price;
+			// AskAmount2[giveplayerid] = vehicleid;
 			SendFormatMessage(playerid, COLOR_WHITE, string, "Игроку {B1C8FB}%s{FFFFFF} предложена '{B1C8FB}%s{FFFFFF}' за {B1C8FB}%d$", ReturnPlayerName(giveplayerid), ReturnVehicleName(vehicleid), price);
 			SendFormatMessage(giveplayerid, COLOR_WHITE, string, "{B1C8FB}%s{FFFFFF} предлагает вам '{B1C8FB}%s{FFFFFF}' за {B1C8FB}%d$ "ASK_CONFIRM_INFO, ReturnPlayerName(playerid), ReturnVehicleName(vehicleid), price);
 			PlayerAction(playerid, "протягивает договор купли-продажи транспорта.");

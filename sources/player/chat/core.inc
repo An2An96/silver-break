@@ -164,7 +164,7 @@ stock SendLocalMessage(playerid, targetid, const message[], anim = true)
 		{
 			ShowPlayerHint(playerid, "Вы пишите в локальный чат, при этом возле вас никого нет~n~~n~~y~/o - общий чат___________~n~/ask - задать вопрос", 8000);
 		}
-		if(IsPlayerInAnyVehicle(playerid) == 0 && gPlayerUsingLoopingAnim[playerid] == false)
+		if(!IsPlayerInAnyVehicle(playerid) && !IsPlayerLoopingAnim(playerid))
 		{
 		    new stoptime = strlen(message) * 100;
 		    KillTimer(talking_timer[playerid]);

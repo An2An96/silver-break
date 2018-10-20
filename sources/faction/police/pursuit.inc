@@ -4,6 +4,7 @@
 
 #define _police_pursuit_included
 
+#include "player/ask"
 #include "faction/police/header"
 
 Public: Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
@@ -763,7 +764,8 @@ Public: PursuitTimer(playerid)
 						}
 					}
 				}
-				if(AskWhat[playerid] == ASK_POLICE_FINE)	StopAsking(playerid);
+				if(GetPlayerAsk(playerid) == ASK_POLICE_FINE)
+					StopAsking(playerid);
 				PursuitHandsupCancel(playerid);
 				if(PursuitCrimTransit[playerid])
 				{
@@ -776,7 +778,7 @@ Public: PursuitTimer(playerid)
 	        }
 	        else
 	        {
-				if(AskWhat[playerid] != ASK_POLICE_FINE)
+				if(GetPlayerAsk(playerid) != ASK_POLICE_FINE)
 				{
 					new Float:curdist;
 		  	        new wl = GetPlayerWantedLevel(playerid);
@@ -824,7 +826,8 @@ Public: PursuitTimer(playerid)
 	    	{
 	    		if(--PursuitCount[playerid] <= 0)
 	       		{
-	       			if(AskWhat[playerid] == ASK_POLICE_FINE)	StopAsking(playerid);
+	       			if(GetPlayerAsk(playerid) == ASK_POLICE_FINE)
+						StopAsking(playerid);
 					ToggleCriminalDanger(playerid, true);
 					CrimePlayer(playerid, CRIME_RESIST);
 					if(PursuitCrimTransit[playerid])
@@ -850,7 +853,7 @@ Public: PursuitTimer(playerid)
 	        }
 	        else
 	        {
-	            if(AskWhat[playerid] != ASK_POLICE_FINE)
+	            if(GetPlayerAsk(playerid) != ASK_POLICE_FINE)
 				{
 		  	        new wl = GetPlayerWantedLevel(playerid);
 				    foreach(Cop, copid)

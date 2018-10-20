@@ -4,7 +4,8 @@
 
 #define _inventory_dialogs_included
 
-#include "../sources/faction/police/header"
+#include "player/ask"
+#include "faction/police/header"
 
 static string[256];
 
@@ -288,12 +289,12 @@ DialogResponse:Inv_GiveThing(playerid, response, listitem, inputtext[])
 				SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас столько нет.");
 				return Dialog_Show(playerid, Dialog:Inv.GiveThing);
 			}
-			if(AskPlayer(playerid, giveplayerid, ASK_GIVE_THING))
+			if(AskPlayer(playerid, giveplayerid, ASK_GIVE_THING, 30, price, inputCount, thing, option))
 			{
-				AskAmount[giveplayerid] = price;
-				AskAmount2[giveplayerid] = inputCount;
-				AskAmount3[giveplayerid] = thing;
-				AskAmount4[giveplayerid] = option;
+				// AskAmount[giveplayerid] = price;
+				// AskAmount2[giveplayerid] = inputCount;
+				// AskAmount3[giveplayerid] = thing;
+				// AskAmount4[giveplayerid] = option;
 				if(price)
 				{
 					SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s хочет продать вам '%s' (%d шт.) за %d$ "ASK_CONFIRM_INFO,  ReturnPlayerName(playerid), GetThingName(thing, option), inputCount, price);

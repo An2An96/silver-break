@@ -320,44 +320,6 @@ enum
 	EVENT_RACE,
 }
 
-enum
-{
-	ASK_NONE,
-	ASK_INVITE,
-	ASK_POLICE_FINE,
-	ASK_CAR_SELLTO,
-	ASK_INVITE_JOB,
-	ASK_HI,
-	ASK_GIVE_MONEY,
-	ASK_GIVE_THING,
-	ASK_INTERVIEW,
-	ASK_BOX,
-	ASK_BUY_HOTDOG,
-	ASK_SHOWPASS,
-	ASK_JOB_PARTNER,
-	ASK_REPAIR,
-	ASK_REFILL,
-}
-
-new const AskPrimory[] =
-{
-	0,	//	ASK_NONE
-	30,	//	ASK_INVITE
-	40,	//	ASK_POLICE_FINE
-	20,	//	ASK_CAR_SELLTO
-	25,	//	ASK_INVITE_JOB
-	10,	//	ASK_HI
-	20,	//	ASK_GIVE_MONEY
-	20,	//	ASK_GIVE_THING
-	20,	//	ASK_INTERVIEW
-	15, //	ASK_BOX
-	5,	//	ASK_BUY_HOTDOG
-	10,	//	ASK_SHOWPASS
-	15,	//	ASK_JOB_PARTNER
-	20,	//	ASK_REPAIR
-	20	//	ASK_REFILL
-};
-
 // Аттач (slot 0 - 9)
 enum
 {
@@ -1199,7 +1161,6 @@ new WantedTime[MAX_PLAYERS];
 new gPressedKeyAIM[MAX_PLAYERS];
 new gTargetVehicle[MAX_PLAYERS];
 new TalkingLive[MAX_PLAYERS] = { INVALID_PLAYER_ID, ... };
-new bool:gPlayerUsingLoopingAnim[MAX_PLAYERS];
 new bool:p_FellAnim[MAX_PLAYERS];
 new AmmoZone[11 * 3];
 
@@ -1295,16 +1256,6 @@ enum E_GPS
 	GPS_OBJ
 };
 new gps_Data[MAX_PLAYERS][E_GPS];
-
-//	Система запросов
-new AskOffer[MAX_PLAYERS][MAX_PLAYER_NAME],
-	AskOfferID[MAX_PLAYERS],
-	AskAmount[MAX_PLAYERS],
-	AskAmount2[MAX_PLAYERS],
-	AskAmount3[MAX_PLAYERS],
-	AskAmount4[MAX_PLAYERS],
-	AskTime[MAX_PLAYERS],
-	AskWhat[MAX_PLAYERS];
 
 //	Механик
 new MechanicCall = -1,

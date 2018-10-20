@@ -509,9 +509,9 @@ DialogResponse:Theft_Main(playerid, response, listitem, inputtext[])	//case DMOD
 					SendLocalMessage(targetid, playerid, "Уволься со своей нынешней работы, а затем приходи");
 					return Dialog_Show(playerid, Dialog:Theft_Main);
 				}
-				if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 60))
+				if(AskPlayer(INVALID_PLAYER_ID, playerid, ASK_INVITE_JOB, 60, JOB_THEFT))
 				{
-					AskAmount[playerid] = JOB_THEFT;
+					//AskAmount[playerid] = JOB_THEFT;
 					SendClientMessage(playerid, COLOR_LIGHTBLUE, "Вы собрались устроиться {FFFFFF}Автоугонщиком "ASK_CONFIRM_INFO);
 					SendClientMessage(playerid, COLOR_LIGHTRED, "Без разрешения от La Cosa Nostra, стоимость устройства $500!");	//	временно
 					//if(Job.GetPlayerJob(playerid) != JOB_NONE) SendClientMessage(playerid, COLOR_LIGHTRED, "Ваша нынешняя работа сбросится, если вы согласитесь!");

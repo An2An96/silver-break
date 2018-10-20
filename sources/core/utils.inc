@@ -21,14 +21,6 @@ new _rslt;
 #define unixtime()							gettime(_, _, _)
 #define IsNull(%0) 							((!(%0[0])) || (((%0[0]) == '\1') && (!(%0[1]))))  
 
-//  Keys
-#if !defined KEY_AIM
-	#define KEY_AIM 						KEY_HANDBRAKE
-#endif
-#define HOLDING(%0)							((newkeys & (%0)) == (%0))
-#define PRESSED(%0)							(((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
-#define RELEASED(%0)						(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))
-
 native gpci(playerid, buffer[], size);
 
 stock PreloadAnimLibs(playerid)

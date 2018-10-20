@@ -15,19 +15,26 @@
 		"Open-GTO/mxINI",
 		"Open-GTO/mdialog",
 		"karimcambridge/SAMP-foreach",
-		"ziggi/samp-plugin-timerfix"
+		"ziggi/samp-plugin-timerfix",
+		"silver-break/samp-easy-keys"
 	],
 	"runtime": {
 		"version": "0.3.7",
 		"mode": "server",
-		"echo": "-",
-		"rcon_password": "password",
+		"echo": "Loading configuration...",
+		"gamemodes": [
+			"SB"
+		],
+		"plugins": [
+			"MapAndreas"
+		],
+		"rcon_password": "1",
 		"port": 7777,
-		"hostname": "SA-MP Server",
-		"maxplayers": 50,
-		"language": "",
+		"hostname": "The Silver Break",
+		"maxplayers": 503,
+		"language": "Russian",
 		"mapname": "San Andreas",
-		"weburl": "www.sa-mp.com",
+		"weburl": "s-break.ru",
 		"gamemodetext": "Unknown",
 		"announce": true,
 		"lanmode": false,
@@ -35,7 +42,7 @@
 		"rcon": false,
 		"logqueries": false,
 		"sleep": 5,
-		"maxnpc": 0,
+		"maxnpc": 40,
 		"stream_rate": 1000,
 		"stream_distance": 200,
 		"onfoot_rate": 30,

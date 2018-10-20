@@ -12,8 +12,8 @@
 		"ziggi/FCNPC",
 		"pBlueG/SA-MP-MySQL",
 		"maddinat0r/sscanf",
-		"MapAndreas",
-		"timerfix"
+		"ziggi/samp-plugin-timerfix",
+		"MapAndreas"
 	],
 	"rcon_password": "1",
 	"port": 7777,
