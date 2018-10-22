@@ -1,10 +1,22 @@
-#if defined _core_interface_included
+#if defined _interface_core_included
 	#endinput
 #endif
 
-#define _core_interface_included
+#define _interface_core_included
 
-#include "interface/header"
+#include "interface/fader"
+#include "interface/hint"
+#include "interface/exp_line"
+#include "interface/progress"
+#include "interface/repbar"
+#include "interface/mission"
+#include "interface/visual_timer"
+#include "interface/cam_effect"
+#include "interface/hack_lock"
+#include "interface/buy_menu"
+#include "interface/select_menu"
+#include "interface/selecter"
+#include "interface/info_bar"
 
 //---	Global TD
 new
@@ -26,289 +38,6 @@ new PlayerText:BuyInfo,
 	PlayerText:debugTD,
 	PlayerText:p_JailPeriod,
 	PlayerText:PTD_AttachHealth[3];
-
-enum IFace.E_GROUP_INFO
-{
-	bool:giToggle,
-	bool:giShow,
-}
-
-static IFace.Groups[MAX_PLAYERS][IFace.E_GROUPS][IFace.E_GROUP_INFO];
-
-enum
-{
-	ADDICTION_DIRECT,
-	ADDICTION_OPPOSITE,
-}
-
-static IFace.E_GROUPS:IFace.Addictions[IFace.E_GROUPS][3][15];
-static IFace.AddictionsCount[IFace.E_GROUPS][3];
-
-//	This function changes visibility groups of text-draws because they require change total or temporary visibility
-//	element				- id of element which require change visibility
-//	toggle 				- state visibility which is required
-//	changeVisibility	- flag which is indicates on temporary change visibility
-stock IFace.ChangeGroupState(playerid, IFace.E_GROUPS:element, bool:toggle, bool:changeVisibility)
-{
-	if(!IsNull(IFace.GroupsInfo[element][gFunction]))
-	{
-		CallLocalFunction(IFace.GroupsInfo[element][gFunction], "ddd", playerid, toggle, changeVisibility);
-	}
-	else
-	{
-		switch(element)
-		{
-			case IFace.TV_EFFECT:
-			{
-				if(toggle)
-				{
-					TextDrawShowForPlayer(playerid, lbb);
-					TextDrawShowForPlayer(playerid, lbt);	
-				}
-				else
-				{
-					TextDrawHideForPlayer(playerid, lbt);
-					TextDrawHideForPlayer(playerid, lbb);
-				}
-			}
-			case IFace.LOGO:
-			{
-				if(toggle)
-				{
-					TextDrawShowForPlayer(playerid, LogoTD[0]);
-					TextDrawShowForPlayer(playerid, LogoTD[1]);
-				}
-				else
-				{
-					TextDrawHideForPlayer(playerid, LogoTD[0]);
-					TextDrawHideForPlayer(playerid, LogoTD[1]);
-				}
-			}
-			case IFace.RESTART:
-			{
-				if(toggle)
-				{
-					TextDrawShowForPlayer(playerid, RestartInfo);
-				}
-				else
-				{
-					TextDrawHideForPlayer(playerid, RestartInfo);
-				}
-			}
-		}
-	}
-
-	//	Активация/Деактивация мыши
-	if(IFace.GroupsInfo[element][gToggleMouse])
-	{
-		if(toggle)
-		{
-			SelectTextDraw(playerid, INTERFACE_SELECT_COLOR);
-		}
-		else
-		{
-			new bool:noCancelSelectTD;
-			for(new IFace.E_GROUPS:i; i < IFace.E_GROUPS; i++)
-			{
-				if(element == i)	continue;
-				if(IFace.GroupsInfo[i][gToggleMouse])
-				{
-					if(IFace.GetGroupToggleAndVisible(playerid, i))
-					{
-						noCancelSelectTD = true;
-						break;
-					}
-				}
-			}
-			if(noCancelSelectTD)	SelectTextDraw(playerid, INTERFACE_SELECT_COLOR);
-			else 					CancelSelectTextDraw(playerid);
-		}
-	}
-
-	IFace.ChangeLinksGroups(playerid, element, toggle);
-
-	CallLocalFunction("OnPlayerChangeInterface", "ddd", playerid, _:element, toggle);
-	return true;
-}
-
-//	Проверяет можно ли изменить состояние группы (element)
-Public: IFace.IsChangeGroupToggle(playerid, IFace.E_GROUPS:element, bool:toggle, bool:changeVisibility)
-{
-	if(changeVisibility)
-	{
-		if(!IFace.GetGroupToggle(playerid, element) || IFace.GetGroupVisible(playerid, element) == _:toggle)
-		{
-			return false;
-		}
-	}
-	else
-	{
-		if(IFace.GetGroupToggle(playerid, element) == _:toggle || !IFace.GetGroupVisible(playerid, element))
-		{
-			return false;
-		}
-	}
-	
-	if(toggle)
-	{
-		for(new IFace.E_GROUPS:j; j < IFace.E_GROUPS; j++)
-		{
-			if(element == j)	continue;
-
-			if(IFace.GetGroupToggleAndVisible(playerid, j))
-			{
-				for(new i = 0; i < IFace.AddictionsCount[j][ADDICTION_OPPOSITE]; i++)
-				{
-					if(IFace.Addictions[j][ADDICTION_OPPOSITE][i] == element)
-					{
-						return false;
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		for(new IFace.E_GROUPS:j; j < IFace.E_GROUPS; j++)
-		{
-			if(element == j)	continue;
-
-			if(IFace.GetGroupToggleAndVisible(playerid, j))
-			{
-				for(new i = 0; i < IFace.AddictionsCount[j][ADDICTION_DIRECT]; i++)
-				{
-					if(IFace.Addictions[j][ADDICTION_DIRECT][i] == element)
-					{
-						return false;
-					}
-				}
-			}
-		}
-	}
-
-	if(!CallLocalFunction("IsPlayerChangeInterface", "ddd", playerid, _:element, toggle))
-	{
-		return false;
-	}
-
-	switch(element)
-	{
-		#if defined _interface_progress_included
-			case IFace.PROGRESS:
-			{
-				if(toggle)
-				{
-					if(PlayerInfo[playerid][pJailTime])
-					{
-						PlayerTextDrawHide(playerid, p_JailPeriod);
-					}	
-				}
-				else
-				{
-					if(PlayerInfo[playerid][pJailTime])
-					{
-						PlayerTextDrawShow(playerid, p_JailPeriod);
-					}
-				}	
-			}
-		#endif
-	}
-	return true;
-}
-
-//	Изменяет состояния групп связанных с текущей изменяемой группой (element)
-IFace.ChangeLinksGroups(playerid, IFace.E_GROUPS:element, bool:toggle)
-{
-	//	перебираем все группы которые нужно скрыть
-	for(new i = 0; i < IFace.AddictionsCount[element][ADDICTION_OPPOSITE]; i++)
-	{
-		IFace.ChangeVisibleGroup(playerid, IFace.Addictions[element][ADDICTION_OPPOSITE][i], !toggle);
-	}
-
-	//	перебираем элементы которые надо показать
-	for(new i = 0; i < IFace.AddictionsCount[element][ADDICTION_DIRECT]; i++)
-	{
-		IFace.ToggleGroup(playerid, IFace.Addictions[element][ADDICTION_DIRECT][i], toggle);
-	}
-	return true;
-}
-
-stock IFace.ToggleGroup(playerid, IFace.E_GROUPS:element, bool:toggle)
-{
-	if(IFace.IsChangeGroupToggle(playerid, element, toggle, false))
-	{
-		IFace.Groups[playerid][element][giToggle] = toggle;
-		IFace.ChangeGroupState(playerid, element, toggle, false);
-	}
-	else
-	{
-		IFace.Groups[playerid][element][giToggle] = toggle;
-	}
-	return true;
-}
-
-stock IFace.ChangeVisibleGroup(playerid, IFace.E_GROUPS:element, bool:toggle)
-{
-	if(IFace.IsChangeGroupToggle(playerid, element, toggle, true))
-	{
-		IFace.Groups[playerid][element][giShow] = toggle;
-		IFace.ChangeGroupState(playerid, element, toggle, true);
-	}
-	else
-	{
-		IFace.Groups[playerid][element][giShow] = toggle;
-	}
-	return true;
-}
-
-stock IFace.GetGroupToggle(playerid, IFace.E_GROUPS:element)
-{
-	return IFace.Groups[playerid][element][giToggle];
-}
-
-stock IFace.GetGroupVisible(playerid, IFace.E_GROUPS:element)
-{
-	return IFace.Groups[playerid][element][giShow];
-}
-
-stock IFace.GetGroupToggleAndVisible(playerid, IFace.E_GROUPS:element)
-{
-	return (IFace.Groups[playerid][element][giToggle] && IFace.Groups[playerid][element][giShow]);
-}
-
-stock IFace.ZeroVars(playerid)
-{
-	for(new IFace.E_GROUPS:e; e < IFace.E_GROUPS; e++)
-	{
-		IFace.Groups[playerid][e][giToggle] = false;
-		IFace.Groups[playerid][e][giShow] 	= true;
-		IFace.ChangeGroupState(playerid, e, false, false);
-	}
-}
-
-stock IFace.AddWantShow(IFace.E_GROUPS:element, IFace.E_GROUPS:showElement)
-{
-	if(IFace.AddictionsCount[element][ADDICTION_DIRECT] >= sizeof(IFace.Addictions[][]))
-	{
-		printf("[WARNING]: Function IFace.AddWantShow: element not added, because the array is full");
-		return false;
-	}
-	IFace.Addictions[element][ADDICTION_DIRECT][ IFace.AddictionsCount[element][ADDICTION_DIRECT] ] = showElement;
-	IFace.AddictionsCount[element][ADDICTION_DIRECT]++;
-	return true;
-}
-
-stock IFace.AddWantHide(IFace.E_GROUPS:element, IFace.E_GROUPS:hideElement)
-{
-	if(IFace.AddictionsCount[element][ADDICTION_OPPOSITE] >= sizeof(IFace.Addictions[][]))
-	{
-		printf("[WARNING]: Function IFace.AddWantHide: element not added, because the array is full");
-		return false;
-	}
-	IFace.Addictions[element][ADDICTION_OPPOSITE][ IFace.AddictionsCount[element][ADDICTION_OPPOSITE] ] = hideElement;
-	IFace.AddictionsCount[element][ADDICTION_OPPOSITE]++;
-	return true;
-}
 
 //	Spec panel
 Interface_SpecPanel_Toggle(playerid, toggle)
@@ -405,14 +134,6 @@ stock UpdateAttackHealth(playerid)
 //
 public OnPlayerClickTextDraw(playerid, Text:clickedid)
 {
-	//////////	#Fix	//////////
-	if(clickedid == Text:INVALID_TEXT_DRAW && GetPVarInt(playerid, "CancelSelectTD"))
-	{
-		DeletePVar(playerid, "CancelSelectTD");
-		return true;
-	}
-	//////////////////////////////
-
 	#if defined _inventory_interface_included
 		Callback: IFace.Inv_OnPlayerClickTD(playerid, clickedid);
 	#endif
@@ -650,7 +371,7 @@ public OnPlayerClickTextDraw(playerid, Text:clickedid)
 		}
 	}
 
-    return false;
+    return (0);
 }// end of OnPlayerClickTextDraw
 
 public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
@@ -681,7 +402,8 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
 	    if(playertextid == tdChooseItemR)		ChoosePlayerVehicle(playerid, 2);
 	    else if(playertextid == tdChooseItemL)	ChoosePlayerVehicle(playerid, 3);
     }
-    return false;
+
+    return (0);
 }
 
 Interface_StaticCreate()
@@ -1048,13 +770,28 @@ Interface_PlayerCreate(playerid)
 
 Public: IFace.OnGameModeInit()
 {
-	for(new i = 0; i < MAX_PLAYERS; i++)
-	{
-		for(new IFace.E_GROUPS:e; e < IFace.E_GROUPS; e++)
-		{
-			IFace.Groups[i][e][giShow] = true;
-		}
-	}
+	//	Create Groups
+	IFace.CreateGroup(IFace.TV_EFFECT,			"", false);
+	IFace.CreateGroup(IFace.EXP_LINE,			#IFace.ExpLine_Toggle, false);
+	IFace.CreateGroup(IFace.PROGRESS,			#IFace.Progress_Toggle, false);
+	IFace.CreateGroup(IFace.REPBAR,				#IFace.RepBar_Toggle, false);
+	IFace.CreateGroup(IFace.MISSION_MES,		#IFace.Mission_Message_Toggle, false);
+	IFace.CreateGroup(IFace.VISUAL_TIMER,		#IFace.VisualTimer_Toggle, false);
+	IFace.CreateGroup(IFace.HACK_LOCK,			#IFace.HackLock_Toggle, false);
+	IFace.CreateGroup(IFace.CAM_EFFECT,			#IFace.CamEffect_Toggle, false);
+	IFace.CreateGroup(IFace.BUY_MENU,			#IFace.BuyMenu_Toggle, true);
+	IFace.CreateGroup(IFace.SELECT_MENU,		#IFace.SelectMenu_Toggle, true);
+	IFace.CreateGroup(IFace.SELECTER,			#IFace.Selecter_Toggle, true);
+	IFace.CreateGroup(IFace.INTERFACE,			#IFace.Player_Toggle, false);
+	IFace.CreateGroup(IFace.LOGO,				"", false);
+	IFace.CreateGroup(IFace.RESTART,			"", false);
+	IFace.CreateGroup(IFace.WANTED,				#IFace.Wanted_Toggle, false);
+	IFace.CreateGroup(IFace.INVENTORY,			#IFace.Inv_Toggle, true);
+	IFace.CreateGroup(IFace.PHONE,				#IFace.Phone_Toggle, false);
+	IFace.CreateGroup(IFace.HOUSE_ENTER_MENU,	#IFace.House_EnterMenuToggle, false);
+	IFace.CreateGroup(IFace.HOUSE_FUR,			#IFace.House_FurToggle, false);
+	IFace.CreateGroup(IFace.WORK_INFO,			#IFace.Job_Toggle, false);
+	IFace.CreateGroup(IFace.SPEEDO,				#IFace.Veh_Toggle, false);
 
 	Interface_StaticCreate();
 
@@ -1190,218 +927,119 @@ IFace.Load_Player(playerid)
 	#endif
 }
 
-//	System
-stock _FormatTextDrawString(const string[])
+public IsPlayerChangeInterface(playerid, element, bool:toggle)
 {
-	new message[256];
-	for(new i, c, bool:ccode; string[i] != EOS; i++) 
+	switch(element)
 	{
-		if(string[i] == '~') 
+		case IFace.SPEEDO:
 		{
-			ccode ^= true;
-			if (!ccode) 
+			if(toggle)
 			{
-				switch (string[i - 1]) 
-				{
-					case 'r':	strins(message, "{DE2121}", c);
-					case 'y':	strins(message, "{CFB53B}", c);
-					case 'b':	strins(message, "{3039F1}", c);
-					case 'g':	strins(message, "{47A76A}", c);
-					case 'w':	strins(message, "{FFFFFF}", c);
-					case 'p':	strins(message, "{BB00DD}", c);
-					default:	continue;
-				}
-				c += 8;
+				if(!IFace.GetGroupToggleAndVisible(playerid, IFace.INTERFACE))
+					return (0);
 			}
 		}
-		else if(!ccode) 
-		{
-			message[c++] = string[i];
-		}
 	}
-	return message;
+	return (1);
 }
 
-stock getLinesNumber(string[], max_line_len)
+public OnPlayerChangeInterface(playerid, element, bool:toggle)
 {
-	new lines = 1;
-	for(new i, line_len, word_len, bool:tilda; string[i] != EOS; i++)
+	switch(element)
 	{
-		if(tilda)
+		case IFace.INTERFACE:
 		{
-			if(string[i] == 'n')
+			IFace.ChangeVisibleGroup(playerid, IFace.SPEEDO, toggle);
+			if(RestTime > 0)
 			{
-				line_len = 0;
-				word_len = 0;
-			    lines++;
-			}
-			else if(string[i] == '~') tilda = false;
-			continue;
-		}
-		else if(string[i] == '~') 
-		{
-			tilda = true;
-			continue;
-		}
-		
-		if(string[i] != ' ')
-		{
-			word_len ++;
-			if(line_len >= max_line_len || word_len + line_len >= max_line_len)
-			{
-			    line_len = 0;
-			    lines++;
+				IFace.ToggleGroup(playerid, IFace.RESTART, toggle);
 			}
 		}
-		else
-		{
-			line_len += word_len + 1;
-			word_len = 0;
-		}
-	}
-	return lines;
-}
 
-stock RusText(const text[], rusif = true)
-{
-	new length = strlen(text),
-		gametext[256], j = 0;
-	if(rusif)
-	{
-		strput(gametext, text);
-		//for(new i = 0; i < length; i++)
-		//{
-		//	j = text[i] - 192;
-		//	gametext[i] = (0 <= j < sizeof(RusChars)) ? RusChars[j] : text[i];
-		//}
-	}
-	else
-	{
-		for(new i; i < length; i++)
+	#if defined _inventory_interface_included
+		case IFace.INVENTORY:
 		{
-			switch(text[i])
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _interface_select_menu_included
+		case IFace.SELECT_MENU:
+		{
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _player_phone_included
+		case IFace.PHONE:
+		{
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _interface_progress_included
+		case IFace.PROGRESS:
+		{
+			if (toggle)
 			{
-				case 'а': gametext[j++] = 'a';
-				case 'А': gametext[j++] = 'A';
-				case 'б': gametext[j++] = 'b';
-				case 'Б': gametext[j++] = 'B';
-				case 'в': gametext[j++] = 'v';
-				case 'В': gametext[j++] = 'V';
-				case 'г': gametext[j++] = 'g';
-				case 'Г': gametext[j++] = 'G';
-				case 'д': gametext[j++] = 'd';
-				case 'Д': gametext[j++] = 'D';
-				case 'е': gametext[j++] = 'e';
-				case 'Е': gametext[j++] = 'E';
-				case 'ё': gametext[j++] = 'e';
-				case 'Ё': gametext[j++] = 'E';
-				case 'ж':
+				if (PlayerInfo[playerid][pJailTime])
 				{
-					gametext[j++] = 'z';
-					gametext[j++] = 'h';
-				}
-				case 'Ж':
+					PlayerTextDrawHide(playerid, p_JailPeriod);
+				}	
+			}
+			else
+			{
+				if (PlayerInfo[playerid][pJailTime])
 				{
-					gametext[j++] = 'Z';
-					gametext[j++] = 'h';
+					PlayerTextDrawShow(playerid, p_JailPeriod);
 				}
-				case 'з': gametext[j++] = 'z';
-				case 'З': gametext[j++] = 'Z';
-				case 'и': gametext[j++] = 'i';
-				case 'И': gametext[j++] = 'I';
-				case 'й': gametext[j++] = 'j';
-				case 'Й': gametext[j++] = 'J';
-				case 'к': gametext[j++] = 'k';
-				case 'К': gametext[j++] = 'K';
-				case 'л': gametext[j++] = 'l';
-				case 'Л': gametext[j++] = 'L';
-				case 'м': gametext[j++] = 'm';
-				case 'М': gametext[j++] = 'M';
-				case 'н': gametext[j++] = 'n';
-				case 'Н': gametext[j++] = 'N';
-				case 'о': gametext[j++] = 'o';
-				case 'О': gametext[j++] = 'O';
-				case 'п': gametext[j++] = 'p';
-				case 'П': gametext[j++] = 'P';
-				case 'р': gametext[j++] = 'r';
-				case 'Р': gametext[j++] = 'R';
-				case 'с': gametext[j++] = 's';
-				case 'С': gametext[j++] = 'S';
-				case 'т': gametext[j++] = 't';
-				case 'Т': gametext[j++] = 'T';
-				case 'у': gametext[j++] = 'u';
-				case 'У': gametext[j++] = 'U';
-				case 'ф': gametext[j++] = 'f';
-				case 'Ф': gametext[j++] = 'F';
-				case 'х': gametext[j++] = 'h';//kh
-				case 'Х': gametext[j++] = 'H';
-				case 'ц': gametext[j++] = 'c';//tc
-				case 'Ц': gametext[j++] = 'C';
-				case 'ч':
-				{
-				    gametext[j++] = 'c';
-				    gametext[j++] = 'h';
-				}
-				case 'Ч':
-				{
-				    gametext[j++] = 'C';
-				    gametext[j++] = 'h';
-				}
-				case 'ш':
-				{
-				    gametext[j++] = 's';
-				    gametext[j++] = 'h';
-				}
-				case 'Ш':
-				{
-				    gametext[j++] = 'S';
-				    gametext[j++] = 'h';
-				}
-				case 'щ':
-				{
-				    gametext[j++] = 's';
-				    gametext[j++] = 'c';
-				    gametext[j++] = 'h';
-				}
-				case 'Щ':
-				{
-				    gametext[j++] = 'S';
-				    gametext[j++] = 'c';
-				    gametext[j++] = 'h';
-				}
-				case 'ъ','Ъ':
-				{
-					gametext[j++] = '\'';
-					gametext[j++] = '\'';
-				}
-				case 'ы': gametext[j++] = 'y';
-				case 'Ы': gametext[j++] = 'Y';
-				case 'ь', 'Ь': gametext[j++] = '\''; //'
-				case 'э': gametext[j++] = 'e';
-				case 'Э': gametext[j++] = 'E';
-				case 'ю':
-				{
-					gametext[j++] = 'e';
-					gametext[j++] = 'u';
-				}
-				case 'Ю':
-				{
-					gametext[j++] = 'E';
-					gametext[j++] = 'u';
-				}
-				case 'я':
-				{
-					gametext[j++] = 'y';
-					gametext[j++] = 'a';
-				}
-				case 'Я':
-				{
-					gametext[j++] = 'Y';
-					gametext[j++] = 'a';
-				}
-				default: gametext[j++] = text[i];
+			}	
+		}
+	#endif
+
+		case IFace.TV_EFFECT:
+		{
+			if (toggle)
+			{
+				TextDrawShowForPlayer(playerid, lbb);
+				TextDrawShowForPlayer(playerid, lbt);	
+			}
+			else
+			{
+				TextDrawHideForPlayer(playerid, lbt);
+				TextDrawHideForPlayer(playerid, lbb);
+			}
+		}
+		case IFace.LOGO:
+		{
+			if (toggle)
+			{
+				TextDrawShowForPlayer(playerid, LogoTD[0]);
+				TextDrawShowForPlayer(playerid, LogoTD[1]);
+			}
+			else
+			{
+				TextDrawHideForPlayer(playerid, LogoTD[0]);
+				TextDrawHideForPlayer(playerid, LogoTD[1]);
+			}
+		}
+		case IFace.RESTART:
+		{
+			if (toggle)
+			{
+				TextDrawShowForPlayer(playerid, RestartInfo);
+			}
+			else
+			{
+				TextDrawHideForPlayer(playerid, RestartInfo);
 			}
 		}
 	}
-	return gametext;
+	return (1);
 }

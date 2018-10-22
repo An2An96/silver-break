@@ -49,20 +49,9 @@
 #include "utils/world_text"
 #include "utils/point_utils"
 
-SB_CancelSelectTextDraw(playerid)
-{
-	SetPVarInt(playerid, "CancelSelectTD", true);
-	CancelSelectTextDraw(playerid);
-	return true;
-}
-#if defined _ALS_CancelSelectTextDraw
-	#undef CancelSelectTextDraw
-#else
-	#define _ALS_CancelSelectTextDraw
-#endif
-#define CancelSelectTextDraw	SB_CancelSelectTextDraw
-
 //	Core
+#include "core/timers"
+#include "core/interface"
 #include "core/colors"
 #include "core/const_data"
 #include "core/utils"
@@ -70,7 +59,6 @@ SB_CancelSelectTextDraw(playerid)
 #include "core/vw_list"
 #include "core/config"
 #include "core/global_scope"
-#include "core/timers"
 #include "core/actors"
 
 //	Modules
@@ -108,21 +96,7 @@ SB_CancelSelectTextDraw(playerid)
 //	Events
 #include "events/races/core"
 
-//	Interface
-#include "interface/fader"
-#include "interface/hint"
-#include "interface/exp_line"
-#include "interface/progress"
-#include "interface/repbar"
-#include "interface/mission"
-#include "interface/visual_timer"
-#include "interface/cam_effect"
-#include "interface/hack_lock"
-#include "interface/buy_menu"
-#include "interface/select_menu"
-#include "interface/selecter"
-#include "interface/info_bar"
-#include "interface/core"
+#include "interface/core"	//	Interface
 
 stock MySetPlayerMarkerForPlayer(playerid, showplayerid, color, bool:oversee = false)
 {
@@ -180,17 +154,6 @@ Public: FixPlayerFreeze(playerid)
 		ClearAnimations(playerid);
 	}
 	return true;
-}
-
-stock ReturnActorName(actorid)
-{
-	new actorname[MAX_PLAYER_NAME];
-	for(new i = 0; i < sizeof(ACTOR); i++)
-	{
-		if(ACTOR[i] == actorid)
-			format(actorname, sizeof(actorname), "%s", ActorInfo[i][a_Name]);
-	}
-	return actorname;
 }
 
 stock GetPlayerUsername(plid)
@@ -710,8 +673,9 @@ IsPlayerInJail(playerid)
 {
 	new Float:X, Float:Y, Float:Z;
 	GetPlayerPos(playerid, X, Y, Z);
-	if(261.0 <= X <= 266.7 && 74.5 <= Y <= 89.5 && 999.4 <= Z < 1003.85) return true;
-	else return false;
+	if(261.0 <= X <= 266.7 && 74.5 <= Y <= 89.5 && 999.4 <= Z < 1003.85)
+		return (1);
+	return (0);
 }
 
 SendRemainingBanTime(playerid, banunix)
@@ -778,41 +742,6 @@ UpdateWeather(weatherid = 0)
     else NowWeather = weatherid;
 	foreach(Player, i)	UpdatePlayerWeather(i);
 	return true;
-}
-
-stock GetRandomModel()
-{
-	for(new i = 0; i < 100; i++)
-	{
-	    new idx = random(sizeof(VehParams));
-	    if(VehParams[idx][VEH_CLASS] == VC_SPECIAL) continue;
-	    if(VehParams[idx][VEH_DONATE] == true) continue;
-		switch(VehParams[idx][VEH_MTYPE])
-		{
-		    case MTYPE_TRUCK, MTYPE_BOAT, MTYPE_PLANE, MTYPE_HELIC:	continue;
-		}
-		return idx + 400;
-	}
-	return 0;
-}
-
-stock GetRandomVehicle(playerid, Float:MaxDist = FLOAT_INFINITY)
-{// Возвращает vehicleid, доступную для угона или миссии (закрытую)
-    new vehlist[MAX_VEHICLES], idx = 0;
-    new Float:X, Float:Y, Float:Z;
-	foreach(Vehicle, v)
-	{
-	    if(VehInfo[v][vLocked] == 999) continue;
-	    if(CarInfo[v][cType] == C_TYPE_DEFAULT && CarInfo[v][cOwnerID] == INVALID_PLAYER_ID && CarInfo[v][cOwnerID] == INVALID_PLAYER_ID && VehInfo[v][vPlayers] == 0)
-	    {
-	        GetVehiclePos(v, X, Y, Z);
-		    if(100 < GetDistanceFromMeToPoint(playerid, X, Y, Z) < MaxDist)
-		    {
-		        vehlist[idx++] = v;
-		    }
-	    }
-	}
-	return vehlist[random(idx)];
 }
 
 Public: MyMoveObject(objectid, Float:X, Float:Y, Float:Z, Float:Speed, Float:RotX, Float:RotY, Float:RotZ)
@@ -1064,46 +993,48 @@ public OnPlayerEnterReceived(playerid, enterid)
 
 		// Заприваченные дома банд
 		new gangid = 0;
-		if(enterid == E_GROOVE)									gangid = F_GROVE;
-		else if(enterid == E_BALLAS)							gangid = F_BALLAS;
-		else if(enterid == E_VAGOS)								gangid = F_VAGOS;
-		else if(enterid == E_AZTECAS || enterid == E_AZTECAS2)	gangid = F_AZTECAS;
-		else if(enterid == E_RIFA)								gangid = F_RIFA;
-		if(gangid > 0)
+		if (enterid == E_GROOVE)
+			gangid = F_GROVE;
+		else if (enterid == E_BALLAS)
+			gangid = F_BALLAS;
+		else if (enterid == E_VAGOS)
+			gangid = F_VAGOS;
+		else if (enterid == E_AZTECAS || enterid == E_AZTECAS2)
+			gangid = F_AZTECAS;
+		else if (enterid == E_RIFA)
+			gangid = F_RIFA;
+		if (gangid > 0 && PlayerInfo[playerid][pFaction] != gangid)
 		{
-		    if(PlayerInfo[playerid][pFaction] != gangid)
-		    {
-		        new string[64]; // ~g~Grove Street~n~~w~only
-		        format(string, 128, "~%c~%s~n~~w~only", GetGangColorChart(gangid), GetFactionName(gangid));
-		        GameTextForPlayer(playerid, string, 4000, 4);
-		        return false;
-		    }
+			new string[64]; // ~g~Grove Street~n~~w~only
+			format(string, 128, "~%c~%s~n~~w~only", GetGangColorChart(gangid), GetFactionName(gangid));
+			GameTextForPlayer(playerid, string, 4000, 4);
+			return (0);
 		}
 		//	LSPD
-		if(PlayerInfo[playerid][pFaction] != F_POLICE)
+		if (PlayerInfo[playerid][pFaction] != F_POLICE)
 		{
 			if(enterid == E_LSPD_GARAGE || enterid == E_LSPD_ROOF || enterid == E_LSPD_AMMO)
 			{
 				GameTextForPlayer(playerid, "~r~Access denied", 3000, 4);
-	        	return false;
+				return (0);
 			}
 		}
 		//	PRISON
-	    if(PlayerInfo[playerid][pJailTime] > 0)
-	    {
-	    	if(enterid == E_PRISON_EAT && LastPrisonStatus != 2)
+		if(PlayerInfo[playerid][pJailTime] > 0)
+		{
+			if(enterid == E_PRISON_EAT && LastPrisonStatus != 2)
 			{
-	            GameTextForPlayer(playerid, "~r~Close", 1000, 1);
-	        	return false;
+				GameTextForPlayer(playerid, "~r~Close", 1000, 1);
+				return (0);
 			}
 			else if(enterid == E_PRISON2 && LastPrisonStatus != 4)
 			{
-	            GameTextForPlayer(playerid, "~r~Close", 1000, 1);
-	        	return false;
+				GameTextForPlayer(playerid, "~r~Close", 1000, 1);
+				return (0);
 			}
-	    }
+		}
 	}
-	return true;
+	return (1);
 }
 
 public OnPlayerExitReceived(playerid, exitid)
@@ -3996,7 +3927,7 @@ public OnGameModeInit()
 	#if defined _vehicle_core_included
 		Callback: Vehicle.OnGameModeInit();
 	#endif	
-	#if defined _core_interface_included
+	#if defined _interface_core_included
 		Callback: IFace.OnGameModeInit();
 	#endif
 	#if defined	_job_job_theft_included
@@ -6394,9 +6325,6 @@ ZeroVars(playerid, source = 0)
 			g_SpawnInfo[playerid][e] = 0;
 
 		//////////		Modules		//////////
-		#if defined _core_interface_included
-			IFace.ZeroVars(playerid);
-		#endif
 		#if defined _player_achieve_included
 			Achieve_ZeroVars(playerid);
 		#endif
@@ -6582,7 +6510,7 @@ public OnPlayerConnect(playerid)
 	PreloadAnimLib(playerid, "MISC");			//	Чтобы проигралась анимка актера
 	PreloadAnimLib(playerid, "COP_AMBIENT");	//	Чтобы проигралась анимка в кат сценке
 
-	#if defined _core_interface_included
+	#if defined _interface_core_included
 		Callback: IFace.OnPlayerConnect(playerid);
 	#endif
 
@@ -12528,10 +12456,18 @@ public OnPlayerUpdate(playerid)
 				new Float:lX = floatabs(X - gps_Data[playerid][GPS_POS][0]);
 				new Float:lY = floatabs(Y - gps_Data[playerid][GPS_POS][1]);
 				new Float:angle = atan2(lX, lY);
-				if(X > gps_Data[playerid][GPS_POS][0] && Y > gps_Data[playerid][GPS_POS][1])		angle = 180.0 + (90.0 - angle);
-				else if(X > gps_Data[playerid][GPS_POS][0] && Y < gps_Data[playerid][GPS_POS][1])	angle += 90.0;
-				else if(X < gps_Data[playerid][GPS_POS][0] && Y > gps_Data[playerid][GPS_POS][1])	angle += 270.0;
-				else if(X < gps_Data[playerid][GPS_POS][0] && Y < gps_Data[playerid][GPS_POS][1])	angle = (90 - angle);
+				if(X > gps_Data[playerid][GPS_POS][0]
+					&& Y > gps_Data[playerid][GPS_POS][1])
+					angle = 180.0 + (90.0 - angle);
+				else if(X > gps_Data[playerid][GPS_POS][0]
+					&& Y < gps_Data[playerid][GPS_POS][1])
+					angle += 90.0;
+				else if(X < gps_Data[playerid][GPS_POS][0]
+					&& Y > gps_Data[playerid][GPS_POS][1])
+					angle += 270.0;
+				else if(X < gps_Data[playerid][GPS_POS][0]
+					&& Y < gps_Data[playerid][GPS_POS][1])
+					angle = (90 - angle);
 				angle -= A;
 				AttachDynamicObjectToVehicle(gps_Data[playerid][GPS_OBJ], vehicleid, 0.0, 0.0, 2.0, 0.0, -100.0, angle);
 			}
@@ -12632,8 +12568,10 @@ public OnPlayerUpdate(playerid)
 
 public OnPlayerStreamIn(playerid, forplayerid)
 {// playerid попадает в зону для forplayerid
-	if(InMask[forplayerid])	ShowPlayerNameTagForPlayer(playerid, forplayerid, false);
-	else 					ShowPlayerNameTagForPlayer(playerid, forplayerid, pNameTags[playerid]);
+	if(InMask[forplayerid])
+		ShowPlayerNameTagForPlayer(playerid, forplayerid, false);
+	else
+		ShowPlayerNameTagForPlayer(playerid, forplayerid, pNameTags[playerid]);
 	return 1;
 }
 
@@ -26120,65 +26058,6 @@ public OnPlayerHackLock(playerid, success)
 	if(success)
 	{
 		BreakCar(playerid, BREAK_CAR_HACKING, 1);
-	}
-	return (1);
-}
-
-public IsPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
-{
-	switch(element)
-	{
-		case IFace.SPEEDO:
-		{
-			if(toggle)
-			{
-				if(!IFace.GetGroupToggleAndVisible(playerid, IFace.INTERFACE))
-					return (0);
-			}
-		}
-	}
-	return (1);
-}
-
-public OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
-{
-	switch(element)
-	{
-		case IFace.INTERFACE:
-		{
-			IFace.ChangeVisibleGroup(playerid, IFace.SPEEDO, toggle);
-			if(RestTime > 0)
-			{
-				IFace.ToggleGroup(playerid, IFace.RESTART, toggle);
-			}
-		}
-
-		#if defined _inventory_interface_included
-			case IFace.INVENTORY:
-			{
-				#if defined _interface_hint_included
-					UpdatePlayerHints(playerid);
-				#endif
-			}
-		#endif
-
-		#if defined _interface_select_menu_included
-			case IFace.SELECT_MENU:
-			{
-				#if defined _interface_hint_included
-					UpdatePlayerHints(playerid);
-				#endif
-			}
-		#endif
-
-		#if defined _player_phone_included
-			case IFace.PHONE:
-			{
-				#if defined _interface_hint_included
-					UpdatePlayerHints(playerid);
-				#endif
-			}
-		#endif
 	}
 	return (1);
 }
