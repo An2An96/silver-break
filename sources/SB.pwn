@@ -70,6 +70,7 @@ SB_CancelSelectTextDraw(playerid)
 #include "core/vw_list"
 #include "core/config"
 #include "core/global_scope"
+#include "core/timers"
 #include "core/actors"
 
 //	Modules
@@ -4404,8 +4405,6 @@ public OnGameModeInit()
 
 	//////////	Timers 	//////////
 	SetTimer("AnticheatTimer", 950, true);
-	SetTimer("EverySecondTimer", 950, true);
-	SetTimer("QuickTimer", 100, true);
 
 	//------------------------------[Others]------------------------------------
 	CreateStaticMenu();     //	Меню
@@ -4875,8 +4874,9 @@ TogglePlayerStreamerAllItem(playerid, toggle)
 	return true;
 }
 
-Public: PlayerEverySecondTimer(i)
+public OnPlayerEverySecondTimer(playerid)
 {
+	new i = playerid;
  	if(gPlayerLogged[i] == false)
     {
     	if(LOGTIMEOUT && ++gLoggedTime[i] == MAX_LOGGED_TIME)
@@ -4911,8 +4911,11 @@ Public: PlayerEverySecondTimer(i)
 	{
 		GameTextForPlayer(i, "~r~Dialog canceled", 3000, 4);
 		DialogTimeleft[i] = INVALID_DATA;
-		CallLocalFunction("OnDialogResponse", "iiiis", i, Dialogid[i], 0, 0, " ");
-		if(DialogTimeleft[i] == INVALID_DATA)	MyHidePlayerDialog(i);	//	если в OnDialogResponse не показало нового диалога, закрываем текущий
+		CallLocalFunction(
+			"OnDialogResponse","iiiis",i, Dialogid[i], 0, 0, " ");
+		// Eсли в OnDialogResponse не показало нового диалога, закрываем текущий
+		if(DialogTimeleft[i] == INVALID_DATA)
+			MyHidePlayerDialog(i);	
 	}
 	//	--- Counters
 	if(p_PrisonTimer{i})					SetPlayerVisualTimer(i, PrisonStatusTime, false);	//	Update Prison Timer
@@ -5128,7 +5131,10 @@ Public: PlayerEverySecondTimer(i)
 		//---   Robbery
 		if(robbery_biz[i] == (-1))
 		{
-			if(biz != INVALID_DATA && targetactor == BizInfo[biz][bActor] && 22 <= GetPlayerWeapon(i) <= 33 && IsGang(PlayerInfo[i][pFaction]))
+			if(biz != INVALID_DATA
+				&& targetactor == BizInfo[biz][bActor]
+				&& 22 <= GetPlayerWeapon(i) <= 33
+				&& IsGang(PlayerInfo[i][pFaction]))
 			{
 				RobberyStart(i);
 			}
@@ -5141,29 +5147,6 @@ Public: PlayerEverySecondTimer(i)
 				SendMissionMessage(i, string, 1300);
 			}
 			else	RobberyFinish(i, 1, false);
-		}
-		//---   box
-		if (IsPlayerBoxing(i))
-		{
-			if (GetDistanceFromMeToPoint(i, Arr3<BoxingRingPos[ gPlayerRing[i] ][RING_POS]>) > 4.0)
-			{
-				new lr = GetPVarInt(i, "LeaveRing");
-				if (lr == 10)
-				{
-					FinishBox(i, 0);
-					DeletePVar(i, "LeaveRing");
-				}
-				else
-				{
-					SetPVarInt(i, "LeaveRing", lr + 1);
-					format(string, sizeof(string), "~n~~r~%d sec~n~~w~Вернитесь на ринг!", 10 - lr);
-					GameTextForPlayer(i, RusText(string, isRus(i)), 1000, 4);
-				}
-			}
-			else if (GetPVarInt(i, "LeaveRing") > 0)
-			{
-				DeletePVar(i, "LeaveRing");
-			}
 		}
         //	---
         if(PlayerCuffedTime[i] > 0)
@@ -5521,21 +5504,23 @@ Public: PlayerEverySecondTimer(i)
 	return true;
 }
 
-Public: EverySecondTimer()
+public	OnEverySecondTimer()
 {
 	new string[128];
 	new hour, minute, second;
 	new timeUNIX = gettime(hour, minute, second);
 	//new Float:pHealth;
-	if(OldMinute != minute) EveryMinuteTimer();
+
+	if (OldMinute != minute)
+		EveryMinuteTimer();
 	//  Время периодов в тюрьме
-	if(--PrisonStatusTime == 0)
+	if (--PrisonStatusTime == 0)
 	{
 		if(++LastPrisonStatus == 5)	LastPrisonStatus = 1;
 		OnPrisonStatusChange(LastPrisonStatus);
 	}
 	// Полицейские миссии
-	if(Iter_Count(Cop) > 0 && random(8 * 60 / Iter_Count(Cop)) == 0)//&& PoliceMission[sizeof(PoliceMission) - 1][pmNum] == 0)
+	if (Iter_Count(Cop) > 0 && random(8 * 60 / Iter_Count(Cop)) == 0)//&& PoliceMission[sizeof(PoliceMission) - 1][pmNum] == 0)
 	{
 	    PoliceMissionCreate();
 	}
@@ -5625,42 +5610,6 @@ Public: EverySecondTimer()
 			gAdvert[i][adTime] = 0;
 			gAdvert[i][adEdit] = false;
 			gAdvertCount--;
-		}
-	}
-	//	Боксерские поединки
-	for(new i = 0; i < sizeof(BoxingRing); i++)
-	{
-		if(BoxingRing[i][RING_TIME] > 0)
-		{
-			BoxingRing[i][RING_TIME]--;
-			if(BoxingRing[i][RING_STATE] == 1)
-			{
-				if(0 < BoxingRing[i][RING_TIME] <= 3)
-				{
-					format(string, 32, "~n~~n~~n~~n~~r~%d", BoxingRing[i][RING_TIME]);
-					GameTextForPlayer(BoxingRing[i][RING_RED_PLAYER], string, 1000, 6);
-					GameTextForPlayer(BoxingRing[i][RING_BLUE_PLAYER], string, 1000, 6);
-				}
-				else if(BoxingRing[i][RING_TIME] == 0)
-				{
-					BoxingRing[i][RING_STATE] = 2;
-					BoxingRing[i][RING_TIME] = 180;
-					GameTextForPlayer(BoxingRing[i][RING_RED_PLAYER], "~n~~n~~n~~n~~g~FIGHT!", 2000, 6);
-					GameTextForPlayer(BoxingRing[i][RING_BLUE_PLAYER], "~n~~n~~n~~n~~g~FIGHT!", 2000, 6);
-					TogglePlayerControllable(BoxingRing[i][RING_RED_PLAYER], true);
-					TogglePlayerControllable(BoxingRing[i][RING_BLUE_PLAYER], true);
-					SetPlayerVisualTimer(BoxingRing[i][RING_RED_PLAYER], BoxingRing[i][RING_TIME], true);
-					SetPlayerVisualTimer(BoxingRing[i][RING_BLUE_PLAYER], BoxingRing[i][RING_TIME], true);
-					ShowAttackHealth(BoxingRing[i][RING_RED_PLAYER], BoxingRing[i][RING_BLUE_PLAYER]);
-					ShowAttackHealth(BoxingRing[i][RING_BLUE_PLAYER], BoxingRing[i][RING_RED_PLAYER]);
-				}
-			}
-			else if(BoxingRing[i][RING_STATE] == 2)
-			{
-				if(BoxingRing[i][RING_TIME] == 0){
-					FinishBox(BoxingRing[i][RING_RED_PLAYER], 2);
-				}
-			}
 		}
 	}
 	//	Ограничение ограблений магазинов
@@ -5909,8 +5858,11 @@ EveryMinuteTimer()
 	new	hour, minute, second,
 		timeUNIX = gettime(hour, minute, second);
 	OldMinute = minute;
-	if(OldHour != hour) 	EveryHourTimer();
-    if(minute % 15 == 0)	UpdateWeather();	// Обновление погоды
+	if(OldHour != hour)
+		EveryHourTimer();
+	// Обновление погоды
+    if(minute % 15 == 0)
+		UpdateWeather();
 
 	//	Движение крана на товарном складе
 	if(minute % 2 == 0)
@@ -6322,7 +6274,6 @@ ZeroVars(playerid, source = 0)
 			KillTimer(LoginCameraTimer[playerid]);
 			LoginCameraTimer[playerid] = 0;
 		}
-		KillTimer(GetPVarInt(playerid, "Player:Timer"));
 
 		//	Iterators
 		Iter_Remove(LoginPlayer, playerid);
@@ -6628,7 +6579,6 @@ public OnPlayerConnect(playerid)
 	mysql_pquery(g_SQL, string, "OnPlayerGetRegister", "d", playerid);
 
 	SendClientMessage(playerid, COLOR_SERVER, "Gamemode data loading...");
-	SetPVarInt(playerid, "Player:Timer", SetPlayerTimerEx(playerid, "PlayerEverySecondTimer", 950, true, "d", playerid));
 	PreloadAnimLib(playerid, "MISC");			//	Чтобы проигралась анимка актера
 	PreloadAnimLib(playerid, "COP_AMBIENT");	//	Чтобы проигралась анимка в кат сценке
 
@@ -11176,9 +11126,9 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	#if defined _gang_gang_zones_included
 		Callback:Gang.GZ_OnPlayerKeyStateChange(playerid, newkeys, oldkeys);
 	#endif
-	#if defined _police_pursuit_included
-		Callback:Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys);
-	#endif
+	// #if defined _police_pursuit_included
+	// 	Callback:Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys);
+	// #endif
 
 	// Система редактирования гонок
 	if(redit_act[playerid] > 0)
@@ -12055,7 +12005,8 @@ public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете передавать за раз более $10.000.");
 						goto stop_ask;
 					}
-					if(GetPlayerState(playerid) == 1)	MyApplyAnimation(playerid, "GANGS", "Invite_Yes", 4.1, 0, 0, 0, 0, 0);
+					if (GetPlayerState(playerid) == 1)
+						MyApplyAnimation(playerid, "GANGS", "Invite_Yes", 4.1, 0, 0, 0, 0, 0);
 
 					MyGivePlayerMoney(offerid, -amount[0]);
 					MyGivePlayerMoney(playerid, amount[0]);
@@ -12129,66 +12080,11 @@ public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 				}
 				case ASK_BOX:
 				{
-					if(IsPlayerNearPlayer(playerid, offerid, 5.0) == 0)
+					if (StartBox(playerid, offerid))
 					{
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
-						goto stop_ask;
+						SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на боксерский поединок против %s'а", ReturnPlayerName(offerid));
+						SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился на боксерский поединок против вас", ReturnPlayerName(playerid));
 					}
-					new ring = GetNearRing(offerid);
-					if(ring == (-1)){
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от рига.");
-						goto stop_ask;
-					}
-					if(BoxingRing[ring][RING_STATE] != 0){
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот ринг в данный момент занят.");
-						goto stop_ask;
-					}
-					if(PlayerInfo[offerid][pTraining] >= MAX_TRAINING)	{
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок устал и сейчас не может боксировать.");
-						goto stop_ask;
-					}
-					if(PlayerInfo[playerid][pTraining] >= MAX_TRAINING)	{
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы сильно устали и не можете сейчас боксировать.");
-						goto stop_ask;
-					}
-					if(MyGetPlayerHealth(playerid) < 15.0){
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас слишком мало здоровья.");
-						goto stop_ask;
-					}
-					if(MyGetPlayerHealth(offerid) < 15.0){
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока слишком мало здоровья.");
-						goto stop_ask;
-					}
-					//	positions
-					GetPlayerPos(playerid, Arr3<gPlayerPosToRing[playerid]>);
-					GetPlayerFacingAngle(playerid, gPlayerPosToRing[playerid][3]);
-					SetPlayerPos(playerid, Arr3<BoxingRingPos[ring][RING_RED]>);
-					SetPlayerFacingAngle(playerid, BoxingRingPos[ring][RING_RED][3]);
-					MySetPlayerSkin(playerid, 80, false);
-					TogglePlayerControllable(playerid, false);
-					MyChangePlayerWeapon(playerid, true);
-					BoxingRing[ring][RING_RED_PLAYER] = playerid;
-					gPlayerRing[playerid] = ring;
-					gPlayerBoxEnemy[playerid] = offerid;
-					if(PlayerInfo[playerid][pJailTime])	HidePlayerPrisonTime(playerid);
-
-					GetPlayerPos(offerid, Arr3<gPlayerPosToRing[offerid]>);
-					GetPlayerFacingAngle(offerid, gPlayerPosToRing[offerid][3]);
-					SetPlayerPos(offerid, Arr3<BoxingRingPos[ring][RING_BLUE]>);
-					SetPlayerFacingAngle(offerid, BoxingRingPos[ring][RING_BLUE][3]);
-					MySetPlayerSkin(offerid, 81, false);
-					TogglePlayerControllable(offerid, false);
-					MyChangePlayerWeapon(offerid, true);
-					BoxingRing[ring][RING_BLUE_PLAYER] = offerid;
-					gPlayerRing[offerid] = ring;
-					gPlayerBoxEnemy[offerid] = playerid;
-					if(PlayerInfo[offerid][pJailTime])	HidePlayerPrisonTime(offerid);
-
-					BoxingRing[ring][RING_STATE] = 1;
-					BoxingRing[ring][RING_TIME] = 15;
-
-					SendFormatMessage(playerid, COLOR_GREEN, string, "Вы согласились на боксерский поединок против %s'а", ReturnPlayerName(offerid));
-					SendFormatMessage(offerid, COLOR_GREEN, string, "%s согласился на боксерский поединок против вас", ReturnPlayerName(playerid));
 				}
 				case ASK_BUY_HOTDOG:
 				{
@@ -12412,8 +12308,7 @@ public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 		}
 	}
 stop_ask:
-	StopAsking(playerid);
-	return true;
+	return (1);
 }
 
 public OnIncomingConnection(playerid, ip_address[], port)
@@ -12496,7 +12391,7 @@ stock GetWeaponModel(weaponid)
 	return 0;
 }
 
-Public: QuickTimer()
+public	OnEveryMillisecondTimer()
 {	//	WARNING! ТАЙМЕР ВЫЗЫВАЕТСЯ 10 РАЗ В СЕКУНДУ, НЕ НАГРУЖАТЬ ЛИШНИМ
     new panelsx, doorsx, lightsx, tiresx;
     foreach(Vehicle, v)
@@ -12576,9 +12471,9 @@ Public: QuickTimer()
     	#if defined _interface_cam_effect_included
 	    	IFace.CamEffect_Update(i);
     	#endif
-    	#if defined _police_pursuit_included	
-    		Police.Pursuit_QuickTimer(i);
-    	#endif	
+    	// #if defined _police_pursuit_included	
+    	// 	Police.Pursuit_QuickTimer(i);
+    	// #endif	
     }
     return true;
 }
@@ -13734,11 +13629,13 @@ stock ShowDialog(playerid, dialogid, action = INVALID_DIALOGID)
 					}
 				#endif	
 
-				if(GetNearRing(playerid) != (-1) && !IsPlayerBoxing(gTargetid[playerid]))
+				if(GetNearRing(playerid) != (-1)
+					&& !IsPlayerBoxing(gTargetid[playerid]))
 					strcat(lstring, "\n"MAIN_COLOR"• {CFB53B}Вызвать на спарринг\t{CFB53B}[/box]");
 
 				//	###	Действия для лидера и зама
-				if(PlayerInfo[playerid][pFaction] > 0 && PlayerInfo[playerid][pRank] >= GetRankMax(PlayerInfo[playerid][pFaction]) - 1)
+				if(PlayerInfo[playerid][pFaction] > 0
+					&& PlayerInfo[playerid][pRank] >= GetRankMax(PlayerInfo[playerid][pFaction]) - 1)
 				{	
 				    if(PlayerInfo[ gTargetid[playerid] ][pFaction] == F_NONE)
 				    {
@@ -24276,23 +24173,6 @@ COMMAND:inter(playerid, params[])
 	format(string, 128, "Class %c, #%d", Class, IntNum);
 	SendClientMessage(playerid, COLOR_WHITE, string);
 	return 1;
-}
-
-flags:cleartrain(CMD_DEVELOPER);
-COMMAND:cleartrain(playerid, params[])
-{// [BT]
-	new giveplayerid;
-	if(sscanf(params, "r", giveplayerid))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /cleartrain [playerid/playername]");
-	if(!IsPlayerLogged(giveplayerid))
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-	new string[128];
-	PlayerInfo[giveplayerid][pTraining] = 0;
-	format(string, 128, "Вы обнулили тренировки у %s[%d]", ReturnPlayerName(giveplayerid), giveplayerid);
-	SendClientMessage(playerid, COLOR_WHITE, string);
-	format(string, 128, "%s[%d] обнулил вам тренировки", ReturnPlayerName(playerid), playerid);
-	SendClientMessage(giveplayerid, COLOR_WHITE, string);
-	return true;
 }
 
 flags:tp(CMD_ADMIN);
