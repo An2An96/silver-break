@@ -7,7 +7,7 @@ static
 stock	BlockPlayerAnimation(playerid, bool:toggle)
 {
 	g_PlayerBlockAnim[playerid] = toggle;
-	return true;
+	return (1);
 }
 
 stock	MyApplyAnimation(playerid, const lib[], const name[], Float:fDelta,
@@ -17,7 +17,7 @@ stock	MyApplyAnimation(playerid, const lib[], const name[], Float:fDelta,
 		return (0);
 	if (gPlayerUsingLoopingAnim[playerid])
 		StopLoopingAnim(playerid);
-	return ApplyAnimation(playerid, lib, name, fDelta, loop, lockx, locky, freeze, time, forcesync);
+	return (ApplyAnimation(playerid, lib, name, fDelta, loop, lockx, locky, freeze, time, forcesync));
 }
 
 stock	LoopingAnim(playerid, const lib[], const name[], Float:fDelta,
@@ -40,7 +40,7 @@ stock	IsPlayerLoopingAnim(playerid)
 stock	StopLoopingAnim(playerid)
 {
 	gPlayerUsingLoopingAnim[playerid] = false;
-	return ClearAnimations(playerid);
+	return (ClearAnimations(playerid));
 }
 
 public	OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
@@ -48,9 +48,7 @@ public	OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	if (PRESSED(KEY_SPRINT))
 	{
 	 	if (IsPlayerLoopingAnim(playerid))
-		{
-			return StopLoopingAnim(playerid);
-		}
+			return (StopLoopingAnim(playerid));
 	}
 	
 	#if defined Anims_OnPlayerKeyStateChange

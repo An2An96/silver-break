@@ -81,7 +81,6 @@
 #include "player/chat/core"
 #include "player/phone/core"
 #tryinclude "player/achieve"
-#tryinclude "player/chat_binds"
 
 #include "inventory/core"	//	Inventory
 #include "job/core"			//	Jobs
