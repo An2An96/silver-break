@@ -19,7 +19,7 @@ new _rslt;
 #define RemovePlayerWorldBounds(%0)			SetPlayerWorldBounds(%0, 20000.0, -20000.0, 20000.0, -20000.0)
 #define mysql_query_ex(%0)  				mysql_tquery(g_SQL, %0)
 #define unixtime()							gettime(_, _, _)
-#define IsNull(%0) 							((!(%0[0])) || (((%0[0]) == '\1') && (!(%0[1]))))  
+#define IsNull(%0) 							((!(%0[0])) || (((%0[0]) == '\1') && (!(%0[1]))))
 
 native gpci(playerid, buffer[], size);
 

@@ -276,6 +276,17 @@ new const ActorInfo[][actor_Data] =
 new ACTOR[sizeof(ActorInfo)];
 new Text3D:ActorNametag[sizeof(ActorInfo)];
 
+stock	ReturnActorName(actorid)
+{
+	new actorname[MAX_PLAYER_NAME];
+	for (new i = 0; i < sizeof(ACTOR); i++)
+	{
+		if (ACTOR[i] == actorid)
+			strput(actorname, ActorInfo[i][a_Name]);
+	}
+	return (actorname);
+}
+
 public	OnGameModeInit()
 {
 	new string[64];

@@ -72,7 +72,6 @@ stock	GetNearRing(playerid)
 
 stock	StartBox(playerid, giveplayerid)
 {
-	printf("StartBox %d %d", playerid, giveplayerid);
 	if(IsPlayerNearPlayer(playerid, giveplayerid, 5.0) == 0)
 	{
 		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");

@@ -195,6 +195,41 @@ stock BlockVehicleEffect(vehicleid, time = 2)
 	return true;
 }
 
+stock GetRandomModel()
+{
+	for(new i = 0; i < 100; i++)
+	{
+	    new idx = random(sizeof(VehParams));
+	    if(VehParams[idx][VEH_CLASS] == VC_SPECIAL) continue;
+	    if(VehParams[idx][VEH_DONATE] == true) continue;
+		switch(VehParams[idx][VEH_MTYPE])
+		{
+		    case MTYPE_TRUCK, MTYPE_BOAT, MTYPE_PLANE, MTYPE_HELIC:	continue;
+		}
+		return idx + 400;
+	}
+	return 0;
+}
+
+stock GetRandomVehicle(playerid, Float:MaxDist = FLOAT_INFINITY)
+{// Возвращает vehicleid, доступную для угона или миссии (закрытую)
+    new vehlist[MAX_VEHICLES], idx = 0;
+    new Float:X, Float:Y, Float:Z;
+	foreach(Vehicle, v)
+	{
+	    if(VehInfo[v][vLocked] == 999) continue;
+	    if(CarInfo[v][cType] == C_TYPE_DEFAULT && CarInfo[v][cOwnerID] == INVALID_PLAYER_ID && CarInfo[v][cOwnerID] == INVALID_PLAYER_ID && VehInfo[v][vPlayers] == 0)
+	    {
+	        GetVehiclePos(v, X, Y, Z);
+		    if(100 < GetDistanceFromMeToPoint(playerid, X, Y, Z) < MaxDist)
+		    {
+		        vehlist[idx++] = v;
+		    }
+	    }
+	}
+	return vehlist[random(idx)];
+}
+
 stock IsAvailableVehicle(vehicleid, playerid)
 {	// return:	VEH_AVAILABLE_NONE		- не имеет доступа к авто
 	//			VEH_AVAILABLE_DRIVE		- может ездить, но не может заводить, закрывать и т д
