@@ -11,7 +11,7 @@ stock	BlockPlayerAnimation(playerid, bool:toggle)
 }
 
 stock	MyApplyAnimation(playerid, const lib[], const name[], Float:fDelta,
-	loop, lockx, locky, freeze, time, forcesync = 1)
+	loop = 0, lockx = 0, locky = 0, freeze = 0, time = 0, forcesync = 1)
 {
 	if (g_PlayerBlockAnim[playerid])
 		return (0);

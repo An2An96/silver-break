@@ -87,11 +87,11 @@ Public: NPC.Init()
 public OnGameModeExit()
 {
 	#if defined _FCNPC_included
-		for(new i = 0; i < MAX_NPC; i++)
-		{
-			if(NPC_ID[i] != INVALID_PLAYER_ID)
-				FCNPC_Destroy(NPC_ID[i]);
-		}
+		// for(new i = 0; i < MAX_NPC; i++)
+		// {
+		// 	if(NPC_ID[i] != INVALID_PLAYER_ID)
+		// 		FCNPC_Destroy(NPC_ID[i]);
+		// }
 	#else
 		for(new i = 0; i < MAX_PLAYERS; i++)
 		{

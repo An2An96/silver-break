@@ -516,11 +516,14 @@ stock RemoveNeons(vehicleid)
 
 stock bool:IsVehicleWithEngine(vehicleid)
 {
-	switch(VehParams[GetVehicleModel(vehicleid) - 400][VEH_MTYPE])
+	if (GetVehicleModel(vehicleid))
 	{
-	    case MTYPE_NONE, MTYPE_MOTO, MTYPE_TRUCK, MTYPE_BOAT, MTYPE_NODOOR:	
-	    {
-	    	return true;
+		switch(VehParams[GetVehicleModel(vehicleid) - 400][VEH_MTYPE])
+		{
+			case MTYPE_NONE, MTYPE_MOTO, MTYPE_TRUCK, MTYPE_BOAT, MTYPE_NODOOR:	
+			{
+				return true;
+			}
 		}
 	}
 	return false;

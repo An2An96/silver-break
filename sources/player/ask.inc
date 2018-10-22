@@ -6,19 +6,12 @@
 #include <foreach>
 #include <easy_keys>
 
-#define ASK_NONE	(-1)
-
 forward AskTimer();
 forward OnPlayerAskResponse(playerid, offerid, askid, const amount[], response);
 
-static
-	AskWhat[MAX_PLAYERS] = { ASK_NONE, ... },
-	AskOfferID[MAX_PLAYERS] = { -1, ... },
-	AskAmounts[MAX_PLAYERS][4],
-	AskTime[MAX_PLAYERS];
-
 enum
 {
+	ASK_NONE,
 	ASK_INVITE,
 	ASK_POLICE_FINE,
 	ASK_CAR_SELLTO,
@@ -33,7 +26,7 @@ enum
 	ASK_JOB_PARTNER,
 	ASK_REPAIR,
 	ASK_REFILL
-}
+};
 
 new const AskPrimory[] =
 {
@@ -53,6 +46,12 @@ new const AskPrimory[] =
 	20	//	ASK_REFILL
 };
 
+static
+	AskWhat[MAX_PLAYERS] = { ASK_NONE, ... },
+	AskOfferID[MAX_PLAYERS] = { -1, ... },
+	AskAmounts[MAX_PLAYERS][4],
+	AskTime[MAX_PLAYERS];
+
 stock	AskPlayer(playerid, giveplayerid, asktype, waittime = 30, ...)
 {
 	if(AskWhat[giveplayerid] != 0
@@ -63,7 +62,7 @@ stock	AskPlayer(playerid, giveplayerid, asktype, waittime = 30, ...)
 	AskWhat[giveplayerid] = asktype;
 	AskOfferID[giveplayerid] = playerid;
 	AskTime[giveplayerid] = waittime;
-	while(arg < numargs() && (arg - 4) < sizeof(AskAmounts[]))
+	while (arg < numargs() && (arg - 4) < sizeof(AskAmounts[]))
 	{
 		AskAmounts[giveplayerid][arg - 4] = getarg(arg);
 		arg++;
@@ -103,7 +102,10 @@ public	AskTimer()
 	{
 		// Автоматический отказ по истечении времени предложения
 		if(AskTime[i] > 0 && --AskTime[i] == 0)
+		{
 			CallLocalFunction("OnPlayerAskResponse", "dddab", i, AskOfferID[i], AskWhat[i], AskAmounts[i], false);
+			StopAsking(i);
+		}
 	}
 	return (1);
 }
@@ -117,8 +119,12 @@ public	OnPlayerClickY(playerid)
 	{	
 		GetPlayerKeys(playerid, newkeys, tmp, tmp);
 		if (HOLDING(KEY_SPRINT))	//	Пробел + Y
-			return (CallLocalFunction("OnPlayerAskResponse", "dddab",
-				playerid, AskOfferID[playerid], AskWhat[playerid], AskAmounts[playerid], true));
+		{
+			(CallLocalFunction("OnPlayerAskResponse", "dddab",
+				playerid, AskOfferID[playerid],
+				AskWhat[playerid], AskAmounts[playerid], true));
+			return (StopAsking(playerid));
+		}
 	}
 
 	#if defined Ask_OnPlayerClickY
