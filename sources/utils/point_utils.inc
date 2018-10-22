@@ -1,8 +1,7 @@
-forward Float: GetDistanceFromPointToPoint(Float:x1, Float:y1, Float:z1,
-	Float:x2, Float:y2, Float:z2, ignore_z = false);
-forward IsCoordInSquare(Float:X, Float:Y,
-	Float:MinX, Float:MinY, Float:MaxX, Float:MaxY);
-forward Float: GetDistanceBetweenPlayers(player1, player2, ignore_z = false);
+#if defined _point_utils_included
+	#endinput
+#endif
+#define _point_utils_included
 
 stock	Float: DistanceCameraTargetToLocation(Float:CamX, Float:CamY, Float:CamZ,
 	Float:ObjX, Float:ObjY, Float:ObjZ, Float:FrX, Float:FrY, Float:FrZ)
@@ -63,6 +62,18 @@ stock	GetXYInFrontOfPoint(&Float:x, &Float:y, Float:angle, Float:distance)
 	y += (distance * floatcos(-angle, degrees));
 }
 
+stock	Float: GetDistanceFromPointToPoint(Float:x1, Float:y1, Float:z1,
+	Float:x2, Float:y2, Float:z2, ignore_z = false)
+{
+	new Float:result;
+
+	if(ignore_z)
+		z2 = z1;
+	result = floatsqroot(floatpower(x2 - x1, 2)
+		+ floatpower(y2 - y1, 2) + floatpower(z2 - z1, 2));
+	return (result);
+}
+
 stock	Float: GetDistanceBetweenPlayers(player1, player2, ignore_z = false)
 {
 	new
@@ -88,18 +99,6 @@ stock	Float: GetDistanceFromMeToPoint(playerid, Float:x2, Float:y2, Float:z2, ig
 	return (result);
 }
 
-stock	Float: GetDistanceFromPointToPoint(Float:x1, Float:y1, Float:z1,
-	Float:x2, Float:y2, Float:z2, ignore_z = false)
-{
-	new Float:result;
-
-	if(ignore_z)
-		z2 = z1;
-	result = floatsqroot(floatpower(x2 - x1, 2)
-		+ floatpower(y2 - y1, 2) + floatpower(z2 - z1, 2));
-	return (result);
-}
-
 stock	Float: GetSquareDistance(Float:x1, Float:y1, Float:z1,
 	Float:x2, Float:y2, Float:z2)
 {
@@ -121,16 +120,13 @@ stock	Float: floatdif(Float:oper1, Float:oper2)
 stock	cmatch(Float:x1, Float:y1, Float:z1,
 	Float:x2, Float:y2, Float:z2, Float:size)
 {
-    if(floatabs(x1 - x2) > size || floatabs(y1 - y2) > size || floatabs(z1 - z2) > size)
-		return (0);
-    return (1);
+	return (floatabs(x1 - x2) <= size
+		&& floatabs(y1 - y2) <= size && floatabs(z1 - z2) <= size);
 }
 
 stock	IsCoordInSquare(Float:X, Float:Y, Float:MinX, Float:MinY, Float:MaxX, Float:MaxY)
 {
-	if (MaxX >= X && X >= MinX && MaxY >= Y && Y >= MinY)
-		return (true);
-	return (false);
+	return (MaxX >= X && X >= MinX && MaxY >= Y && Y >= MinY);
 }
 
 stock	IsPlayerInSquare(playerid, Float:MinX, Float:MinY, Float:MaxX, Float:MaxY, bool:incZ = true)
@@ -146,7 +142,5 @@ stock	IsPlayerInSquare(playerid, Float:MinX, Float:MinY, Float:MaxX, Float:MaxY,
 
 stock	IsPlayerNearPlayer(playerid, giveplayerid, Float:dist)
 {
-	if(dist > floatround(GetDistanceBetweenPlayers(playerid, giveplayerid)))
-		return (true);
-	return (false);
+	return (dist > floatround(GetDistanceBetweenPlayers(playerid, giveplayerid)));
 }
