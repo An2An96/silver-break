@@ -5,6 +5,7 @@
 
 #include "faction/police/header"
 
+#include "faction/police/commands"
 #include "faction/police/mission"	
 #include "faction/police/pursuit"
 
@@ -106,6 +107,12 @@ IFace.UpdatePlayerWanted(playerid)
 }
 
 //////////	Functions	//////////
+stock	IsPoliceDuty(playerid)
+{
+	return (PlayerInfo[playerid][pFaction] == F_POLICE
+		&& Iter_Contains(Cop, playerid));
+}
+
 public MySetPlayerWantedLevel(playerid, level)
 {
 	if(IsPlayerNPC(playerid)) return true;
@@ -328,43 +335,6 @@ stock SendPoliceMessage(color, string[])
 	return true;
 }
 
-//////////	Commands	////////////
-COMMAND:wanted(playerid, params[])
-{
-	if(PlayerInfo[playerid][pFaction] != F_POLICE)
-	{
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете использовать эту команду.");
-	}
-	if(GetPlayerState(playerid) != 2 || IsCopCar(GetPlayerVehicleID(playerid)) == 0)
-	{
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы можете использовать эту команду только за рулем полицейской машины.");
-	}
-	new string[1024] = "{FFFFFF}", count;
-	foreach(Player, i)
-	{
-		if(GetPlayerWantedLevel(i) == 0)	continue;
-		format(string, sizeof(string), "%s%s[%d] - %d ур. розыска\n", string, ReturnPlayerName(i), i, GetPlayerWantedLevel(i));
-		count++;
-	}
-	if(count == 0)	format(string, sizeof(string), "%sСписок подозреваемых пуст.", string);
-	MyShowPlayerDialog(playerid, DMODE_NONE, DIALOG_STYLE_MSGBOX, "Список подозреваемых", string, "Закрыть", "");
-	return true;
-}
-
-COMMAND:spike(playerid, params[])
-{
-	if(PlayerInfo[playerid][pFaction] != F_POLICE)
-	{
-	    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете использовать эту команду.");
-	}
-    if(GetPVarInt(playerid, "Police:Spikes"))	callcmd::dspike(playerid, "");
-    if(MyApplyAnimation(playerid, "BOMBER", "BOM_Plant", 2, 0, 0, 0, 0, 0))
-	{
-		SetPVarInt(playerid, "Police:Spikes:Timer", SetTimerEx("SetPlayerSpike", 2000, false, "d", playerid));
-	}
-    return true;
-}
-
 Public: SetPlayerSpike(playerid)
 {
 	new Float:pos[4];
@@ -378,22 +348,5 @@ Public: SetPlayerSpike(playerid)
     Streamer_Update(playerid);
     GameTextForPlayer(playerid, "~w~Spikes ~g~installed", 3000, 3);
 	DeletePVar(playerid, "Police:Spikes:Timer");
-    return true;
-}
-
-COMMAND:dspike(playerid, params[])
-{
-    if(GetPVarInt(playerid, "Police:Spikes") == 0)
-    {
-    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не устанавливали шипов.");
-    }
-    if(GetPVarInt(playerid, "Police:Spikes:Timer"))
-    {
-    	KillTimer(GetPVarInt(playerid, "Police:Spikes:Timer"));
-    	DeletePVar(playerid, "Police:Spikes:Timer");
-    }
-    GameTextForPlayer(playerid, "~w~Spikes ~r~removed", 3000, 3);
-	DestroyDynamicObject(GetPVarInt(playerid, "Police:Spikes"));
-	DeletePVar(playerid, "Police:Spikes");
     return true;
 }

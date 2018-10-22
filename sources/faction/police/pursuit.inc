@@ -7,403 +7,498 @@
 #include "player/ask"
 #include "faction/police/header"
 
-Public: Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
+public OnPlayerClickSubmission(playerid)
 {
 	new string[128];
 	new pState = GetPlayerState(playerid);
 	new vehicleid = GetPlayerVehicleID(playerid);
-	if(PRESSED(KEY_WALK))
-    {
-    	if(pState == PLAYER_STATE_ONFOOT)
-    	{
-			if(PlayerCuffedTime[playerid] == 0)
-	    	{
-	    		if(GetPVarInt(playerid, "Police:Pursuit:Handsup") && PursuitStatus[playerid] > PS_NONE && PlayerCuffedTime[playerid] == 0)
-				{
-					PursuitCancelHandsup[playerid] = 1;
-					return true;
-				}
 
-				if(PlayerInfo[playerid][pFaction] == F_POLICE && IsPoliceDuty(playerid))
-	    		{
-					foreach(LoginPlayer, i)
-					{
-			    		if(GetDistanceBetweenPlayers(playerid, i) < 2.0 && GetPlayerState(i) == PLAYER_STATE_ONFOOT)
-			    		{
-			    			if(CriminalDanger[i] || (PM_Type[playerid] == 10 && PM_Place[playerid] == i && (GetPlayerWantedLevel(i) > 3 || PursuitAllowArrest[i])))
-			    			{
-				    			if(GetPVarInt(i, "Police:Arrest") == 1)
-				    			{
-				    				return SendClientMessage(playerid, COLOR_GREY, PREFIX_ERROR "Игрока уже арестовывает другой полицейский.");
-				    			}
-								if(GetPVarInt(i, "Police:Pursuit:Handsup"))
-								{
-									MyApplyAnimation(playerid, "INT_SHOP", "shop_loop", 4.1, 1, 0, 0, 0, 0);
-								}
-								else if(PlayerCuffedTime[i])
-								{
-									MyApplyAnimation(playerid, "BOMBER", "BOM_Plant_Loop", 4.1, 0, 1, 1, 1, 0);
-								}
-								else
-								{
-									return SendClientMessage(playerid, COLOR_GREY, PREFIX_ERROR "Игрок должен поднять руки или быть оглушен.");
-								}
-								PursuitArest[playerid] = 1;
-								PursuitArestPlayer[playerid] = i;
-								SetPVarInt(i, "Police:Arrest", 1);
-								GameTextForPlayer(i, "~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
-								GameTextForPlayer(playerid, "~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
-								return true;
-							}
-						}
-			    	}
-		    	}
+	if (pState == PLAYER_STATE_ONFOOT)	//	колесико мышки
+	{
+		if (GetPVarInt(playerid, "Police:Pursuit:Handsup") == 0
+			&& PursuitStatus[playerid] > PS_NONE
+			&& PlayerCuffedTime[playerid] == 0)
+		{
+			if (GetPlayerWeapon(playerid) != 0)
+			{
+				ShowPlayerHint(playerid, "Чтобы поднять руки спрячьте оружие");
+			}
+			else
+			{
+				PursuitHandsup(playerid);
+			}
+		}
+		else
+		{
+			if (PlayerInfo[playerid][pAnim] > 0)
+			{
+				MyApplyAnimation(playerid,
+					PlayerAnims[ PlayerInfo[playerid][pAnim] ][PANIM_LIB],
+					PlayerAnims[ PlayerInfo[playerid][pAnim] ][PANIM_NAME],
+					4.1, 0, 0, 0, 0, 0);
 			}
 		}
 	}
-	else if(RELEASED(KEY_WALK))
+	else if (pState == PLAYER_STATE_DRIVER) // KEY_2
 	{
-		if(PursuitArest[playerid])
+		if(CarInfo[vehicleid][cType] == C_TYPE_FACTION
+			&& CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction])
 		{
-        	DeletePVar(PursuitArestPlayer[playerid], "Police:Arrest");
-        	PursuitArest[playerid] = 0;
-        	PursuitArestPlayer[playerid] = INVALID_PLAYER_ID;
-        	GameTextForPlayer(playerid, "~r~arrest failure", 3000, 3);
-        	ClearAnimations(playerid);
-        	ProgressBarHide(playerid);
-        }
-		if(PursuitCancelHandsup[playerid])
+			// Преследование на транспорте
+			if(CarInfo[vehicleid][cOwnerID] == F_POLICE)
+			{
+				if(!IsPoliceDuty(playerid))
+				{
+					return ShowPlayerHint(playerid, "Для остановки транспорта вы должны быть на ~b~дежурстве");
+				}
+				new model = GetVehicleModel(GetPlayerVehicleID(playerid));
+				if(PM_Type[playerid] == 0)
+				{// Не выполняет задание
+					new bool:founded, Float:curdist, Float:mindist, suspectid, vehid, mtype;
+					foreach(LoginPlayer, i)
+					{
+						if(IsForce(PlayerInfo[i][pFaction]) || GetPlayerState(i) != 2) continue;
+						//
+						if(model == 497)
+						{
+							curdist = GetDistanceBetweenPlayers(playerid, i, true);
+							if(curdist > 100)
+								continue;
+						}
+						else
+						{
+							curdist = GetDistanceBetweenPlayers(playerid, i);
+							if(curdist > 50)
+								continue;
+						}
+						//
+						vehid = GetPlayerVehicleID(i);
+						//if(VehInfo[vehid][vWithEngine] == false) continue;
+						mtype = VehInfo[vehid][vModelType];
+						if(mtype == MTYPE_RC || mtype == MTYPE_TRAIN || mtype == MTYPE_BOAT || mtype == MTYPE_HELIC || mtype == MTYPE_PLANE) continue;
+						//
+						if(curdist < mindist || founded == false)
+						{
+							suspectid = i;
+							mindist = curdist;
+							founded = true;
+						}
+					}
+					if(founded)
+					{
+						if(GetPlayerWarGangZone(suspectid) >= 0 && PursuitStatus[suspectid] == PS_NONE)
+						{
+							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете запросить остановку члена банды во время захвата территории.");
+						}
+						if(IsPlayerAFK(suspectid))
+						{
+							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый находится в AFK, его нельзя остановить.");
+						}
+						new bool:wl_veh = false;
+						foreach(LoginPlayer, i)
+						{
+							if(IsPlayerInVehicle(i, vehid) && GetPlayerWantedLevel(i) > 0)
+							{
+								wl_veh = true; // В машине найден игрок с розыском
+								break;
+							}
+						}
+						if(!wl_veh && PursuitLastUNIX[suspectid] > gettime())
+						{
+							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Совсем недавно этот автомобиль уже проверяли.");
+						}
+						if(PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
+						{
+							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Помощь в задержании пока не требуется, но будьте на чеку.");
+						}
+						// Формируем задание
+						if(!PursuitStatus[suspectid])
+						{
+							if(model == 497)
+							{
+								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На вертолете можно только подключиться к погоне.");
+							}
+							PursuitTimer(suspectid);
+							new sound = 15800;
+							format(string, 128, "[%s %s:o< Это отделение полиции Лос-Сантос. Оставайтесь на месте!]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
+							//format(string, 128, "[%s %s:o< Водитель %s, прижмитесь к обочине и остановитесь]", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
+							SendRadiusMessage(playerid, 60.0, COLOR_YELLOW, string);
+							PlayerPlaySound(playerid, sound, 0, 0, 0);
+							PlayerPlaySound(suspectid, sound, 0, 0, 0);
+						}
+						else
+						{
+							format(string, 128, "[R] %s %s: {FFFFFF}Подключаюсь к погоне за %s, прием.", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
+							SendPoliceMessage(COLOR_BLUE, string);
+						}
+						if(CriminalDanger[suspectid])	format(string, 128, "~n~~n~Остановите ~r~%s ~w~любой ценой!", ReturnPlayerName(suspectid));
+						else 							format(string, 128, "~n~~n~Задержите ~b~%s ~w~не применяя силы.", ReturnPlayerName(suspectid));
+						// Подключаем всех копов в машине, из которой поступил запрос
+						foreach(Cop, copid)
+						{
+							if(PM_Type[copid] == 0 && GetPlayerVehicleID(copid) == vehicleid)
+							{
+								PM_Type[copid] = 10;// Номер миссии (10 - преследование)
+								PM_Place[copid] = suspectid;// ид подозреваемого
+								PM_UNIX[copid] = gettime();// Время начала погони
+								SendMissionMessage(copid, string, 0);// Вывод задания
+							}
+						}
+					}
+					else
+					{
+						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Поблизости не найдено ни одного игрока.");
+					}
+					return true;
+				}
+				else if (PM_Type[playerid] == 10)
+				{	// Ведет преследование подозреваемого
+					new suspectid = PM_Place[playerid];
+					if (GetDistanceBetweenPlayers(playerid, suspectid) > 50)
+					{
+						return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый слишком далеко, подъедьте ближе.");
+					}
+					if (PursuitStatus[suspectid] == PS_WAIT)
+					{
+						return ShowPlayerHint(playerid, "Требования выполнены, задержите подозреваемого");
+					}
+					if (IsPlayerInAnyVehicle(suspectid) == 0)
+					{
+						return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый вышел из машины, задержите его.");
+					}
+					new nowtick = GetTickCount();
+					if (PursuitTickcount[suspectid] > nowtick)
+					{
+						format(string, 128, "Остановку уже запрашивали, до следующего раза: ~y~%d сек", 1+(PursuitTickcount[suspectid]-nowtick)/1000);
+						return ShowPlayerHint(playerid, string);
+					}
+					new sound = 15800;
+					format(string, 128, "[%s %s:o< Это отделение полиции Лос-Сантос. Оставайтесь на месте!]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
+					//if(!random(2))	format(string, 128, "[%s %s:o< Прижмитесь к обочине или мы будем вынуждены применить силу]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
+					//else 			format(string, 128, "[%s %s:o< Водитель %s, последнее предупреждение и мы открываем огонь]", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
+					SendRadiusMessage(playerid, 60.0, COLOR_YELLOW, string);
+					PlayerPlaySound(playerid, sound, 0, 0, 0);
+					PlayerPlaySound(suspectid, sound, 0, 0, 0);
+					PursuitTickcount[suspectid] = nowtick + 15000;
+				}
+				else
+				{
+					SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы выполняете задание, подробнее в /hq.");
+				}
+				return true;
+			}
+		}
+	}
+	else if(pState == PLAYER_STATE_PASSENGER)
+	{
+		if(PlayerInfo[playerid][pFaction] == F_POLICE && PM_Type[playerid] == 0 && VehInfo[vehicleid][vDriver] >= 0)
+		{
+			new driver = VehInfo[vehicleid][vDriver];
+			if(PlayerInfo[driver][pFaction] == F_POLICE && PM_Type[driver] == 10)
+			{
+				if(!IsPoliceDuty(playerid))
+				{
+					return ShowPlayerHint(playerid, "Для присоединения к погоне вы должны быть на ~b~дежурстве");
+				}
+				new suspectid = PM_Place[driver];
+				if(PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
+				{
+					return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Помощь в задержании пока не требуется, но будьте на чеку.");
+				}
+				// Формируем задание
+				format(string, 128, "[R] %s %s: {FFFFFF}Подключаюсь к погоне за %s, прием.", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
+				SendPoliceMessage(COLOR_BLUE, string);
+				PM_Type[playerid] = 10;			// Номер миссии (10 - преследование)
+				PM_Place[playerid] = suspectid;	// ид подозреваемого
+				PM_UNIX[playerid] = gettime();	// Время начала погони
+				if(CriminalDanger[suspectid])
+					format(string, 128, "~n~~n~Остановите ~r~%s ~w~любой ценой!", ReturnPlayerName(suspectid));
+				else
+					format(string, 128, "~n~~n~Задержите ~b~%s ~w~не применяя силы.", ReturnPlayerName(suspectid));
+				SendMissionMessage(playerid, string, 0);	// Вывод задания
+			}
+		}
+	}
+
+	#if defined Pursuit_OnPlayerClickSubmission
+		return Pursuit_OnPlayerClickSubmission(playerid);
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnPlayerClickSubmission
+	#undef OnPlayerClickSubmission
+#else
+	#define _ALS_OnPlayerClickSubmission
+#endif
+#define OnPlayerClickSubmission Pursuit_OnPlayerClickSubmission
+#if defined Pursuit_OnPlayerClickSubmission
+	forward Pursuit_OnPlayerClickSubmission(playerid);
+#endif
+
+public	OnPlayerClickAlt(playerid)
+{
+	if (GetPlayerState(playerid) == PLAYER_STATE_ONFOOT
+		&& PlayerCuffedTime[playerid] == 0)
+	{
+		if (GetPVarInt(playerid, "Police:Pursuit:Handsup")
+			&& PursuitStatus[playerid] > PS_NONE
+			&& PlayerCuffedTime[playerid] == 0)
+		{
+			PursuitCancelHandsup[playerid] = 1;
+			return (1);
+		}
+		if (IsPoliceDuty(playerid))
+		{
+			foreach (LoginPlayer, i)
+			{
+				if (GetDistanceBetweenPlayers(playerid, i) < 2.0
+					&& GetPlayerState(i) == PLAYER_STATE_ONFOOT
+					&& (CriminalDanger[i]
+					|| (PM_Type[playerid] == 10 && PM_Place[playerid] == i 
+					&& (GetPlayerWantedLevel(i) > 3 || PursuitAllowArrest[i]))))
+				{
+					if (GetPVarInt(i, "Police:Arrest") == 1)
+						return (SendClientMessage(playerid, COLOR_GREY,
+							PREFIX_ERROR "Игрока уже арестовывает \
+							другой полицейский."));
+					if (GetPVarInt(i, "Police:Pursuit:Handsup"))
+						MyApplyAnimation(playerid,
+							"INT_SHOP", "shop_loop", 4.1, 1);
+					else if(PlayerCuffedTime[i])
+						MyApplyAnimation(playerid,
+							"BOMBER", "BOM_Plant_Loop", 4.1, 0, 1, 1, 1);
+					else
+						return (SendClientMessage(playerid, COLOR_GREY,
+							PREFIX_ERROR "Игрок должен поднять руки \
+							или быть оглушен."));
+					PursuitArest[playerid] = 1;
+					PursuitArestPlayer[playerid] = i;
+					SetPVarInt(i, "Police:Arrest", 1);
+					GameTextForPlayer(i,
+						"~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
+					GameTextForPlayer(playerid,
+						"~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
+					return (1);
+				}
+			}
+		}
+	}
+
+	#if defined Pursuit_OnPlayerClickAlt
+		return Pursuit_OnPlayerClickAlt(playerid);
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnPlayerClickAlt
+	#undef OnPlayerClickAlt
+#else
+	#define _ALS_OnPlayerClickAlt
+#endif
+#define OnPlayerClickAlt Pursuit_OnPlayerClickAlt
+#if defined Pursuit_OnPlayerClickAlt
+	forward Pursuit_OnPlayerClickAlt(playerid);
+#endif
+
+public	OnPlayerClickH(playerid)
+{
+	new vehicleid = GetPlayerVehicleID(playerid);
+
+	if (GetPlayerState(playerid) == PLAYER_STATE_DRIVER
+		&& IsVehicleWithEngine(GetPlayerVehicleID(playerid))
+		&& CarInfo[vehicleid][cType] == C_TYPE_FACTION
+		&& CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction]
+		&& CarInfo[vehicleid][cOwnerID] == F_POLICE)
+	{
+		//	Ведет преследование подозреваемого
+		if (PM_Type[playerid] == 10)
+		{	
+			new suspectid = PM_Place[playerid];
+			if (PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
+				return (SendClientMessage(playerid, COLOR_WHITE,
+					PREFIX_ERROR "Помощь в задержании пока не требуется."));
+			if (PursuitReinforcReload[playerid])
+				return (SendClientMessage(playerid, COLOR_WHITE,
+					PREFIX_ERROR "Подкрепление недавно уже запрашивалось."));
+			PursuitReinforc[playerid] = 1;
+			return (1);
+		}
+	}
+
+	#if defined Pursuit_OnPlayerClickH
+		return Pursuit_OnPlayerClickH(playerid);
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnPlayerClickH
+	#undef OnPlayerClickH
+#else
+	#define _ALS_OnPlayerClickH
+#endif
+#define OnPlayerClickH Pursuit_OnPlayerClickH
+#if defined Pursuit_OnPlayerClickH
+	forward Pursuit_OnPlayerClickH(playerid);
+#endif
+
+public	OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
+{
+	if (RELEASED(KEY_WALK))
+	{
+		if (PursuitArest[playerid])
+		{
+			DeletePVar(PursuitArestPlayer[playerid], "Police:Arrest");
+			PursuitArest[playerid] = 0;
+			PursuitArestPlayer[playerid] = INVALID_PLAYER_ID;
+			GameTextForPlayer(playerid, "~r~arrest failure", 3000, 3);
+			ClearAnimations(playerid);
+			ProgressBarHide(playerid);
+		}
+		if (PursuitCancelHandsup[playerid])
 		{
 			PursuitCancelHandsup[playerid] = 0;
 			ProgressBarHide(playerid);
 		}
 	}
-	else if(PRESSED(KEY_CTRL_BACK))	// H
+	else if (RELEASED(KEY_CTRL_BACK))
 	{
-		if(pState == PLAYER_STATE_DRIVER)
-		{
-			if(IsVehicleWithEngine(GetPlayerVehicleID(playerid)))
-			{
-	        	if(CarInfo[vehicleid][cType] == C_TYPE_FACTION && CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction])
-		    	{
-		    		if(CarInfo[vehicleid][cOwnerID] == F_POLICE)
-					{
-						if(PM_Type[playerid] == 10)
-						{	// Ведет преследование подозреваемого
-							new suspectid = PM_Place[playerid];
-							if(PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
-							{
-								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Помощь в задержании пока не требуется.");
-							}
-							if(PursuitReinforcReload[playerid])
-							{
-								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подкрепление недавно уже запрашивалось.");
-							}
-							PursuitReinforc[playerid] = 1;
-							return true;
-						}
-					}
-		    	}
-	        }
-	    }
-	}
-	else if(RELEASED(KEY_CTRL_BACK))
-	{
-		if(PursuitReinforc[playerid])
+		if (PursuitReinforc[playerid])
 		{
 			PursuitReinforc[playerid] = 0;
 			ProgressBarHide(playerid);
 		}
 	}
-	else if(PRESSED(KEY_SUBMISSION))
-	{
-		if(pState == PLAYER_STATE_ONFOOT)	//	колесико мышки
+
+	#if defined Pursuit_OnPlayerKeyStateChange
+		return Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys);
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnPlayerKeyStateChange
+	#undef OnPlayerKeyStateChange
+#else
+	#define _ALS_OnPlayerKeyStateChange
+#endif
+#define OnPlayerKeyStateChange Pursuit_OnPlayerKeyStateChange
+#if defined Pursuit_OnPlayerKeyStateChange
+	forward Pursuit_OnPlayerKeyStateChange(playerid, newkeys, oldkeys);
+#endif
+
+public	OnEveryMillisecondTimer()
+{
+	foreach(LoginPlayer, i)
+    {
+		//	Cancel Handsup
+		if(PursuitCancelHandsup[i])
 		{
-			if(GetPVarInt(playerid, "Police:Pursuit:Handsup") == 0 && PursuitStatus[playerid] > PS_NONE && PlayerCuffedTime[playerid] == 0)
+			if (++PursuitCancelHandsup[i] < 15)
+				ProgressBarUpdate(i, PursuitCancelHandsup[i], 15,
+					RusText("Сопротивление", isRus(i)));
+			else
 			{
-				if(GetPlayerWeapon(playerid) != 0)
+				PursuitHandsupCancel(i);
+				PursuitCancelHandsup[i] = 0;
+				ProgressBarHide(i);
+			}
+		}
+		//	Reinforc
+		if (PursuitReinforc[i])
+		{
+			if (++PursuitReinforc[i] < 20)
+				ProgressBarUpdate(i, PursuitReinforc[i], 20,
+					RusText("Подмога", isRus(i)));
+			else
+			{
+				new string[128];
+				new Float:pos[3];
+
+				ProgressBarHide(i);
+				PursuitReinforc[i] = 0;
+				PursuitReinforcReload[i] = 120;
+				PursuitReinforcTime[i] = 60;
+				GetPlayerPos(i, Arr3<pos>);
+				PursuitReinforcMapIcon[i] = CreateDynamicMapIcon(Arr3<pos>, 30,
+					COLOR_WHITE, GetPlayerVirtualWorld(i), GetPlayerInterior(i),
+					i, 3000.0, MAPICON_GLOBAL);
+				format(string, sizeof(string),
+					"[R] Диспетчер HQ: {FFFFFF}%s запрашивает подкрепление \
+					{8D8DFF}| Район: {FFFFFF}%s",
+					ReturnPlayerName(i), GetPlayerArea(i));
+				SendPoliceMessage(COLOR_BLUE, string);
+			}
+		}
+		//	Arrest
+		if (PursuitArest[i])
+		{
+			new pursued = PursuitArestPlayer[i];
+			if (++PursuitArest[i] < 50)
+			{
+				if (GetDistanceBetweenPlayers(i, pursued) < 2.0
+					&& (PlayerCuffedTime[pursued]
+					|| GetPVarInt(pursued, "Police:Pursuit:Handsup")))
 				{
-					ShowPlayerHint(playerid, "Чтобы поднять руки спрячьте оружие");
+					ProgressBarUpdate(i, PursuitArest[i], 50,
+						RusText("Арест", isRus(i)));
+					GameTextForPlayer(pursued,
+						"~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
+					GameTextForPlayer(i,
+						"~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
 				}
 				else
 				{
-					PursuitHandsup(playerid);
+					DeletePVar(PursuitArestPlayer[i], "Police:Arrest");
+					PursuitArest[i] = 0;
+					PursuitArestPlayer[i] = INVALID_PLAYER_ID;
+					GameTextForPlayer(i, "~r~arrest failure", 3000, 3);
+					ClearAnimations(i);
+					ProgressBarHide(i);
 				}
 			}
 			else
 			{
-				if(PlayerInfo[playerid][pAnim] > 0)
+				new string[128];
+				//MySetPlayerSpecialAction(pursued, SPECIAL_ACTION_CUFFED);
+				if (PursuitStatus[pursued] == PS_NONE)
 				{
-					MyApplyAnimation(playerid, PlayerAnims[ PlayerInfo[playerid][pAnim] ][PANIM_LIB], PlayerAnims[ PlayerInfo[playerid][pAnim] ][PANIM_NAME], 4.1, 0, 0, 0, 0, 0);
+					PlayerInfo[i][pCopCases] += 1;
+					SendFormatMessage(i, COLOR_DBLUE, string, "Преступник %s отправлен за решетку, отличная работа!", ReturnPlayerName(pursued));
+					HidePlayerVisualTimer(pursued);
+					FlashPoliceZone(pursued, false);
+					KillTimer(pursuit_timer[pursued]);
+					PursuitStatus[pursued] = PS_NONE;
+					PursuitCount[pursued] = 0;
+					pursuit_timer[pursued] = 0;
+					SetPlayerInJail(pursued, true);
 				}
-			}
-		}
-	    else if(pState == PLAYER_STATE_DRIVER) // KEY_2
-		{
-			if(CarInfo[vehicleid][cType] == C_TYPE_FACTION && CarInfo[vehicleid][cOwnerID] == PlayerInfo[playerid][pFaction])
-		    {
-				// Преследование на транспорте
-				if(CarInfo[vehicleid][cOwnerID] == F_POLICE)
-				{
-					if(!IsPoliceDuty(playerid))
-		    		{
-		    			return ShowPlayerHint(playerid, "Для остановки транспорта вы должны быть на ~b~дежурстве");
-		    		}
-					new model = GetVehicleModel(GetPlayerVehicleID(playerid));
-					if(PM_Type[playerid] == 0)
-					{// Не выполняет задание
-						new bool:founded, Float:curdist, Float:mindist, suspectid, vehid, mtype;
-						foreach(LoginPlayer, i)
-						{
-							if(IsForce(PlayerInfo[i][pFaction]) || GetPlayerState(i) != 2) continue;
-							//
-							if(model == 497)
-							{
-								curdist = GetDistanceBetweenPlayers(playerid, i, true);
-								if(curdist > 100)	continue;
-							}
-							else
-							{
-								curdist = GetDistanceBetweenPlayers(playerid, i);
-								if(curdist > 50)	continue;
-							}
-							//
-							vehid = GetPlayerVehicleID(i);
-							//if(VehInfo[vehid][vWithEngine] == false) continue;
-							mtype = VehInfo[vehid][vModelType];
-							if(mtype == MTYPE_RC || mtype == MTYPE_TRAIN || mtype == MTYPE_BOAT || mtype == MTYPE_HELIC || mtype == MTYPE_PLANE) continue;
-							//
-							if(curdist < mindist || founded == false)
-							{
-								suspectid = i;
-								mindist = curdist;
-								founded = true;
-							}
-						}
-						if(founded)
-						{
-							if(GetPlayerWarGangZone(suspectid) >= 0 && PursuitStatus[suspectid] == PS_NONE)
-							{
-								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете запросить остановку члена банды во время захвата территории.");
-							}
-							if(IsPlayerAFK(suspectid))
-							{
-								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый находится в AFK, его нельзя остановить.");
-							}
-							new bool:wl_veh = false;
-							foreach(LoginPlayer, i)
-							{
-							    if(IsPlayerInVehicle(i, vehid) && GetPlayerWantedLevel(i) > 0)
-							    {
-							        wl_veh = true; // В машине найден игрок с розыском
-							        break;
-							    }
-							}
-							if(!wl_veh && PursuitLastUNIX[suspectid] > gettime())
-							{
-							    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Совсем недавно этот автомобиль уже проверяли.");
-							}
-							if(PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
-							{
-								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Помощь в задержании пока не требуется, но будьте на чеку.");
-							}
-							// Формируем задание
-							if(!PursuitStatus[suspectid])
-							{
-								if(model == 497)
-								{
-									return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "На вертолете можно только подключиться к погоне.");
-								}
-								PursuitTimer(suspectid);
-								new sound = 15800;
-								format(string, 128, "[%s %s:o< Это отделение полиции Лос-Сантос. Оставайтесь на месте!]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
-								//format(string, 128, "[%s %s:o< Водитель %s, прижмитесь к обочине и остановитесь]", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
-								SendRadiusMessage(playerid, 60.0, COLOR_YELLOW, string);
-								PlayerPlaySound(playerid, sound, 0, 0, 0);
-								PlayerPlaySound(suspectid, sound, 0, 0, 0);
-							}
-							else
-							{
-								format(string, 128, "[R] %s %s: {FFFFFF}Подключаюсь к погоне за %s, прием.", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
-								SendPoliceMessage(COLOR_BLUE, string);
-							}
-							if(CriminalDanger[suspectid])	format(string, 128, "~n~~n~Остановите ~r~%s ~w~любой ценой!", ReturnPlayerName(suspectid));
-							else 							format(string, 128, "~n~~n~Задержите ~b~%s ~w~не применяя силы.", ReturnPlayerName(suspectid));
-							// Подключаем всех копов в машине, из которой поступил запрос
-							foreach(Cop, copid)
-							{
-							    if(PM_Type[copid] == 0 && GetPlayerVehicleID(copid) == vehicleid)
-							    {
-									PM_Type[copid] = 10;// Номер миссии (10 - преследование)
-									PM_Place[copid] = suspectid;// ид подозреваемого
-									PM_UNIX[copid] = gettime();// Время начала погони
-									SendMissionMessage(copid, string, 0);// Вывод задания
-								}
-							}
-						}
-						else
-						{
-							SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Поблизости не найдено ни одного игрока.");
-						}
-						return true;
-					}
-					else if(PM_Type[playerid] == 10)
-					{	// Ведет преследование подозреваемого
-						new suspectid = PM_Place[playerid];
-						if(GetDistanceBetweenPlayers(playerid, suspectid) > 50)
-						{
-							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый слишком далеко, подъедьте ближе.");
-						}
-						if(PursuitStatus[suspectid] == PS_WAIT)
-						{
-							return ShowPlayerHint(playerid, "Требования выполнены, задержите подозреваемого");
-						}
-						if(IsPlayerInAnyVehicle(suspectid) == 0)
-						{
-							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Подозреваемый вышел из машины, задержите его.");
-						}
-						new nowtick = GetTickCount();
-						if(PursuitTickcount[suspectid] > nowtick)
-						{
-							format(string, 128, "Остановку уже запрашивали, до следующего раза: ~y~%d сек", 1+(PursuitTickcount[suspectid]-nowtick)/1000);
-							return ShowPlayerHint(playerid, string);
-						}
-						new sound = 15800;
-						format(string, 128, "[%s %s:o< Это отделение полиции Лос-Сантос. Оставайтесь на месте!]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
-						//if(!random(2))	format(string, 128, "[%s %s:o< Прижмитесь к обочине или мы будем вынуждены применить силу]", GetPlayerRank(playerid), ReturnPlayerName(playerid));
-						//else 			format(string, 128, "[%s %s:o< Водитель %s, последнее предупреждение и мы открываем огонь]", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
-						SendRadiusMessage(playerid, 60.0, COLOR_YELLOW, string);
-						PlayerPlaySound(playerid, sound, 0, 0, 0);
-						PlayerPlaySound(suspectid, sound, 0, 0, 0);
-						PursuitTickcount[suspectid] = nowtick + 15000;
-					}
-					else
-					{
-						SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы выполняете задание, подробнее в /hq.");
-					}
-					return true;
-				}
-			}
-		}
-		else if(pState == PLAYER_STATE_PASSENGER)
-		{
-			if(PlayerInfo[playerid][pFaction] == F_POLICE && PM_Type[playerid] == 0 && VehInfo[vehicleid][vDriver] >= 0)
-			{
-				new driver = VehInfo[vehicleid][vDriver];
-				if(PlayerInfo[driver][pFaction] == F_POLICE && PM_Type[driver] == 10)
-				{
-					if(!IsPoliceDuty(playerid))
-		    		{
-		    			return ShowPlayerHint(playerid, "Для присоединения к погоне вы должны быть на ~b~дежурстве");
-		    		}
-		    		new suspectid = PM_Place[driver];
-		    		if(PS_NONE < PursuitStatus[suspectid] < PS_CRIMINAL)
-		    		{
-		    			return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Помощь в задержании пока не требуется, но будьте на чеку.");
-		    		}
-					// Формируем задание
-					format(string, 128, "[R] %s %s: {FFFFFF}Подключаюсь к погоне за %s, прием.", GetPlayerRank(playerid), ReturnPlayerName(playerid), ReturnPlayerName(suspectid));
-					SendPoliceMessage(COLOR_BLUE, string);
-					PM_Type[playerid] = 10;			// Номер миссии (10 - преследование)
-					PM_Place[playerid] = suspectid;	// ид подозреваемого
-					PM_UNIX[playerid] = gettime();	// Время начала погони
-					if(CriminalDanger[suspectid])	format(string, 128, "~n~~n~Остановите ~r~%s ~w~любой ценой!", ReturnPlayerName(suspectid));
-					else 							format(string, 128, "~n~~n~Задержите ~b~%s ~w~не применяя силы.", ReturnPlayerName(suspectid));
-					SendMissionMessage(playerid, string, 0);	// Вывод задания
-				}
-			}
-		}
-	}
-	return CONTINUE;
-}
-
-Police.Pursuit_QuickTimer(playerid)
-{
-	new i = playerid;
-	//---	Cancel Handsup
-	if(PursuitCancelHandsup[i])
-	{
-		if(++PursuitCancelHandsup[i] < 15)
-		{
-			ProgressBarUpdate(i, PursuitCancelHandsup[i], 15, RusText("Сопротивление", isRus(i)));
-		}
-		else
-		{
-			PursuitHandsupCancel(i);
-			PursuitCancelHandsup[i] = 0;
-			ProgressBarHide(i);
-		}
-	}
-	//---	Reinforc
-	if(PursuitReinforc[i])
-	{
-		if(++PursuitReinforc[i] < 20)
-		{
-			ProgressBarUpdate(i, PursuitReinforc[i], 20, RusText("Подмога", isRus(i)));
-		}
-		else
-		{
-			ProgressBarHide(i);
-			PursuitReinforc[i] = 0;
-			PursuitReinforcReload[i] = 120;
-			PursuitReinforcTime[i] = 60;
-			new Float:pos[3];
-			GetPlayerPos(i, Arr3<pos>);
-			PursuitReinforcMapIcon[i] = CreateDynamicMapIcon(Arr3<pos>, 30, COLOR_WHITE, GetPlayerVirtualWorld(i), GetPlayerInterior(i), i, 3000.0, MAPICON_GLOBAL);
-			new string[128];
-			format(string, sizeof(string), "[R] Диспетчер HQ: {FFFFFF}%s запрашивает подкрепление {8D8DFF}| Район: {FFFFFF}%s", ReturnPlayerName(i), GetPlayerArea(i));
-			SendPoliceMessage(COLOR_BLUE, string);
-		}
-	}
-	//---	Arrest
-	if(PursuitArest[i])
-	{
-		new pursued = PursuitArestPlayer[i];
-		if(++PursuitArest[i] < 50)
-		{
-			if(GetDistanceBetweenPlayers(i, pursued) < 2.0 && (PlayerCuffedTime[pursued] || GetPVarInt(pursued, "Police:Pursuit:Handsup")))
-			{
-				ProgressBarUpdate(i, PursuitArest[i], 50, RusText("Арест", isRus(i)));
-				GameTextForPlayer(pursued, "~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
-				GameTextForPlayer(i, "~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
-			}
-			else
-			{
+				else
+					StopPursuit(pursued, 4);
+				SendFormatMessageToAll(COLOR_DBLUE, string, "[Госдепартамент]: %s {FFFFFF}%s[%d] {2641FE}арестовал преступника {FFFFFF}%s[%d]", GetPlayerRank(i), ReturnPlayerName(i), i, ReturnPlayerName(pursued), pursued);
 				DeletePVar(PursuitArestPlayer[i], "Police:Arrest");
 				PursuitArest[i] = 0;
 				PursuitArestPlayer[i] = INVALID_PLAYER_ID;
-	        	GameTextForPlayer(i, "~r~arrest failure", 3000, 3);
-	        	ClearAnimations(i);
-	        	ProgressBarHide(i);
+				ClearAnimations(i);
+				ProgressBarHide(i);
 			}
-		}
-		else
-		{
-			new string[128];
-			//MySetPlayerSpecialAction(pursued, SPECIAL_ACTION_CUFFED);
-			if(PursuitStatus[pursued] == PS_NONE)
-			{
-    			PlayerInfo[i][pCopCases] += 1;
-				SendFormatMessage(i, COLOR_DBLUE, string, "Преступник %s отправлен за решетку, отличная работа!", ReturnPlayerName(pursued));
-
-				HidePlayerVisualTimer(pursued);
-				FlashPoliceZone(pursued, false);
-		        KillTimer(pursuit_timer[pursued]);
-		        PursuitStatus[pursued] = PS_NONE;
-		        PursuitCount[pursued] = 0;
-		        pursuit_timer[pursued] = 0;
-				SetPlayerInJail(pursued, true);
-			}
-			else StopPursuit(pursued, 4);
-			SendFormatMessageToAll(COLOR_DBLUE, string, "[Госдепартамент]: %s {FFFFFF}%s[%d] {2641FE}арестовал преступника {FFFFFF}%s[%d]", GetPlayerRank(i), ReturnPlayerName(i), i, ReturnPlayerName(pursued), pursued);
-			DeletePVar(PursuitArestPlayer[i], "Police:Arrest");
-			PursuitArest[i] = 0;
-			PursuitArestPlayer[i] = INVALID_PLAYER_ID;
-        	ClearAnimations(i);
-        	ProgressBarHide(i);
 		}
 	}
+
+	#if defined Pursuit_OnEveryMillisecondTimer
+		return Pursuit_OnEveryMillisecondTimer();
+	#else
+		return (1);
+	#endif
 }
+#if defined _ALS_OnEveryMillisecondTimer
+	#undef OnEveryMillisecondTimer
+#else
+	#define _ALS_OnEveryMillisecondTimer
+#endif
+#define OnEveryMillisecondTimer Pursuit_OnEveryMillisecondTimer
+#if defined Pursuit_OnEveryMillisecondTimer
+	forward Pursuit_OnEveryMillisecondTimer();
+#endif
 
 //////////	Functions	///////////
 GetPlayerPursuit(playerid)
@@ -536,12 +631,12 @@ Public: StartPursuit(playerid, targetid)
 	{	
 		if(IsPlayerNPC(targetid))
 		{
-			return false;
+			return (0);
 		}
 		if(!IsPoliceDuty(playerid))
 		{
 			SendClientMessage(playerid, COLOR_GREY, PREFIX_ERROR "Для остановки игроков вы должны быть на дежурстве.");
-			return false;
+			return (0);
 		}
 		new sound, string[128];
 		if(PM_Type[playerid] == 0)
@@ -1014,100 +1109,4 @@ stock ToggleCriminalDanger(playerid, bool:toggle)
 	}
 	CriminalDanger[playerid] = toggle;
 	IFace.UpdatePlayerWanted(playerid);
-}
-
-//////////	Commands	////////////
-COMMAND:frisk(playerid, params[])
-{
-	extract params -> new player:giveplayerid; else
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /frisk [playerid/playername]");
-
-	if(playerid == giveplayerid)
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете обыскать самого себя.");
-	}
-	if(GetDistanceBetweenPlayers(playerid, giveplayerid) > 5.0)
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Игрок слишком далеко от вас.");
-	}
-	if(IsGover(PlayerInfo[giveplayerid][pFaction]))
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете обыскать гос.служащего.");
-	}
-	if(PlayerInfo[giveplayerid][pNextFriskTime] > gettime())
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока недавно обыскивали.");
-	}
-	if(PursuitStatus[giveplayerid] == PS_NONE)
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Для обыска вы должны запросить остановку игрока.");
-	}
-	if(PursuitStatus[giveplayerid] == PS_WAIT || PursuitStatus[giveplayerid] == PS_OUT_COMPLETE)
-	{
-		new string[128];
-		PlayerInfo[giveplayerid][pNextFriskTime] = gettime() + (60 * 5);
-		format(string, sizeof(string), "обыскивает %s'а.", ReturnPlayerName(giveplayerid));
-		PlayerAction(playerid, string);
-
-		mysql_format(g_SQL, string, sizeof(string), "SELECT `thing`, `count` FROM `inventory` WHERE `source` = '%d' AND `source_type` = '%d'", PlayerInfo[giveplayerid][pUserID], _:TAB_INVENTORY);
-    	new Cache:result = mysql_query(g_SQL, string);
-    	new thing, cnt, count, wcount;
-    	for(new i = 0; i < cache_num_rows(); i++)
-		{
-			cache_get_value_name_int(i, "thing", thing);
-			if(GetThingLegally(thing) == 0)
-			{
-				cache_get_value_name_int(i, "count", cnt);
-				if(count)	format(string, sizeof(string), "%s, %s (%d шт.)", string, GetThingName(thing), cnt);
-				else 		format(string, sizeof(string), "%s (%d шт.)", GetThingName(thing), cnt);
-				count++;
-			}
-    	}
-    	cache_delete(result);
-    	//	Оружие
-    	if(PlayerInfo[giveplayerid][pGunLic] == 0)
-		{
-	    	for(new s = 2; s < 13; s++)
-	    	{
-			    if(!MyGetPlayerWeaponID(giveplayerid, s) || 9 <= s <= 11) continue;
-	    		if(count || wcount)	format(string, sizeof(string), "%s, %s", string, ReturnWeaponName(MyGetPlayerWeaponID(giveplayerid, s)));
-				else 				format(string, sizeof(string), "%s", ReturnWeaponName(MyGetPlayerWeaponID(giveplayerid, s)));
-				wcount++;
-	    	}
-    	}
-    	if(count || wcount)
-    	{
-    		SendFormatMessage(playerid, COLOR_DBLUE, string, "Запрещенные вещи %s'а: {FFFFFF}%s", ReturnPlayerName(giveplayerid), string);
-    		if(count)
-    		{
-	    		CrimePlayer(giveplayerid, CRIME_THINGS);
-	    	}
-	    	if(wcount)
-	    	{
-	    		CrimePlayer(giveplayerid, CRIME_HAVE_GUN);
-	    	}
-	    	if(PM_Type[playerid] == 10 && PM_Place[playerid] == giveplayerid)
-			{
-				PursuitIllegalItem[giveplayerid] = true;
-				ShowDialog(playerid, DMODE_REACTION);
-			}
-    	}
-    	else
-    	{
-    		if(PM_Type[playerid] == 10 && PM_Place[playerid] == giveplayerid)
-    		{
-    			if(GetPlayerWantedLevel(giveplayerid) == 0)
-    			{
-    				CancelPlayerPursuit(giveplayerid, 1);
-    			}
-    		}
-    		SendFormatMessage(giveplayerid, COLOR_DBLUE, string, "%s %s обыскал вас и ничего не нашел", GetPlayerRank(playerid), ReturnPlayerName(playerid));
-			SendFormatMessage(playerid, COLOR_DBLUE, string, "Вы обыскали %s: ничего запрещенного не найдено", ReturnPlayerName(giveplayerid));
-    	}
-	}
-	else
-	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "В данный момент обыск невозможен.");
-	}
-	return true;
 }

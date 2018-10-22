@@ -7,15 +7,15 @@
 
 #define CopList_ADD(%0)		Iter_Add(Cop, %0)
 #define CopList_REMOVE(%0)	Iter_Remove(Cop, %0)
-#define IsPoliceDuty(%0)	Iter_Contains(Cop, %0)  //  Optimize
+//#define IsPoliceDuty(%0)	Iter_Contains(Cop, %0)  //  Optimize
 
 enum
 {
-	//	Р›РµРіРєРёРµ (С€С‚СЂР°С„)
+	//	Легкие (штраф)
 	CRIME_NOT_LIGHT,
 	CRIME_DRUNK,
 	CRIME_NOT_LIC,
-	//	РЎСЂРµРґРЅРёРµ (Р°СЂРµСЃС‚)
+	//	Средние (арест)
 	CRIME_HOOLIGAN,
 	CRIME_ROBBERY_SHOP,
 	CRIME_THEFT_AUTO,
@@ -25,7 +25,7 @@ enum
 	CRIME_CARRY_CRIMINAL,
 	CRIME_HAVE_GUN,
 	CRIME_THINGS,
-	//	РўСЏР¶РєРёРµ (Р°СЂРµСЃС‚)
+	//	Тяжкие (арест)
 	CRIME_KILL,
 	CRIME_COP_KILL,
 	CRIME_RUNAWAY,
@@ -46,38 +46,38 @@ enum
 enum E_CRIME
 {
 	E_TITLE[32],
-	E_START_WL,		// Р•СЃР»Рё РјРµРЅСЊС€Рµ СЌС‚РѕРіРѕ, С‚Рѕ РґР°СЃС‚ СЌС‚РѕС‚
-	E_WL,			// РЎРєРѕР»СЊРєРѕ Р±СѓРґРµС‚ РїСЂРёР±Р°РІР»СЏС‚СЊСЃСЏ
-	E_MAX_WL,		// РљР°РєРѕР№ РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ Р·Р° РЅР°СЂСѓС€РµРЅРёРµ
-	E_SHOW_AGAIN	// РџРѕРєР°Р·С‹РІР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂРµСЃС‚СѓРїР»РµРЅРёРё РїСЂРё РїРѕРІС‚РѕСЂРЅРѕРј СЃРѕРІРµСЂС€РµРЅРёРё(РєРѕРіР° Р·РІРµР·Рґ СѓР¶Рµ РјР°РєСЃРёРјСѓРј)
+	E_START_WL,		// Если меньше этого, то даст этот
+	E_WL,			// Сколько будет прибавляться
+	E_MAX_WL,		// Какой максимальный за нарушение
+	E_SHOW_AGAIN	// Показывать информацию о преступлении при повторном совершении(кога звезд уже максимум)
 }
 
 new CrimesList[][E_CRIME] =
 {
-	//	Р›РµРіРєРёРµ (С€С‚СЂР°С„)
-	{ "Р’РѕР¶РґРµРЅРёРµ Р±РµР· РѕСЃРІРµС‰РµРЅРёСЏ",			1, 1, 2, false },
-	{ "Р’РѕР¶РґРµРЅРёРµ РІ РїСЊСЏРЅРѕРј РІРёРґРµ",			3, 1, 3, false },
-	{ "Р’РѕР¶РґРµРЅРёРµ Р±РµР· Р»РёС†РµРЅР·РёРё",			3, 1, 3, false },
-	{ "РҐСѓР»РёРіР°РЅСЃС‚РІРѕ", 					3, 1, 3, false },
-	//	РЎСЂРµРґРЅРёРµ (Р°СЂРµСЃС‚)
-	{ "РћРіСЂР°Р±Р»РµРЅРёРµ РјР°РіР°Р·РёРЅР°",			4, 2, 6, false },
-	{ "РЈРіРѕРЅ Р°РІС‚РѕС‚СЂР°РЅСЃРїРѕСЂС‚Р°",			4, 1, 4, false },
-	{ "РР·РіРѕС‚РѕРІР»РµРЅРёРµ РѕСЂСѓР¶РёСЏ",			4, 1, 4, false },
-	{ "РР·РіРѕС‚РѕРІР»РµРЅРёРµ РЅР°СЂРєРѕС‚РёРєРѕРІ",		4, 1, 4, false },
-	{ "РћРєР°Р·Р°РЅРёРµ СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёСЏ",			4, 1, 4, false },
-	{ "РџРµСЂРµРІРѕР·РєР° РїСЂРµСЃС‚СѓРїРЅРёРєР°",			4, 1, 4, false },
-	{ "РќРµР·Р°РєРѕРЅРЅРѕРµ РЅРѕС€РµРЅРёРµ РѕСЂСѓР¶РёСЏ",		4, 1, 4, false },
-	{ "РќРѕС€РµРЅРёРµ Р·Р°РїСЂРµС‰РµРЅРЅС‹С… РїСЂРµРґРјРµС‚РѕРІ",	4, 1, 4, false },
-	//	РўСЏР¶РєРёРµ (Р°СЂРµСЃС‚)
-	{ "РЈР±РёР№СЃС‚РІРѕ", 						4, 1, 8, false },
-	{ "РќР°РїР°РґРµРЅРёРµ РЅР° СЃРѕС‚СЂСѓРґРЅРёРєР°",		4, 1, 6, false },
-	{ "РџРѕР±РµРі РёР· С‚СЋСЂСЊРјС‹",				8, 1, 8, false },
-	{ "РџСЂРѕРЅРёРєРЅРѕРІРµРЅРёРµ РІ С‚СЋСЂСЊРјСѓ",			8, 1, 8, false }
+	//	Легкие (штраф)
+	{ "Вождение без освещения",			1, 1, 2, false },
+	{ "Вождение в пьяном виде",			3, 1, 3, false },
+	{ "Вождение без лицензии",			3, 1, 3, false },
+	{ "Хулиганство", 					3, 1, 3, false },
+	//	Средние (арест)
+	{ "Ограбление магазина",			4, 2, 6, false },
+	{ "Угон автотранспорта",			4, 1, 4, false },
+	{ "Изготовление оружия",			4, 1, 4, false },
+	{ "Изготовление наркотиков",		4, 1, 4, false },
+	{ "Оказание сопротивления",			4, 1, 4, false },
+	{ "Перевозка преступника",			4, 1, 4, false },
+	{ "Незаконное ношение оружия",		4, 1, 4, false },
+	{ "Ношение запрещенных предметов",	4, 1, 4, false },
+	//	Тяжкие (арест)
+	{ "Убийство", 						4, 1, 8, false },
+	{ "Нападение на сотрудника",		4, 1, 6, false },
+	{ "Побег из тюрьмы",				8, 1, 8, false },
+	{ "Проникновение в тюрьму",			8, 1, 8, false }
 };
 
 new PlayerCuffedTime[MAX_PLAYERS];
 new CriminalMarkers[MAX_PLAYERS];
-new bool:CriminalDanger[MAX_PLAYERS];    // РћСЃРѕР±Рѕ РѕРїР°СЃРµРЅ (СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёРµ)
+new bool:CriminalDanger[MAX_PLAYERS];    // Особо опасен (сопротивление)
 new criminal_timer[MAX_PLAYERS];
 
 new 
@@ -87,22 +87,38 @@ new
 forward	CrimePlayer(playerid, crimeid);
 forward	MySetPlayerWantedLevel(playerid, level);
 
-//	РџРѕР»РёС†РµР№СЃРєРёРµ РїРѕРіРѕРЅРё
-new PursuitStatus[MAX_PLAYERS],				// РЎС‚Р°С‚СѓСЃ РїРѕРіРѕРЅРё
-	PursuitState[MAX_PLAYERS],				// GetPlayerState РІ РЅР°С‡Р°Р»Рµ РїРѕРіРѕРЅРё
-	PursuitCount[MAX_PLAYERS],				// РЎС‡РµС‚С‡РёРє РІСЂРµРјРµРЅРё
-	PursuitLastUNIX[MAX_PLAYERS],			// Unix РїРѕСЃР»РµРґРЅРµР№ РѕСЃС‚Р°РЅРѕРІРєРё
-	PursuitTickcount[MAX_PLAYERS],			// РЎС‡РµС‚С‡РёРє РјРµРіР°С„РѕРЅР°
-	bool:PursuitLamp[MAX_PLAYERS],			// РЎС‚Р°С‚СѓСЃ С„Р°СЂ РЅР° РјРѕРјРµРЅС‚ РѕСЃС‚Р°РЅРѕРІРєРё
-	bool:PursuitCrimTransit[MAX_PLAYERS],	// РџРµСЂРµРІРѕР·РёС‚ Р»Рё РїСЂРµСЃС‚СѓРїРЅРёРєР°
-	bool:PursuitIllegalItem[MAX_PLAYERS],	//	РќР°С€Р»Рё Р»Рё РЅРµР»РµРіР°Р»СЊРЅС‹Рµ РїСЂРµРґРјРµС‚С‹
-	bool:PursuitAllowArrest[MAX_PLAYERS],	//	Р Р°Р·СЂРµС€РµРЅРѕ Р»Рё Р°СЂРµСЃС‚РѕРІР°С‚СЊ (СЂРѕР·С‹СЃРє < 4)
+//	Полицейские погони
+new PursuitStatus[MAX_PLAYERS],				// Статус погони
+	PursuitState[MAX_PLAYERS],				// GetPlayerState в начале погони
+	PursuitCount[MAX_PLAYERS],				// Счетчик времени
+	PursuitLastUNIX[MAX_PLAYERS],			// Unix последней остановки
+	PursuitTickcount[MAX_PLAYERS],			// Счетчик мегафона
+	bool:PursuitLamp[MAX_PLAYERS],			// Статус фар на момент остановки
+	bool:PursuitCrimTransit[MAX_PLAYERS],	// Перевозит ли преступника
+	bool:PursuitIllegalItem[MAX_PLAYERS],	//	Нашли ли нелегальные предметы
+	bool:PursuitAllowArrest[MAX_PLAYERS],	//	Разрешено ли арестовать (розыск < 4)
 	PursuitReinforc[MAX_PLAYERS],
 	PursuitReinforcReload[MAX_PLAYERS],
 	PursuitReinforcMapIcon[MAX_PLAYERS],
 	PursuitReinforcTime[MAX_PLAYERS],
 	PursuitArest[MAX_PLAYERS],
-	PursuitArestPlayer[MAX_PLAYERS] = { INVALID_PLAYER_ID, ... },	//	РёРґ РёРіСЂРѕРєР° РєРѕС‚РѕСЂРѕРіРѕ Р°СЂРµСЃС‚РѕРІС‹РІР°РµС‚ РєРѕРї
+	PursuitArestPlayer[MAX_PLAYERS] = { INVALID_PLAYER_ID, ... },	//	ид игрока которого арестовывает коп
 	PursuitCancelHandsup[MAX_PLAYERS],
 	pursuit_timer[MAX_PLAYERS];
 new Text3D:criminal_3d[MAX_PLAYERS];
+
+enum pmInfo
+{
+	pmNum,      // Номер вызова
+	pmType,     // Тип вызова
+	pmPlace,    // Место вызова
+	pmUNIX,     // Срок вызова
+};
+new PoliceMission[12][pmInfo];
+
+new PM_Type[MAX_PLAYERS],// 0 - пусто, 2-4 - одиночные миссии, 10 - преследование
+	PM_Step[MAX_PLAYERS],
+	PM_Place[MAX_PLAYERS],
+	PM_UNIX[MAX_PLAYERS],
+	PM_SearchZone[MAX_PLAYERS], // CreateGangZone()
+	PM_SearchZone2[MAX_PLAYERS]; // CreateDynamicRectangle()

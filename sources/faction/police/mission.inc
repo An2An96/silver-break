@@ -1,21 +1,5 @@
 #include "house/header"
 
-enum pmInfo
-{
-	pmNum,      // Номер вызова
-	pmType,     // Тип вызова
-	pmPlace,    // Место вызова
-	pmUNIX,     // Срок вызова
-};
-new PoliceMission[12][pmInfo];
-
-new PM_Type[MAX_PLAYERS],// 0 - пусто, 2-4 - одиночные миссии, 10 - преследование
-	PM_Step[MAX_PLAYERS],
-	PM_Place[MAX_PLAYERS],
-	PM_UNIX[MAX_PLAYERS],
-	PM_SearchZone[MAX_PLAYERS], // CreateGangZone()
-	PM_SearchZone2[MAX_PLAYERS]; // CreateDynamicRectangle()
-
 Police_GetPlayerMissionType(playerid)
 {
 	return PM_Type[playerid];
