@@ -41,17 +41,36 @@ COMMAND:setpower(playerid, params[])
 	return 1;
 }
 
+flags:cleartrain(CMD_DEVELOPER);
+COMMAND:cleartrain(playerid, params[])
+{// [BT]
+	new giveplayerid;
+	if(sscanf(params, "r", giveplayerid))
+	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /cleartrain [playerid/playername]");
+	if(!IsPlayerLogged(giveplayerid))
+		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
+	new string[128];
+	PlayerInfo[giveplayerid][pTraining] = 0;
+	format(string, 128, "Вы обнулили тренировки у %s[%d]", ReturnPlayerName(giveplayerid), giveplayerid);
+	SendClientMessage(playerid, COLOR_WHITE, string);
+	format(string, 128, "%s[%d] обнулил вам тренировки", ReturnPlayerName(playerid), playerid);
+	SendClientMessage(giveplayerid, COLOR_WHITE, string);
+	return true;
+}
+
 public	OnGameModeInit()
 {
 	#if defined _gym_bench_press_included
 		BenchpressInit();
 	#endif
 
-	// for (new i = 0; i < sizeof(BoxingRing); i++)
-	// {
-	// 	BoxingRing[i][RING_RED_PLAYER] = INVALID_PLAYER_ID;
-	// 	BoxingRing[i][RING_BLUE_PLAYER] = INVALID_PLAYER_ID;
-	// }
+	#if defined _gym_boxing_included
+		for (new i = 0; i < sizeof(BoxingRing); i++)
+		{
+			BoxingRing[i][RING_RED_PLAYER] = INVALID_PLAYER_ID;
+			BoxingRing[i][RING_BLUE_PLAYER] = INVALID_PLAYER_ID;
+		}
+	#endif
 
 	#if defined GYM_OnGameModeInit
 		return GYM_OnGameModeInit();

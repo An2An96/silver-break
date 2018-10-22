@@ -156,20 +156,20 @@ static	BenchpressEND(playerid)
 		Arr3<PlayerCameraVector>,Arr3<BenchpressPos[i]>, 5000);
 	//	========================================================================
 
-	KillTimer(BenchpressTimer[playerid]);
-	ProgressBarHide(playerid);
-	
 	IFace.HidePlayerInfoBar(playerid);
-    MyApplyAnimation(playerid,
-		"benchpress", "gym_bp_getoff", 4.1, 0, 0, 0, 0, 0);
-    KillTimer(BenchpressStepTimer[playerid]);
+	ProgressBarHide(playerid);
 
-    if(PlayerInfo[playerid][pJailTime])
+	MyApplyAnimation(playerid,
+		"benchpress", "gym_bp_getoff", 4.1, 0, 0, 0, 0, 0);
+	KillTimer(BenchpressStepTimer[playerid]);
+	KillTimer(BenchpressTimer[playerid]);
+
+	if (PlayerInfo[playerid][pJailTime])
 		ShowPlayerPrisonTime(playerid);
 
 	GymBlockKey{playerid} = true;
 	BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 1800, false, "ii", playerid, BENCHSTEP_FINISH_UP);
-    return true;
+    return (1);
 }
 
 Public: BenchpressNext(playerid, action)
@@ -226,7 +226,7 @@ Public: BenchpressNext(playerid, action)
 			else
 			{
 				BenchpressDOWN(playerid);
-		    	BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext",
+				BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext",
 					900, false, "ii", playerid, BENCHSTEP_DOWN_FINISH);
 			}
 			new string[32];
@@ -360,23 +360,19 @@ public	OnPlayerClickSprint(playerid)
 
 public OnPlayerClickEnter(playerid)
 {
-	//	Тренажеры
 	if (playerBenchUsed{playerid} && GymBlockKey{playerid} == false)
-	{
-		BenchpressEND(playerid);
-		return (1);
-	}
+		return (BenchpressEND(playerid));
 	else if (playerBenchUsed{playerid} == 0)
 	{
 		for (new i = 0; i < sizeof BenchpressPos; i++)
 		{
 			if (IsPlayerInRangeOfPoint(playerid, 2.5, Arr3<BenchpressPos[i]>))
-				return BenchpressStart(playerid, i);
+				return (BenchpressStart(playerid, i));
 		}
 	}
 
 	#if defined BenchPress_OnPlayerClickEnter
-		return BenchPress_OnPlayerClickEnter(playerid);
+		return (BenchPress_OnPlayerClickEnter(playerid));
 	#else
 		return (1);
 	#endif
