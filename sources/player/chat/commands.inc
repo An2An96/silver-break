@@ -83,7 +83,7 @@ COMMAND:s(playerid, params[])
 	format(string, sizeof(string), "- %s кричит: %s", ReturnPlayerName(playerid), string);
 	CensoreProxDetector(playerid, 30.0, string, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, 0xE6E6E6E6, 0xC8C8C8C8);
 	SetPlayerChatBubble(playerid, params, COLOR_LIGHTGREEN, 30.0, 5000);
-	if(IsPlayerInAnyVehicle(playerid) == 0 && playerBenchUsed{playerid} == 0)
+	if(IsPlayerInAnyVehicle(playerid) == 0 && !IsPlayerTraining(playerid))
 		MyApplyAnimation(playerid, "ON_LOOKERS", "shout_01", 4.1, 0, 0, 0, 0, 0);
 	//printf("[%s]: %s", ReturnPlayerName(playerid), params);
 	return true;

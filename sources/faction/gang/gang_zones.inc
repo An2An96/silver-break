@@ -33,38 +33,40 @@ static
 
 Public: Gang.GZ_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 {
-	if((PRESSED(KEY_FIRE) || PRESSED(KEY_SECONDARY_ATTACK | KEY_HANDBRAKE)))
+	if ((PRESSED(KEY_FIRE) || PRESSED(KEY_SECONDARY_ATTACK | KEY_HANDBRAKE)))
 	{
-		if(GetPlayerComb(playerid) == COMB_NONE && playerBenchUsed{playerid} == 0 && gPlayerRing[playerid] == (-1)
-		&& playerSmokeCount{playerid} == 0)
+		if (GetPlayerComb(playerid) == COMB_NONE && !IsPlayerTraining(playerid)
+			&& !IsPlayerBoxing(playerid) && playerSmokeCount{playerid} == 0)
 		{
-			if(InGangZone[playerid] >= 0 && GangZoneStatus[InGangZone[playerid]] == 0)
+			if (InGangZone[playerid] >= 0
+				&& GangZoneStatus[InGangZone[playerid]] == 0)
 			{
 				new zone = InGangZone[playerid];
-			    if(PlayerInfo[playerid][pFaction] == GangZoneOwner[zone] || PlayerInfo[playerid][pFaction] == GangZoneEnemy[zone])
+			    if (PlayerInfo[playerid][pFaction] == GangZoneOwner[zone]
+					|| PlayerInfo[playerid][pFaction] == GangZoneEnemy[zone])
 			    {
-			        if(!(22 <= GetPlayerWeapon(playerid) <= 33))
+			        if (!(22 <= GetPlayerWeapon(playerid) <= 33))
 			        {
 						BlockPlayerAggression(playerid);
 						ShowPlayerHint(playerid, "Во время ожидания~n~нападение ~r~запрещено");
 					}
-					return true;
+					return (true);
 			    }
 			}
 		}
 	}
-
 	if(PRESSED(KEY_FIRE))
-    {
-    	// Рисование граффити
-        new weaponid = GetPlayerWeapon(playerid);
-		if(weaponid == 41 && IsGang(PlayerInfo[playerid][pFaction]) && IsPlayerInGetto(playerid))
-        {
-            new zone = GetPlayerGangZone(playerid);
-            if(zone != -1)
-            {
-	            new Float:ang, Float:Fault = 45.0;
-	            GetPlayerFacingAngle(playerid, ang);
+	{
+		// Рисование граффити
+		new weaponid = GetPlayerWeapon(playerid);
+		if (weaponid == 41 && IsGang(PlayerInfo[playerid][pFaction])
+			&& IsPlayerInGetto(playerid))
+		{
+			new zone = GetPlayerGangZone(playerid);
+			if (zone != -1)
+			{
+				new Float:ang, Float:Fault = 45.0;
+				GetPlayerFacingAngle(playerid, ang);
 				for(new g = 0; g < sizeof(Graffiti); g++)
 				{
 					if(IsPlayerInRangeOfPoint(playerid, 3.0, Graffiti[g][0], Graffiti[g][1], Graffiti[g][2] - 0.4) && floatdif(Graffiti[g][3] + 270, ang) < Fault)
@@ -74,74 +76,73 @@ Public: Gang.GZ_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 						new tick = GetTickCount();
 						if(tick - StartupAntiflood[playerid] < 500)
 						{
-						    StartupAntiflood[playerid] = tick;
-						    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Не так быстро.");
-						    return false;
+							StartupAntiflood[playerid] = tick;
+							SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Не так быстро.");
+							return false;
 						}
 						StartupAntiflood[playerid] = tick;
 						//-------------
 
-			            if(PlayerInfo[playerid][pRank] == 1)
-			                return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас слишком низкий ранг для нападения на территорию.");
-					    new const owner = GangZoneOwner[zone];
-		                if(owner > 0)
-		                {
-		                	new string[128];
-				            if(owner == PlayerInfo[playerid][pFaction])
-				                return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на свою же территорию.");
-			                if(GangZoneEnemy[zone] > 0)
-			                    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на эту зону, за нее уже идет война.");
+						if(PlayerInfo[playerid][pRank] == 1)
+							return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас слишком низкий ранг для нападения на территорию.");
+						new const owner = GangZoneOwner[zone];
+						if(owner > 0)
+						{
+							new string[128];
+							if(owner == PlayerInfo[playerid][pFaction])
+								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на свою же территорию.");
+							if(GangZoneEnemy[zone] > 0)
+								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на эту зону, за нее уже идет война.");
 							if(GangBaseZone[owner] == zone && getGangZoneCount(owner) > 1)
-			                    return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на главную территорию банды, пока есть другие.");
-			                new hour, nowtime = gettime(hour, _, _);
+								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы не можете напасть на главную территорию банды, пока есть другие.");
+							new hour, nowtime = gettime(hour, _, _);
 							if((10 <= hour <= 23) == false)
 							{
-			    				return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Нападения на зоны происходят с 10:00 до 23:00.");
+								return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Нападения на зоны происходят с 10:00 до 23:00.");
 							}
-			                if(GangRescue[PlayerInfo[playerid][pFaction]] > nowtime)
-			                {
-			                    SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Ваша банда еще не восстановилась после поражения, осталось: %d мин.", 1 + floatround(float(GangRescue[PlayerInfo[playerid][pFaction]] - nowtime) / 60));
-			                    return true;
-			                }
-			                for(new z; z < sizeof(GangZones); z++)
-			                {
-			                    if(GangZoneEnemy[z] > 0 && (GangZoneOwner[z] == owner || GangZoneEnemy[z] == owner))
-			                        return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Владельцы этой территории уже участвуют в войне в данный момент.");
-			                }
-			                new owners, enemies;
+							if(GangRescue[PlayerInfo[playerid][pFaction]] > nowtime)
+							{
+								SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Ваша банда еще не восстановилась после поражения, осталось: %d мин.", 1 + floatround(float(GangRescue[PlayerInfo[playerid][pFaction]] - nowtime) / 60));
+								return true;
+							}
+							for(new z; z < sizeof(GangZones); z++)
+							{
+								if(GangZoneEnemy[z] > 0 && (GangZoneOwner[z] == owner || GangZoneEnemy[z] == owner))
+									return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Владельцы этой территории уже участвуют в войне в данный момент.");
+							}
+							new owners, enemies;
 							foreach(LoginPlayer, i)
 							{
-				                if(PlayerInfo[i][pFaction] == owner && IsPlayerAFK(i) == false) 							owners++;
-				                if(PlayerInfo[i][pFaction] == PlayerInfo[playerid][pFaction] && IsPlayerAFK(i) == false)	enemies++;
+								if(PlayerInfo[i][pFaction] == owner && IsPlayerAFK(i) == false) 							owners++;
+								if(PlayerInfo[i][pFaction] == PlayerInfo[playerid][pFaction] && IsPlayerAFK(i) == false)	enemies++;
 							}
 							if(enemies < 2)
 							{
-							    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Требуется как минимум 2 игрока онлайн из вашей банды.");
-							    return true;
+								SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Требуется как минимум 2 игрока онлайн из вашей банды.");
+								return true;
 							}
 							if(owners < 2)
 							{
-							    SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Требуется как минимум 2 игрока онлайн во вражеской банде.");
-							    return true;
+								SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Требуется как минимум 2 игрока онлайн во вражеской банде.");
+								return true;
 							}
-			                if(GangRescue[owner] > nowtime)
-			                {
-			                    SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вражеская банда еще не восстановилась после поражения, осталось: %d мин.", 1 + floatround(float(GangRescue[owner] - nowtime) / 60));
-			                    return true;
-			                }
-		                }
-		                new wdata[2];
-		                GetPlayerWeaponData(playerid, 9, wdata[0], wdata[1]);
-		                SetPVarInt(playerid, "SprayCount", wdata[1]);
+							if(GangRescue[owner] > nowtime)
+							{
+								SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "Вражеская банда еще не восстановилась после поражения, осталось: %d мин.", 1 + floatround(float(GangRescue[owner] - nowtime) / 60));
+								return true;
+							}
+						}
+						new wdata[2];
+						GetPlayerWeaponData(playerid, 9, wdata[0], wdata[1]);
+						SetPVarInt(playerid, "SprayCount", wdata[1]);
 						graffiti_timer[playerid] = SetTimerEx("MakePlayerGraffiti", 3000, 0, "ii", playerid, g);
 						GameTextForPlayer(playerid, "Painting...", 5000, 3);
 						return true;
 					}
 				}
 			}
-        }
-    }
-
+		}
+	}
     return CONTINUE;
 }
 

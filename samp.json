@@ -13,7 +13,7 @@
 		"pBlueG/SA-MP-MySQL",
 		"maddinat0r/sscanf",
 		"ziggi/samp-plugin-timerfix",
-		"MapAndreas"
+		"Southclaws/samp-plugin-mapandreas"
 	],
 	"rcon_password": "1",
 	"port": 7777,

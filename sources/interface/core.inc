@@ -25,7 +25,6 @@ new PlayerText:BuyInfo,
 	PlayerText:tdChooseItemR,
 	PlayerText:debugTD,
 	PlayerText:p_JailPeriod,
-	PlayerText:InfoBar,
 	PlayerText:PTD_AttachHealth[3];
 
 enum IFace.E_GROUP_INFO
@@ -1017,16 +1016,6 @@ Interface_PlayerCreate(playerid)
 	PlayerTextDrawSetOutline(playerid, p_JailPeriod, 1);
 	PlayerTextDrawSetProportional(playerid, p_JailPeriod, 1);
 
-	//  Gym
-	InfoBar = CreatePlayerTextDraw(playerid, 608.0, 140.0, "_");
-	PlayerTextDrawAlignment(playerid, InfoBar, 3);
-	PlayerTextDrawBackgroundColor(playerid, InfoBar, 255);
-	PlayerTextDrawFont(playerid, InfoBar, 2);
-	PlayerTextDrawLetterSize(playerid, InfoBar, 0.25, 1.5);
-	PlayerTextDrawColor(playerid, InfoBar, 0xB1C8FBFF);
-	PlayerTextDrawSetOutline(playerid, InfoBar, 1);
-	PlayerTextDrawSetProportional(playerid, InfoBar, 1);
-
 	//  DEBUG TD
 	debugTD = CreatePlayerTextDraw(playerid, 20.0, 280.0, "_");
 	PlayerTextDrawBackgroundColor(playerid, debugTD, 255);
@@ -1194,6 +1183,10 @@ IFace.Load_Player(playerid)
 
 	#if defined FACTION_POLICE_CORE_INCLUDED
 		IFace.Wanted_Create_Player(playerid);
+	#endif
+
+	#if defined _interface_info_bar_included
+		IFace.InfoBar_CreatePlayerTD(playerid);
 	#endif
 }
 

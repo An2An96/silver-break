@@ -16,6 +16,8 @@
 		"Open-GTO/mdialog",
 		"karimcambridge/SAMP-foreach",
 		"ziggi/samp-plugin-timerfix",
+		"Southclaws/samp-plugin-mapandreas",
+		"Zeex/samp-plugin-jit",
 		"silver-break/samp-easy-keys"
 	],
 	"runtime": {
@@ -24,9 +26,6 @@
 		"echo": "Loading configuration...",
 		"gamemodes": [
 			"SB"
-		],
-		"plugins": [
-			"MapAndreas"
 		],
 		"rcon_password": "1",
 		"port": 7777,

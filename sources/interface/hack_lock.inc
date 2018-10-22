@@ -1,7 +1,6 @@
 #if defined _interface_hack_lock_included
 	#endinput
 #endif
-
 #define _interface_hack_lock_included
 
 #define START_HACK_HEIGHT	397.0

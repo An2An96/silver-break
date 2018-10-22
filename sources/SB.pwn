@@ -34,23 +34,20 @@
 #include <streamer>
 #include <rustext>
 #include <Pawn.CMD>
-#include <FCNPC>
 #include <crashdetect>
 #include <timerfix>
+#include <mapandreas>
 	//	Utils
 #include <mxINI>
 #include <foreach>
 #include <easy_keys>
-
-//	Libs
-#include "lib/mapandreas"
 
 //	Utils
 #include "utils/extend_mdialog"
 #include "utils/fixes"
 #include "utils/t_time"
 #include "utils/world_text"
-#include "utils/space_utils"
+#include "utils/point_utils"
 
 SB_CancelSelectTextDraw(playerid)
 {
@@ -73,6 +70,7 @@ SB_CancelSelectTextDraw(playerid)
 #include "core/vw_list"
 #include "core/config"
 #include "core/global_scope"
+#include "core/actors"
 
 //	Modules
 #include "anticheat/core"
@@ -85,6 +83,9 @@ SB_CancelSelectTextDraw(playerid)
 #include "system/combinations"
 #include "system/attach"
 #tryinclude "system/ucp_news"
+
+//	NPC
+#include "npc/core"
 
 //	Player
 #include "player/core"
@@ -119,7 +120,8 @@ SB_CancelSelectTextDraw(playerid)
 #include "interface/buy_menu"
 #include "interface/select_menu"
 #include "interface/selecter"
-#include "interface/core"	
+#include "interface/info_bar"
+#include "interface/core"
 
 stock MySetPlayerMarkerForPlayer(playerid, showplayerid, color, bool:oversee = false)
 {
@@ -775,20 +777,6 @@ UpdateWeather(weatherid = 0)
     else NowWeather = weatherid;
 	foreach(Player, i)	UpdatePlayerWeather(i);
 	return true;
-}
-
-stock MyCreateNPC(name[], script[] = "")
-{
-    #if defined _FCNPC_included
-        #pragma unused script
-		return FCNPC_Create(name);
-	#elseif defined RNPC_VERSION
-		#pragma unused script
-		return ConnectRNPC(name);
-	#else
-	    //ConnectNPC(name, script);
-	    return -1;
-	#endif
 }
 
 stock GetRandomModel()
@@ -1944,285 +1932,6 @@ GetPlayerEmail(playerid)
 	return query;
 }
 
-#if defined _FCNPC_included
-	public FCNPC_OnSpawn(npcid)
-	{
-	    SetPlayerColor(npcid, 0x88AA8800);
-		/*if(npcid == NPC_ID[NPC_BusDriver1])
-		{
-			if(FCNPC_PutInVehicle(npcid, BusVehicle[0], 0) == 0)
-			{
-				printf("ERROR! FCNPC %d didn't seat in vehicle!", npcid);
-			}
-			else
-			{
-				MyStartPlayback(npcid);
-			    SetPlayerColor(npcid, COLOR_ORANGE);
-			}
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver2])
-		{
-			if(FCNPC_PutInVehicle(npcid, BusVehicle[1], 0) == 0)
-			{
-				printf("ERROR! FCNPC %d didn't seat in vehicle!", npcid);
-			}
-			else
-			{
-				MyStartPlayback(npcid);
-			    SetPlayerColor(npcid, COLOR_ORANGE);
-			}
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver3])
-		{
-			if(FCNPC_PutInVehicle(npcid, BusVehicle[2], 0) == 0)
-			{
-				printf("ERROR! FCNPC %d didn't seat in vehicle!", npcid);
-			}
-			else
-			{
-				MyStartPlayback(npcid);
-			    SetPlayerColor(npcid, COLOR_ORANGE);
-			}
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver4])
-		{
-			if(FCNPC_PutInVehicle(npcid, BusVehicle[3], 0) == 0)
-			{
-				printf("ERROR! FCNPC %d didn't seat in vehicle!", npcid);
-			}
-			else
-			{
-				MyStartPlayback(npcid);
-			    SetPlayerColor(npcid, COLOR_ORANGE);
-			}
-		}
-		else
-		{*/
-		for(new i = 0; i < sizeof(TrainInfo); i++)
-		{
-			if(npcid == NPC_ID[ TrainInfo[i][trNPC] ])
-			{
-		        if(FCNPC_PutInVehicle(NPC_ID[ TrainInfo[i][trNPC] ], TrainInfo[i][trID], 0) == 0)
-				{
-		        	printf("ERROR! FCNPC %d didn't seat in vehicle!", npcid);
-		        }
-		        else
-		        {
-		            SetPlayerColor(npcid, 0x8C5F11FF);
-		        }
-				if(++TDriverCount == sizeof(TrainInfo))	SetTimer("StartTrainCycle", 5000, 0);
-			}
-		}
-		//}
-		return true;
-	}
-
-	Public: MyStartPlayback(npcid)
-	{
-		/*if(npcid == NPC_ID[NPC_BusDriver1])
-		{
-		    FCNPC_StartPlayingPlayback(npcid, "bus_1");
-		   	BusPlaybackCount++;
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver2])
-		{
-			FCNPC_StartPlayingPlayback(npcid, "bus_2");
-			BusPlaybackCount++;
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver3])
-		{
-			FCNPC_StartPlayingPlayback(npcid, "bus_3");
-			BusPlaybackCount++;
-		}
-		else if(npcid == NPC_ID[NPC_BusDriver4])
-		{
-			FCNPC_StartPlayingPlayback(npcid, "bus_4");
-			BusPlaybackCount++;
-		}*/
-	    return true;
-	}
-
-	public FCNPC_OnFinishPlayback(npcid)
-	{
-	    new string[128];
-		/*if(npcid == NPC_ID[NPC_BusDriver1] || npcid == NPC_ID[NPC_BusDriver2] || npcid == NPC_ID[NPC_BusDriver3] || npcid == NPC_ID[NPC_BusDriver4])
-		{
-			if(--BusPlaybackCount == 0)
-			{
-				MyStartPlayback(NPC_ID[NPC_BusDriver1]);
-				MyStartPlayback(NPC_ID[NPC_BusDriver2]);
-				MyStartPlayback(NPC_ID[NPC_BusDriver3]);
-				MyStartPlayback(NPC_ID[NPC_BusDriver4]);
-			}
-		}
-		else
-		{*/
-		for(new train = 0; train < sizeof(TrainInfo); train++)
-		{
-		    new npc = TrainInfo[train][trNPC];
-			if(npcid == NPC_ID[npc])
-			{
-			    TrainInfo[train][trPlayback]++;
-				new station = GetTrainStation(npcid);
-				if(npc != NPC_TrainDriver3)
-				{
-			   		format(string, 128, "[Railway Station]: Поезд прибыл на станцию, остановка: %d сек.", StationInfo[station][stStop]);
-			   		SendRadiusMessageEx(StationInfo[station][stPos][0], StationInfo[station][stPos][1], StationInfo[station][stPos][2], 50.0, COLOR_LIGHTBLUE, string);
-				}
-				if(TrainInfo[train][trPlayback] == TrainInfo[train][trAllStations])
-				{// Проверка для начала нового цикла
-					new finished;
-					for(new t; t < sizeof(TrainInfo); t++)
-					    if(TrainInfo[t][trPlayback] == TrainInfo[t][trAllStations])
-					        finished++;
-					if(finished == sizeof(TrainInfo))
-					{
-						SetTimer("StartTrainCycle", StationInfo[station][stStop] * 1000, false);
-					}
-				}
-				else
-				{
-				    if(npc == NPC_TrainDriver3)	SetTimerEx("NextTrainPlayback", 60000, 0, "d", 2);
-				    else 						SetTimerEx("NextTrainPlayback", StationInfo[station][stStop] * 1000, 0, "d", train);
-
-				    if(npc == NPC_TrainDriver1)			UpdateStationTime(station, 835);
-				    else if(npc == NPC_TrainDriver2)	UpdateStationTime(station, 315);
-				}
-		    }
-		}
-		//}
-		return true;
-	}
-
-	/*public FCNPC_OnVehicleExitComplete(npcid)
-	{
-		print("NPC Train exit vehicle");
-
-	    for( new i = 0; i < sizeof(TrainInfo); i++ )
-		{
-			if( TrainInfo[ i ][ trNPC ] != npcid )
-			    continue;
-			FCNPC_StopRecordingPlayback( npcid );
-	   		TrainInfo[ i ][ trPlaybackCycle ] = 0;
-		}
-		return true;
-	}*/
-#elseif defined RNPC_VERSION
-	public OnRNPCPlaybackFinished(npcid)
-	{
-		new string[128];
-		for(new train = 0; train < sizeof(TrainInfo); train++)
-		{
-		    new npc = TrainInfo[train][trNPC];
-			if(npcid == NPC_ID[npc])
-			{
-			    TrainInfo[train][trPlayback]++;
-				new station = GetTrainStation(npcid);
-				if(npc != NPC_TrainDriver3)
-				{
-			   		format(string, 128, "[Railway Station]: Поезд прибыл на станцию, остановка: %d сек.", StationInfo[station][stStop]);
-			   		SendRadiusMessageEx(StationInfo[station][stPos][0], StationInfo[station][stPos][1], StationInfo[station][stPos][2], 50.0, COLOR_LIGHTBLUE, string);
-				}
-				if(TrainInfo[train][trPlayback] == TrainInfo[train][trAllStations])
-				{// Проверка для начала нового цикла
-					new finished;
-					for(new t; t < sizeof(TrainInfo); t++)
-					    if(TrainInfo[t][trPlayback] == TrainInfo[t][trAllStations])
-					        finished++;
-					if(finished == sizeof(TrainInfo))
-					{
-						SetTimer("StartTrainCycle", StationInfo[station][stStop] * 1000, false);
-					}
-				}
-				else
-				{
-				    if(npc == NPC_TrainDriver3) SetTimerEx("NextTrainPlayback", 60000, 0, "d", 2);
-				    else SetTimerEx("NextTrainPlayback", StationInfo[station][stStop]*1000, 0, "d", train);
-
-				    if(npc == NPC_TrainDriver1) UpdateStationTime(station, 835);
-				    else if(npc == NPC_TrainDriver2) UpdateStationTime(station, 315);
-				}
-		    }
-		}
-		return true;
-	}
-#endif
-
-Public: StartTrainCycle()
-{
-	print("[TRAIN]: Starting train cycle...");
-	for(new train; train < sizeof(TrainInfo); train++)
-	{
-	    TrainInfo[train][trPlayback] = 0;
-		NextTrainPlayback(train);
-	}
-	new interval;
-	for(new s; s < sizeof(StationInfo); s++)
-	{
-	    if(s != 0 && s != 2) interval += StationInfo[s][stStop];
-	    else interval = 0;
-		interval += StationInfo[s][stInterval];
-		UpdateStationTime(s, interval);
-	}
-	return 1;
-}
-
-Public: NextTrainPlayback(train)
-{
-    new string[64], npc = TrainInfo[train][trNPC];
-	if(TrainInfo[train][trPlayback] <= TrainInfo[train][trAllStations])
-	{
-		format(string, 64, "train_%d_%d", train + 1, TrainInfo[train][trPlayback]);
-		printf(string);
-	#if defined _FCNPC_included
-		if(FCNPC_StartPlayingPlayback(NPC_ID[npc], string))
- #elseif defined RNPC_VERSION
-		if(RNPC_StartPlayback(NPC_ID[npc], string))
-	#else
-		if(false)
-	#endif
-		{
-		    //printf("[TRAIN]: TrainDriver%d start record (%s)", train, string);
-		}
-		else
-		{
-		    printf("ERROR! TrainDriver%d error start record (%s)", train, string);
-		}
-	}
-	return 1;
-}
-
-GetTrainStation(npcid)
-{
-	new Float:X, Float:Y, Float:Z;
-#if defined _FCNPC_included
-	FCNPC_GetPosition(npcid, X, Y, Z);
-#else
-	GetPlayerPos(npcid, X, Y, Z);
-#endif
-	for(new Float:Dist, s; s < sizeof(StationInfo); s++)
-	{
-	    Dist = floatsqroot((X - StationInfo[s][stPos][0]) * (X - StationInfo[s][stPos][0]) + (Y - StationInfo[s][stPos][1]) * (Y - StationInfo[s][stPos][1]) + (Z - StationInfo[s][stPos][2]) * (Z - StationInfo[s][stPos][2]));
-	    if(Dist < 100.0) return s;
-	}
-	return 0;
-}
-
-stock UpdateStationTime(station, interval)
-{
-	new time, hour, minute, second;
-	gettime(hour, minute, second);
-	time = hour * 3600 + minute * 60 + second + interval;
-
-	hour = time / 3600;
-	minute = (time % 3600) / 60;
-	if(hour > 23) hour -= 24;
-
-	new string[128];
-	format(string, 128, "%s\nСледующий поезд: [%02d:%02d]", StationInfo[station][stName], hour, minute);
-	UpdateDynamic3DTextLabelText(RailStation3DText[station], 0x33CCFFFF, string);
-}
-
 //	---
 CreateGotoSmoke(playerid)
 {
@@ -2489,7 +2198,7 @@ stock clearHackCar(playerid)
 	return true;
 }
 
-stock OnActorReaction(playerid, targetid)
+public	OnActorReaction(playerid, targetid)
 {
 	new string[128];
 	// Не зависят от миссий //
@@ -2846,295 +2555,6 @@ public OnPlayerCombFinish(playerid, source, bool:fail)
 	return false;
 }
 
-//  Спорт
-stock GivePlayerPower(playerid, Float:power)
-{
-	new a = floatround(PlayerInfo[playerid][pPower], floatround_floor);
-	PlayerInfo[playerid][pPower] += power * ((PlayerInfo[playerid][pVip]) ? (1.2) : (1.0));
-	new b = floatround(PlayerInfo[playerid][pPower], floatround_floor);
-	if(b > a)	RepBarShow(playerid, "Ваша сила выросла:", a, b);
-	return true;
-}
-
-//	жим лежа
-Public: BenchpressNext(playerid, action)
-{
-	switch(action)
-	{
-		case BENCHSTEP_START_DOWN:
-		{
-			Streamer_RemoveArrayData(STREAMER_TYPE_OBJECT, g_BenchpressObject[ playerBenchUsed{playerid} - 1 ], E_STREAMER_PLAYER_ID, playerid);
-			Streamer_Update(playerid, STREAMER_TYPE_OBJECT);
-	        SetPlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND, 2913, 5, 0.099, 0.0039, 0.0606, 9.7105, -177.8293, 58.15, 1.0, 1.0, 1.0);
-	        BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 600, false, "ii", playerid, BENCHSTEP_START_READY);
-	        ShowPlayerHint(playerid, "Нажимайте ~y~~k~~PED_SPRINT~~w~~n~пока шкала справа не заполнится");
-		}
-		case BENCHSTEP_START_READY:
-		{
-			if(PlayerInfo[playerid][pJailTime])
-			{
-				HidePlayerPrisonTime(playerid);
-			}
-			GymBlockKey{playerid} = false;
-		    ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
-	        PlayerTextDrawSetString(playerid, InfoBar, RusText("Повторений: 0", PlayerInfo[playerid][pRusifik]));
-	        PlayerTextDrawShow(playerid, InfoBar);
-
-	        BenchpressTimer[playerid] = SetTimerEx("BenchpressUpdate", 100, true, "i", playerid);
-		}
-		case BENCHSTEP_DOWN_FINISH:	//  finish DOWN
-		{
-			ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
-		    GymBlockKey{playerid} = false;
-		}
-	 	case BENCHSTEP_UP_FINISH:	//  finish UP
-	 	{
-		 	GymCount{playerid}++;
-			GivePlayerPower(playerid, 0.1);
-			if(++PlayerInfo[playerid][pTraining] >= MAX_TRAINING)
-			{
-				BenchpressEND(playerid);
-				ShowPlayerHint(playerid, "Вы достаточно потренеровались, приходите позже!");
-			}
-			else if(PlayerInfo[playerid][pPower] >= 100.0)
-			{
-				//	---	achievements
-			#if defined _player_achieve_included	
-				GivePlayerAchieve(playerid, ACHIEVE_ARNOLD);
-			#endif
-				BenchpressEND(playerid);
-			}
-			else
-			{
-				BenchpressDOWN(playerid);
-		    	BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 900, false, "ii", playerid, BENCHSTEP_DOWN_FINISH);
-			}
-			new string[32];
-			format(string, 32, "Повторений: %d", GymCount{playerid});
-			PlayerTextDrawSetString(playerid, InfoBar, RusText(string, PlayerInfo[playerid][pRusifik]));
-	 	}
-	 	case BENCHSTEP_FINISH_UP:
-	 	{
-	 	    RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
-	 	    new i = playerBenchUsed{playerid} - 1;
-	 	    Streamer_AppendArrayData(STREAMER_TYPE_OBJECT, g_BenchpressObject[i], E_STREAMER_PLAYER_ID, playerid);
-	 	    Streamer_Update(playerid, STREAMER_TYPE_OBJECT);
-	 	    BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 6200, false, "ii", playerid, BENCHSTEP_FINISH_ALL);
-
-	 	}
-	 	case BENCHSTEP_FINISH_ALL:	//  finish
-		{
-			IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
-		    SetCameraBehindPlayer(playerid);
-		    BlockPlayerAnimation(playerid, false);
-		    MyApplyAnimation(playerid, "benchpress", "gym_bp_celebrate", 4.1, 0, 0, 0, 0, 0);
-		    BenchpressUsed[ playerBenchUsed{playerid} - 1 ] = false;
-		    playerBenchUsed{playerid} = 0;
-			GymCount{playerid} = 0;
-			GymBlockKey{playerid} = false;
-		}
-	}
-	return true;
-}
-
-Public: BenchpressUpdate(playerid)
-{
-	if(playerBenchStep{playerid} == 0)
-	    return true;
-	if(playerBenchStep{playerid} < 100)
-	{
-		BenchpressDOWN(playerid);
-	    if(playerBenchStop{playerid})   playerBenchStop{playerid} = false;
-	    else							playerBenchStep{playerid} = (playerBenchStep{playerid} - 4 < 0) ? 0 : (playerBenchStep{playerid} - 4);
-		ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
-	}
-	else
-	{
-	    GymBlockKey{playerid} = true;
-		playerBenchStep{playerid} = 0;
-	    BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 500, false, "ii", playerid, BENCHSTEP_UP_FINISH);
-	}
-	return true;
-}
-
-BenchpressUP(playerid)
-{
-	if(GymAnimState{playerid} == BENCHPRESS_UP)  return true;
-	GymAnimState{playerid} = BENCHPRESS_UP;
-	return MyApplyAnimation(playerid, "benchpress", "gym_bp_up_smooth", 4.1, 0, 0, 0, 1, 0);
-}
-
-BenchpressDOWN(playerid)
-{
-	if(GymAnimState{playerid} == BENCHPRESS_DOWN)  return true;
-	GymAnimState{playerid} = BENCHPRESS_DOWN;
-	return MyApplyAnimation(playerid, "benchpress", "gym_bp_down", 4.1, 0, 0, 0, 1, 0);
-}
-
-BenchpressEND(playerid)
-{
-    new i = playerBenchUsed{playerid} - 1;
-
-    //	=========================	Set Camera Pos 	=========================
-	new Float:CameraPos[3],
-		Float:PlayerCameraPos[3],
-		Float:PlayerCameraVector[3];
-	const Float:fScale = 5.0;
-
-	GetPlayerCameraPos(playerid, Arr3<PlayerCameraPos>);
-	GetPlayerCameraFrontVector(playerid, Arr3<PlayerCameraVector>);
-
-	PlayerCameraVector[0] = PlayerCameraPos[0] + floatmul(PlayerCameraVector[0], fScale);
-	PlayerCameraVector[1] = PlayerCameraPos[1] + floatmul(PlayerCameraVector[1], fScale);
-	PlayerCameraVector[2] = PlayerCameraPos[2] + floatmul(PlayerCameraVector[2], fScale);
-
-    CameraPos[0] = BenchpressPos[i][0] - 3.5 * floatsin(-BenchpressPos[i][3], degrees);
-	CameraPos[1] = BenchpressPos[i][1] - 3.5 * floatcos(-BenchpressPos[i][3], degrees);
-	CameraPos[2] = BenchpressPos[i][2] + 1.0;
-
-	InterpolateCameraPos(playerid, Arr3<PlayerCameraPos>, Arr3<CameraPos>, 5000);
-	InterpolateCameraLookAt(playerid, Arr3<PlayerCameraVector>, Arr3<BenchpressPos[i]>, 5000);
-	//	======================================================================
-
-	KillTimer(BenchpressTimer[playerid]);
-	ProgressBarHide(playerid);
-	PlayerTextDrawHide(playerid, InfoBar);
-    MyApplyAnimation(playerid, "benchpress", "gym_bp_getoff", 4.1, 0, 0, 0, 0, 0);
-    KillTimer(BenchpressStepTimer[playerid]);
-
-    if(PlayerInfo[playerid][pJailTime])
-		ShowPlayerPrisonTime(playerid);
-
-	GymBlockKey{playerid} = true;
-	BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 1800, false, "ii", playerid, BENCHSTEP_FINISH_UP);
-    return true;
-}
-
-BenchpressClear(playerid)
-{
-	if(playerBenchUsed{playerid})
-	{
-		KillTimer(BenchpressTimer[playerid]);
-		KillTimer(BenchpressStepTimer[playerid]);
-		ProgressBarHide(playerid);
-		IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
-		PlayerTextDrawHide(playerid, InfoBar);
-		SetCameraBehindPlayer(playerid);
-		//BlockPlayerAnimation(playerid, false);
-
-		if(PlayerInfo[playerid][pJailTime])
-			ShowPlayerPrisonTime(playerid);
-
-		RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
-		new i = playerBenchUsed{playerid} - 1;
-		Streamer_AppendArrayData(STREAMER_TYPE_OBJECT, g_BenchpressObject[i], E_STREAMER_PLAYER_ID, playerid);
-		Streamer_Update(playerid, STREAMER_TYPE_OBJECT);
-
-		BenchpressUsed[i] = false;
-		playerBenchUsed{playerid} = 0;
-		GymCount{playerid} = 0;
-		GymBlockKey{playerid} = false;
-	}
-    return true;
-}
-
-//	Boxing Ring
-stock GetNearRing(playerid)
-{
-	new Float:dist, Float:best_dist, ring = (-1);
-	for(new i = 0; i < sizeof(BoxingRingPos); i++){
-		dist = GetDistanceFromMeToPoint(playerid, Arr3<BoxingRingPos[i][RING_POS]>);
-		if(dist < 8.0)
-		{
-			if(ring == (-1)){
-				best_dist = dist;
-				ring = i;
-			}
-			else if(dist < best_dist){
-				ring = i;
-			}
-		}
-	}
-	return ring;
-}
-
-stock FinishBox(playerid, reason)
-{
-	if(gPlayerRing[playerid] != (-1))
-	{
-		new enemy = gPlayerBoxEnemy[playerid];
-		BoxingRing[ gPlayerRing[playerid] ][RING_BLUE_PLAYER] = INVALID_PLAYER_ID;
-		BoxingRing[ gPlayerRing[playerid] ][RING_RED_PLAYER] = INVALID_PLAYER_ID;
-		BoxingRing[ gPlayerRing[playerid] ][RING_STATE] = 0;
-
-		if(reason == 2)	//	ничья
-		{
-			if(enemy != INVALID_PLAYER_ID)
-			{
-				GameTextForPlayer(enemy, "~n~~n~~n~~r~Time is over", 5000, 6);
-				MySetPlayerPos(enemy, Arr4<gPlayerPosToRing[ enemy ]>);
-				ReloadPlayerSkin(enemy);
-				LoseAnim(enemy);
-				gPlayerBoxEnemy[enemy] = INVALID_PLAYER_ID;
-				gPlayerRing[enemy] = (-1);
-
-				GivePlayerPower(enemy, 0.1);
-				HidePlayerVisualTimer(enemy);
-				HideAttackHealth(enemy);
-				if(PlayerInfo[enemy][pJailTime])	ShowPlayerPrisonTime(enemy);
-			}
-
-			GameTextForPlayer(playerid, "~n~~n~~n~~r~Time is over", 5000, 6);
-			MySetPlayerPos(playerid, Arr4<gPlayerPosToRing[playerid]>);
-			ReloadPlayerSkin(playerid);
-			LoseAnim(playerid);
-
-			GivePlayerPower(playerid, 0.1);
-			HidePlayerVisualTimer(playerid);
-			HideAttackHealth(playerid);
-			if(PlayerInfo[playerid][pJailTime]){
-				ShowPlayerPrisonTime(playerid);
-			}
-		}
-		else
-		{
-			if(enemy != INVALID_PLAYER_ID)
-			{
-				GameTextForPlayer(enemy, "~n~~n~~n~~g~You won!!!", 5000, 6);
-				MySetPlayerPos(enemy, Arr4<gPlayerPosToRing[ enemy ]>);
-				ReloadPlayerSkin(enemy);
-				SuccesAnim(enemy);
-				gPlayerBoxEnemy[enemy] = INVALID_PLAYER_ID;
-				gPlayerRing[enemy] = (-1);
-
-				GivePlayerPower(enemy, 1.0);
-				HidePlayerVisualTimer(enemy);
-				HideAttackHealth(enemy);
-				if(PlayerInfo[enemy][pJailTime])	ShowPlayerPrisonTime(enemy);
-			}
-			if(reason)
-			{
-				GameTextForPlayer(playerid, "~n~~n~~n~~r~You lose!", 5000, 6);
-				MySetPlayerPos(playerid, Arr4<gPlayerPosToRing[playerid]>);
-				ReloadPlayerSkin(playerid);
-				LoseAnim(playerid);
-
-				GivePlayerPower(playerid, 0.5);
-				HidePlayerVisualTimer(playerid);
-				HideAttackHealth(playerid);
-				if(PlayerInfo[playerid][pJailTime])	ShowPlayerPrisonTime(playerid);
-			}
-		}
-		MyChangePlayerWeapon(enemy, false);
-		MyChangePlayerWeapon(playerid, false);
-		PlayerInfo[enemy][pTraining] += 5;
-		PlayerInfo[playerid][pTraining] += 5;
-		gPlayerBoxEnemy[playerid] = INVALID_PLAYER_ID;
-		gPlayerRing[playerid] = (-1);
-	}
-	return true;
-}
-
 //	Hospital
 CancelPlayerBerth(playerid)
 {
@@ -3155,13 +2575,6 @@ CancelPlayerBerth(playerid)
 }
 
 //---
-
-stock CreateNPCTextLabel(npcid)
-{
-    new string[128];
-    format(string, 128, "%s\n{AFAFAF}(прицелиться + y)", ReturnPlayerName(npcid));// CFB53B
-    CreateDynamic3DTextLabel(string, 0xFFFFFFFF, 0.0, 0.0, 0.15, 20.0, npcid, INVALID_VEHICLE_ID, 1, 0);
-}
 
 stock UpdatePlayerGPSZone(playerid)
 {
@@ -3665,7 +3078,8 @@ stock StoryMissionCancel(playerid)
 		if(gType_CP[playerid] == CPMODE_MISSION)					MyDisablePlayerCheckpoint(playerid);
 		RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
 		ProgressBarHide(playerid);
-		PlayerTextDrawHide(playerid, InfoBar);
+		IFace.HidePlayerInfoBar(playerid);
+		//PlayerTextDrawHide(playerid, InfoBar);
 		HideMissionMessage(playerid);
 		HideMissionInfo(playerid);
 		TogglePlayerMapIcon(playerid, true);
@@ -4533,7 +3947,6 @@ MySQL_Load()
 Public: GameModeInit_Reload()	OnGameModeInit();
 public OnGameModeInit()
 {
-	new string[128];
 	StartUNIXTime = GetTickCount();
 	printf("\nGamemode: [%s]", GAMEMODE_NAME);
 	print("   by Borog25 & Impereal");
@@ -4561,8 +3974,6 @@ public OnGameModeInit()
 	SetGameModeText("Role Play (RP)");
 	SendRconCommand("hostname The Silver Break Role Play");
 	SendRconCommand("mapname loading...");
-	format(string, sizeof(string), "maxnpc %d", MAX_NPC);
-	SendRconCommand(string);
 
 	EnableStuntBonusForAll(0);
 	EnableVehicleFriendlyFire();
@@ -4617,7 +4028,9 @@ public OnGameModeInit()
 	#if defined _inventory_included
 		Callback: Inv.OnGameModeInit();
 	#endif
-
+	#if defined _npc_core_included
+		NPC.Init();
+	#endif
 	new warehouses = LoadWarehouses();
 	printf("  Loaded warehouses: %d.", warehouses);
 
@@ -4640,48 +4053,6 @@ public OnGameModeInit()
 
 	OnPrisonStatusChange(LastPrisonStatus);	//  start jail period
 	ReloadEmmetStore();
-
-	//////////		NPC 	//////////
-	printf("  Load NPC:");
-	for(new i = 0; i < MAX_NPC; i++)
-	{
-		NPC_ID[i] = MyCreateNPC(NpcInfo[i][n_Name]);//, NpcInfo[i][n_Script]);
-		if(NPC_ID[i] == INVALID_PLAYER_ID)	printf("WARNING! NPC '%s' (%d) was not created!", NpcInfo[i][n_Name], i);
-	}
-
-#if defined _FCNPC_included
-	for(new i = 0; i < MAX_NPC; i++)
-	{
-	    if(NPC_ID[i] == INVALID_PLAYER_ID)
-	    {
-	    	continue;   //  fix
-	    }
-	    FCNPC_Spawn(NPC_ID[i], NpcInfo[i][n_Skin], Arr3<NpcInfo[i][n_Pos]>);
-		FCNPC_SetAngle(NPC_ID[i], NpcInfo[i][n_Pos][3]);
-	}
-#endif
-
-	for(new i = 0; i < sizeof(ActorInfo); i++)
-	{
-		ACTOR[i] = CreateActor(ActorInfo[i][a_Skin], Arr4<ActorInfo[i][a_Pos]>);
-		SetActorVirtualWorld(ACTOR[i], ActorInfo[i][a_VW]);
-		if(ActorInfo[i][a_Nametag])
-		{
-			format(string, sizeof(string), "%s", ActorInfo[i][a_Name]);// CFB53B
-			if(ActorInfo[i][a_Hint]) strcat(string, "\n{AFAFAF}(прицелиться + y)");
-	    	ActorNametag[i] = CreateDynamic3DTextLabel(string, 0xFFFFFFFF, ActorInfo[i][a_Pos][0], ActorInfo[i][a_Pos][1], ActorInfo[i][a_Pos][2] + 1.0, 15.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 0, ActorInfo[i][a_VW]);
-		}
-		if(strlen(ActorInfo[i][a_AnimLib]))	ApplyActorAnimation(ACTOR[i], ActorInfo[i][a_AnimLib], ActorInfo[i][a_AnimName], 4.1, 1, 0, 0, 1, 0);
-		//if(A_CITYHALL1 <= i <= A_CITYHALL4){	ApplyActorAnimation(ACTOR[i], "ped", "SEAT_idle", 4.1, 1, 0, 0, 0, 0);	}
-	}
-
-	////////////////////////////////////////
-
-	for(new i = 0; i < sizeof(BoxingRing); i++)
-	{
-		BoxingRing[i][RING_RED_PLAYER] = INVALID_PLAYER_ID;
-		BoxingRing[i][RING_BLUE_PLAYER] = INVALID_PLAYER_ID;
-	}
 
 	// Просчет максимального ранга фракций
 	for(new i = 1; i < sizeof(Faction); i++)
@@ -4981,12 +4352,6 @@ public OnGameModeInit()
 	j_f3DText = CreateDynamic3DTextLabel("Склад: 0 шт.", 0xFF8300FF, 2549.3, -1283.9, 1044.1, 30.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 1, VW_JAIL, 2);
 	j_l3DText = CreateDynamic3DTextLabel("Склад: 0 шт.", 0xFF8300FF, 505.3, -2677.2, 13.1, 50);
 	UpdateJailStorage();
-	// Тренажеры
-	for(new i = 0; i < sizeof BenchpressPos; i++)
-	{
-	    CreateDynamic3DTextLabel(ACTION_TEXT, COLOR_ACTION, Arr3<BenchpressPos[i]>, 2.5);
-	    g_BenchpressObject[i] = CreateDynamicObject(2913, BenchpressPos[i][4], BenchpressPos[i][5], BenchpressPos[i][6], BenchpressPos[i][7], BenchpressPos[i][8], BenchpressPos[i][9]);
-	}
 
 	//	Койки больницы
 	for(new i = 0; i < sizeof(HospitalBerth); i++)
@@ -4998,11 +4363,6 @@ public OnGameModeInit()
 	{
 		CreateDynamicPickup(1244, 1, Arr3<FillPos[p]>);
 		CreateDynamic3DTextLabel("* Заправка *\nЗаглушите двигатель и посигнальте", 0xFFFFFFFF, Arr3<FillPos[p]>, 15.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 1, 0);
-	}
-	// Остановки поезда
-	for(new i = 0; i < sizeof(StationInfo); i++)
-	{
-        RailStation3DText[i] = CreateDynamic3DTextLabel(" ", 0x33CCFFFF, StationInfo[i][stPos][0], StationInfo[i][stPos][1], StationInfo[i][stPos][2] + 1.0, 50.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 1);
 	}
 
 	//	Банкоматы
@@ -5057,20 +4417,6 @@ public OnGameModeInit()
 public OnGameModeExit()
 {
 	mysql_query_ex("UPDATE `players` SET `online` = '-1' WHERE `online` > '-1'");
-	#if defined _FCNPC_included
-		for(new i = 0; i < MAX_NPC; i++)
-		{
-			if(NPC_ID[i] != INVALID_PLAYER_ID)
-			{
-				FCNPC_Destroy(NPC_ID[i]);
-			}
-		}
-	#else
-		for(new i = 0; i < MAX_PLAYERS; i++)
-		{
-			if(IsPlayerNPC(i))	Kick(i);
-		}
-	#endif
 
 	SaveHouse();
 	SaveBiz();
@@ -5248,7 +4594,7 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
 	}
 
 	//	бокс
-	if(gPlayerRing[playerid] != (-1))
+	if(IsPlayerBoxing(playerid))
 	{
 		new Float:health = MyGetPlayerHealth(playerid);
 		if(issuerid != INVALID_PLAYER_ID && gPlayerBoxEnemy[issuerid] == playerid)
@@ -5797,12 +5143,12 @@ Public: PlayerEverySecondTimer(i)
 			else	RobberyFinish(i, 1, false);
 		}
 		//---   box
-        if(gPlayerRing[i] != (-1))
+		if (IsPlayerBoxing(i))
 		{
-			if(GetDistanceFromMeToPoint(i, Arr3<BoxingRingPos[ gPlayerRing[i] ][RING_POS]>) > 4.0)
+			if (GetDistanceFromMeToPoint(i, Arr3<BoxingRingPos[ gPlayerRing[i] ][RING_POS]>) > 4.0)
 			{
 				new lr = GetPVarInt(i, "LeaveRing");
-				if(lr == 10)
+				if (lr == 10)
 				{
 					FinishBox(i, 0);
 					DeletePVar(i, "LeaveRing");
@@ -5814,7 +5160,7 @@ Public: PlayerEverySecondTimer(i)
 					GameTextForPlayer(i, RusText(string, isRus(i)), 1000, 4);
 				}
 			}
-			else if(GetPVarInt(i, "LeaveRing") > 0)
+			else if (GetPVarInt(i, "LeaveRing") > 0)
 			{
 				DeletePVar(i, "LeaveRing");
 			}
@@ -6599,12 +5945,10 @@ EveryMinuteTimer()
 		if(minute % 5 == 0)	UpdatePlayerStatics(i);
 	    UpdatePlayerTime(i);
 		// Освобождение из тюрьмы
-		if(0 < PlayerInfo[i][pJailTime] < timeUNIX && IsPlayerAFK(i) == false)
+		if(0 < PlayerInfo[i][pJailTime] < timeUNIX
+			&& !IsPlayerAFK(i) && !IsPlayerBoxing(i))
 		{
-			if(gPlayerRing[i] == (-1))
-			{
-				JailDelivery(i);
-			}
+			JailDelivery(i);
 		}
 		if(PlayerInfo[i][pVip])
 		{
@@ -7389,31 +6733,18 @@ public OnPlayerConnect(playerid)
 	return true;
 }// end of OnPlayerConnect(playerid)
 
-public OnPlayerRequestClass(playerid, classid)
+public	OnPlayerRequestClass(playerid, classid)
 {
-	if(IsPlayerNPC(playerid))
-   	{
-	#if	!defined _FCNPC_included
-		for(new i = 0; i < MAX_NPC; i++)
-		{
-			if(strcmp(ReturnPlayerName(playerid), NpcInfo[i][n_Name], true) == 0)
-			{
-				NPC_ID[i] = playerid;
-				SetSpawnInfo(playerid, 0, NpcInfo[i][n_Skin], Arr4<NpcInfo[i][n_Pos]>, 0, 0, 0, 0, 0, 0);
-			}
-		}
-	#endif
-	}
-	else
+	if (IsPlayerNPC(playerid))
+		return (1);
+
+	TogglePlayerSpectating(playerid, true);
+	if (gPlayerLogged[playerid])
 	{
-		TogglePlayerSpectating(playerid, true);
-		if(gPlayerLogged[playerid])
-		{
-			UpdatePlayerSkin(playerid);
-			TogglePlayerSpectating(playerid, false);
-		}
+		UpdatePlayerSkin(playerid);
+		TogglePlayerSpectating(playerid, false);
 	}
-	return true;
+	return (1);
 }
 
 public OnPlayerRequestSpawn(playerid)
@@ -7423,7 +6754,8 @@ public OnPlayerRequestSpawn(playerid)
 
 public OnPlayerDisconnect(playerid, reason)
 {
-	if(IsPlayerNPC(playerid))	return true;
+	if(IsPlayerNPC(playerid))
+		return (1);
 
 	gPlayerDisconnecting[playerid] = true;
 
@@ -7705,26 +7037,8 @@ stock SetPlayerSpawn(playerid)
 
 public OnPlayerSpawn(playerid)
 {
-	if(IsPlayerNPC(playerid))
-	{
-		//SetPlayerColor(playerid, 0xB1C8FB33);
-	#if !defined _FCNPC_included
-		for(new i = 0; i < sizeof(NpcInfo); i++)
-		{
-			if(NPC_ID[i] != playerid)	continue;
-			for(new t = 0; t < sizeof(TrainInfo); t++)
-			{
-				if(i != TrainInfo[t][trNPC])	continue;
-		       	MyPutPlayerInVehicle(playerid, TrainInfo[t][trID], 0);
-		    #if defined RNPC_VERSION
-		        if(++TDriverCount == sizeof(TrainInfo))	StartTrainCycle();
-		    #endif
-		    	return true;
-			}
-		}
-	#endif
-		return true;
-	}
+	if (IsPlayerNPC(playerid))
+		return (1);
 
 	gPlayerDeath[playerid] = false;
 
@@ -7896,7 +7210,7 @@ public OnPlayerSpawn(playerid)
 			if(p_JailOccupied[playerid] != INVALID_PLAYER_ID)
 			{
 				g_JailOccupied[ p_JailOccupied[playerid] ]--;
-                p_JailOccupied[playerid] = INVALID_PLAYER_ID;
+				p_JailOccupied[playerid] = INVALID_PLAYER_ID;
 			}
 		}
 		else
@@ -8061,7 +7375,8 @@ Public: FixRegAnim(playerid)
 
 public OnPlayerDeath(playerid, killerid, reason)
 {
-	if(IsPlayerNPC(playerid))	return true;
+	if (IsPlayerNPC(playerid))
+		return (1);
 
 	gPlayerDeath[playerid] = true;
 
@@ -8133,7 +7448,8 @@ public OnPlayerDeath(playerid, killerid, reason)
 	DeletePVar(playerid, "Player:JobPartner");
 
 	_CarryDown(playerid);	//CarryClear(playerid);
-	PlayerTextDrawHide(playerid, InfoBar);
+	IFace.HidePlayerInfoBar(playerid);
+	// PlayerTextDrawHide(playerid, InfoBar);
 	FlashPoliceZone(playerid, false);
 	HideMissionInfo(playerid);
 	CancelPlayerBerth(playerid);		// Очистка больничной койки
@@ -9121,10 +8437,10 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 
 public OnPlayerEnterDynamicArea(playerid, areaid)
 {
-	if(IsPlayerNPC(playerid) || SpectateID[playerid] != INVALID_PLAYER_ID)
-	{
-		return true;
-	}
+	if(IsPlayerNPC(playerid))
+		return (1);
+	if (SpectateID[playerid] != INVALID_PLAYER_ID)
+		return (1);
 
 	#if defined	_job_job_theft_included
 		Callback: Theft_OnPlayerEnterDynamicArea(playerid, areaid);
@@ -9257,13 +8573,13 @@ public OnPlayerEnterDynamicArea(playerid, areaid)
 	return true;
 }
 
-public OnPlayerLeaveDynamicArea(playerid, areaid)
+public	OnPlayerLeaveDynamicArea(playerid, areaid)
 {
-	if(IsPlayerNPC(playerid) || SpectateID[playerid] != INVALID_PLAYER_ID)
-	{
-		return true;
-	}
-    else if(areaid == AirportZone[0])
+	if (IsPlayerNPC(playerid))
+		return (1);
+	if (SpectateID[playerid] != INVALID_PLAYER_ID)
+		return (1);
+    if(areaid == AirportZone[0])
     {
     	if(NearAirportDoorPlayers > 0)
     	{
@@ -11325,11 +10641,11 @@ public	OnPlayerClickY(playerid)
 			return callcmd::action(playerid, _str);
 		}
 
-		targetid = GetPlayerTargetActor(playerid);
-		if(targetid != INVALID_ACTOR_ID)
-		{
-			return OnActorReaction(playerid, targetid);
-		}
+		// targetid = GetPlayerTargetActor(playerid);
+		// if(targetid != INVALID_ACTOR_ID)
+		// {
+		// 	return OnActorReaction(playerid, targetid);
+		// }
 
 		new tick = GetTickCount();
 		if(tick - StartupAntiflood[playerid] < 800)
@@ -11809,73 +11125,6 @@ public	OnPlayerClickEnter(playerid)
 			}
 		}
 
-    	//	Тренажеры
-    	if(playerBenchUsed{playerid} && GymBlockKey{playerid} == false)
-		{
-			BenchpressEND(playerid);
-		    return true;
-		}
-		else if(playerBenchUsed{playerid} == 0)
-		{
-		    for(new i = 0; i < sizeof BenchpressPos; i++)
-		    {
-		        if(IsPlayerInRangeOfPoint(playerid, 2.5, Arr3<BenchpressPos[i]>))
-		        {
-		        	if(GetPlayerDrunkLevel(playerid) > 100)
-		        	{
-		        		return SendClientMessage(playerid, COLOR_GREY, PREFIX_ERROR "Вы не можете тренироваться пьяным.");
-		        	}
-	        	 	if(BenchpressUsed[i])
-	        	 	{
-		                return SendClientMessage(playerid, COLOR_GREY, PREFIX_ERROR "Данный тренажер занят.");
-		            }
-		            if(PlayerInfo[playerid][pPower] >= 100.0)
-		            {
-		            	return ShowPlayerHint(playerid, "Ваша сила прокачена на максимум");
-		            }
-					if(PlayerInfo[playerid][pTraining] >= MAX_TRAINING)
-					{
-						return ShowPlayerHint(playerid, "Вы достаточно потренеровались, приходите позже!");
-					}
-					IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
-					SetPlayerArmedWeapon(playerid, 0);
-
-					//	======================	Set player camera pos and look 	======================
-					new Float:CameraPos[3], Float:CameraLookAt[3], Float:PlayerCameraPos[3], Float:PlayerCameraVector[3];
-
-					CameraPos[0] = BenchpressPos[i][0] + (1.4866 * floatsin(-BenchpressPos[i][3] + 70.34, degrees));
-					CameraPos[1] = BenchpressPos[i][1] + (1.4866 * floatcos(-BenchpressPos[i][3] + 70.34, degrees));
-					CameraPos[2] = BenchpressPos[i][2] - 0.3;
-
-					CameraLookAt[0] = BenchpressPos[i][0] + (1.0049 * floatsin(-BenchpressPos[i][3] + 5.71, degrees));
-					CameraLookAt[1] = BenchpressPos[i][1] + (1.0049 * floatcos(-BenchpressPos[i][3] + 5.71, degrees));
-					CameraLookAt[2] = BenchpressPos[i][2] - 0.3;
-
-					GetPlayerCameraPos(playerid, Arr3<PlayerCameraPos>);
-					GetPlayerCameraFrontVector(playerid, Arr3<PlayerCameraVector>);
-	                PlayerCameraVector[0] = PlayerCameraPos[0] + floatmul(PlayerCameraVector[0], 5.0);
-					PlayerCameraVector[1] = PlayerCameraPos[1] + floatmul(PlayerCameraVector[1], 5.0);
-					PlayerCameraVector[2] = PlayerCameraPos[2] + floatmul(PlayerCameraVector[2], 5.0);
-
-					InterpolateCameraPos(playerid, Arr3<PlayerCameraPos>, Arr3<CameraPos>, 5000);
-					InterpolateCameraLookAt(playerid, Arr3<PlayerCameraVector>, Arr3<CameraLookAt>, 5000);
-	                MySetPlayerPos(playerid, Arr4<BenchpressPos[i]>);
-	                //	==============================================================================
-
-	                BenchpressUsed[i] = true;
-					GymAnimState{playerid} = 0;
-	             	GymBlockKey{playerid} = true;
-					playerBenchStop{playerid} = false;
-					playerBenchUsed{playerid} = i + 1;
-					playerBenchStep{playerid} = 0;
-
-	                BenchpressStepTimer[playerid] = SetTimerEx("BenchpressNext", 3900, false, "ii", playerid, BENCHSTEP_START_DOWN);
-					MyApplyAnimation(playerid, "benchpress", "gym_bp_geton", 4.1, 0, 0, 0, 1, 0);
-					return true;
-		        }
-		    }
-		}
-
 		// госпиталь
 		if(GetPlayerVirtualWorld(playerid) == VW_HOSPITAL && GetPVarType(playerid, "Player:Hospital:Berth") == PLAYER_VARTYPE_NONE)
 		{
@@ -12113,8 +11362,10 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			}
 			if((PRESSED(KEY_FIRE) || PRESSED(KEY_SECONDARY_ATTACK | KEY_HANDBRAKE)))
 			{
-				if(GetPlayerComb(playerid) == COMB_NONE && playerBenchUsed{playerid} == 0 && gPlayerRing[playerid] == (-1)
-				&& playerSmokeCount{playerid} == 0)
+				if(GetPlayerComb(playerid) == COMB_NONE
+					&& !IsPlayerTraining(playerid)
+					&& !IsPlayerBoxing(playerid)
+					&& playerSmokeCount{playerid} == 0)
 				{
 					if(PlayerInfo[playerid][pJailTime])
 					{
@@ -12205,16 +11456,6 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	 	{
 			RegisterCutScene(playerid, 22, 0, 0);	//	отмена заставки
         }
-
-		//  Тренажеры
-		if(playerBenchUsed{playerid} && GymBlockKey{playerid} == false)
-		{
-	        playerBenchStep{playerid} += 5;
-	        playerBenchStop{playerid} = true;
-	        ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
-	        BenchpressUP(playerid);
-	        return true;
-		}
     }
     else if(PRESSED(KEY_ACTION))
 	{
@@ -13355,7 +12596,8 @@ public OnPlayerChangeArmour(playerid, Float:oldArmour, Float:armour)
 
 public OnPlayerUpdate(playerid)
 {
-	if(IsPlayerNPC(playerid))	return true;
+	if (IsPlayerNPC(playerid))
+		return (1);
 	
 	if(IsPlayerLogged(playerid) == 0)
 	{
@@ -14492,10 +13734,8 @@ stock ShowDialog(playerid, dialogid, action = INVALID_DIALOGID)
 					}
 				#endif	
 
-				if(GetNearRing(playerid) != (-1) && gPlayerRing[ gTargetid[playerid] ] == (-1))
-				{
+				if(GetNearRing(playerid) != (-1) && !IsPlayerBoxing(gTargetid[playerid]))
 					strcat(lstring, "\n"MAIN_COLOR"• {CFB53B}Вызвать на спарринг\t{CFB53B}[/box]");
-				}
 
 				//	###	Действия для лидера и зама
 				if(PlayerInfo[playerid][pFaction] > 0 && PlayerInfo[playerid][pRank] >= GetRankMax(PlayerInfo[playerid][pFaction]) - 1)
@@ -24598,74 +23838,6 @@ COMMAND:goto(playerid, params[])
 	return 1;
 }
 
-#if defined _FCNPC_included
-flags:gotobot(CMD_MODER);
-COMMAND:gotobot(playerid, params[])
-{
-	new npcid;
-	if(sscanf(params, "i", npcid))
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /gotobot [npcid]");
-    if(!FCNPC_IsSpawned(npcid))
-    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого бота нет на сервере.");
-	new string[128];
-	new Float: X, Float: Y, Float: Z;
-	FCNPC_GetPosition(npcid, X, Y, Z);
-	if(GetPlayerState(playerid) == 2)
-	{
-		new vehicleid = GetPlayerVehicleID(playerid);
-		MySetVehiclePos(vehicleid, X+2, Y+2, Z);
-		LinkVehicleToInterior(vehicleid, PlayerInfo[playerid][pPosINT]);
-		SetVehicleVirtualWorld(vehicleid, PlayerInfo[playerid][pPosVW]);
-	}
-	else MySetPlayerPos(playerid, X, Y+2, Z);
-	format(string, 128, "[AdmCmd]: %s %s[%d] телепортировался к боту %s[%d]",
-		GetPlayerAdminStatus(playerid), ReturnPlayerName(playerid), playerid, ReturnPlayerName(npcid), npcid);
-	SendAdminMessage(COLOR_ADMIN, string);
-	return 1;
-}
-
-/*flags:startbot(CMD_MODER);
-COMMAND:startbot(playerid, params[])
-{
-	BusPlaybackCount = 0;
-	MyStartPlayback(NPC_ID[NPC_BusDriver1]);
-	MyStartPlayback(NPC_ID[NPC_BusDriver2]);
-	MyStartPlayback(NPC_ID[NPC_BusDriver3]);
-	MyStartPlayback(NPC_ID[NPC_BusDriver4]);
-	SendClientMessage(playerid, COLOR_SERVER, "[BT]: Цикл ботов запущен сначала");
-	return 1;
-}
-
-flags:putbotdriver(CMD_DEVELOPER);
-COMMAND:putbotdriver(playerid, params[])
-{
-	new npcid;
-	if(sscanf(params, "i", npcid))
-		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /putbotdriver [npcid]");
-    if(!FCNPC_IsSpawned(npcid))
-        return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого бота нет на сервере.");
-
-	new string[128], vehicleid;
-	if(npcid == NPC_ID[NPC_BusDriver1]) vehicleid = BusVehicle[0];
-	else if(npcid == NPC_ID[NPC_BusDriver2]) vehicleid = BusVehicle[1];
-	else if(npcid == NPC_ID[NPC_BusDriver3]) vehicleid = BusVehicle[2];
-	else if(npcid == NPC_ID[NPC_BusDriver4]) vehicleid = BusVehicle[3];
-    else return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого бот не является водителем автобуса.");
-
-	if(FCNPC_PutInVehicle(npcid, vehicleid, 0) == 0)
-	{
-	    SendFormatMessage(playerid, COLOR_LIGHTRED, string, "[BT]: Бот-Водитель[%d] не захотел сесть в автомобиль vehicleid[%d]", npcid, vehicleid);
-	}
-	else
-	{
-		SetTimerEx("MyStartPlayback", 5000, 0, "d", npcid);
-	    SetPlayerColor(npcid, COLOR_ORANGE);
-	    SendFormatMessage(playerid, COLOR_SERVER, string, "[BT]: Бот-Водитель[%d] успешно сел в автомобиль vehicleid[%d]", npcid, vehicleid);
-	}
-	return 1;
-}*/
-#endif
-
 flags:gethere(CMD_IVENTER);
 COMMAND:gethere(playerid, params[])
 {
@@ -25103,23 +24275,6 @@ COMMAND:inter(playerid, params[])
 	SetCameraBehindPlayer(playerid);
 	format(string, 128, "Class %c, #%d", Class, IntNum);
 	SendClientMessage(playerid, COLOR_WHITE, string);
-	return 1;
-}
-
-flags:setpower(CMD_DEVELOPER);
-COMMAND:setpower(playerid, params[])
-{// [BT]
-	new giveplayerid, Float:powerlvl;
-	if(sscanf(params, "rf", giveplayerid, powerlvl))
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /setpower [playerid/playername] [level]");
-	if(!IsPlayerLogged(giveplayerid))
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-	new string[128];
-	PlayerInfo[giveplayerid][pPower] = powerlvl;
-	format(string, 128, "Вы задали игроку %s[%d] силу %0.2f", ReturnPlayerName(giveplayerid), giveplayerid, powerlvl);
-	SendClientMessage(playerid, COLOR_WHITE, string);
-	format(string, 128, "%s[%d] задал вам силу %0.2f", ReturnPlayerName(playerid), playerid, powerlvl);
-	SendClientMessage(giveplayerid, COLOR_WHITE, string);
 	return 1;
 }
 
@@ -26161,54 +25316,6 @@ COMMAND:showpass(playerid, params[])
 	return true;
 }
 
-COMMAND:box(playerid, params[])
-{
-
-	new giveplayerid;
-	if(sscanf(params, "r", giveplayerid)){
-	    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /box [playerid/playername]");
-	}
-    if(!IsPlayerLogged(giveplayerid)){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
-    }
-    if(PlayerInfo[playerid][pTraining] >= MAX_TRAINING)	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы сильно устали и не можете сейчас боксировать.");
-	}
-    new ring = GetNearRing(playerid);
-	if(ring == (-1)){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Вы должны быть рядом с боксерским рингом.");
-	}
-	if(BoxingRing[ring][RING_STATE] != 0){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот ринг в данный момент занят.");
-	}
-	if(gPlayerRing[giveplayerid] != (-1)){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок в данный момент уже боксирует.");
-	}
-    new Float:dist = GetDistanceBetweenPlayers(playerid, giveplayerid);
-    if(dist > 5.0){
-    	return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок слишком далеко от вас.");
-    }
-    if(PlayerInfo[giveplayerid][pTraining] >= MAX_TRAINING)	{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этот игрок устал и сейчас не может боксировать.");
-	}
-	if(MyGetPlayerHealth(playerid) < 15.0){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У вас слишком мало здоровья.");
-	}
-	if(MyGetPlayerHealth(giveplayerid) < 15.0){
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока слишком мало здоровья.");
-	}
-	new string[128];
-    if(AskPlayer(playerid, giveplayerid, ASK_BOX))
-	{
-		SendFormatMessage(giveplayerid, COLOR_WHITE, string, "%s вызывает вас на боксерский поединок "ASK_CONFIRM_INFO, ReturnPlayerName(playerid));
-		SendFormatMessage(playerid, COLOR_WHITE, string, "Вы предложили %s боксерский поединок", ReturnPlayerName(giveplayerid));
-	}
-	else{
-		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "У игрока есть не принятый запрос, попробуйте позже.");
-	}
-    return true;
-}
-
 COMMAND:pay(playerid, params[])
 {
 	if(PlayerInfo[playerid][pLevel] < 2)
@@ -26896,7 +26003,7 @@ COMMAND:answer(playerid, params[])
 	if(sscanf(params, "rs[128]", giveplayerid, answer))
 		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /answer [playerid/playername] [ответ]");
 
-    if(!IsPlayerLogged(giveplayerid))
+	if(!IsPlayerLogged(giveplayerid))
 		return SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Этого игрока нет на сервере.");
 
 	new string[256];
@@ -26977,8 +26084,10 @@ COMMAND:adminlist(playerid, params[])
 		cache_get_value_name_int(r, "online", online);
 		cache_get_value_name_int(r, "admin", admin);
 		cache_get_value_index(r, 3, date);
-		if(online == -1)    format(lstring, sizeof(lstring), "%s{DFDFDF}%d\t{DFDFDF}%s\t{DFDFDF}%s\t{DFDFDF}%s\n", lstring, online, getAdminStatus(admin), date, name);
-		else                format(lstring, sizeof(lstring), "%s{FFFFFF}%d\t{FFFFFF}%s\t{FFFFFF}%s\t{FFFFFF}%s\n", lstring, online, getAdminStatus(admin), date, name);
+		if(online == -1)
+			format(lstring, sizeof(lstring), "%s{DFDFDF}%d\t{DFDFDF}%s\t{DFDFDF}%s\t{DFDFDF}%s\n", lstring, online, getAdminStatus(admin), date, name);
+		else
+			format(lstring, sizeof(lstring), "%s{FFFFFF}%d\t{FFFFFF}%s\t{FFFFFF}%s\t{FFFFFF}%s\n", lstring, online, getAdminStatus(admin), date, name);
 	}
 	cache_delete(result);
 	format(string, sizeof(string), "Администраторский состав:");
@@ -27120,9 +26229,10 @@ public OnPlayerHackLockClick(playerid, step, success)
 		}
 		PlayerPlaySound(playerid, 1145, 0.0, 0.0, 0.0);
 		LoseAnim(playerid);
-		if(theft_break)	return false;
+		if(theft_break)
+			return (0);
 	}
-	return true;
+	return (1);
 }
 
 public OnPlayerHackLock(playerid, success)
@@ -27131,7 +26241,7 @@ public OnPlayerHackLock(playerid, success)
 	{
 		BreakCar(playerid, BREAK_CAR_HACKING, 1);
 	}
-	return true;
+	return (1);
 }
 
 public IsPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
@@ -27143,13 +26253,11 @@ public IsPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
 			if(toggle)
 			{
 				if(!IFace.GetGroupToggleAndVisible(playerid, IFace.INTERFACE))
-				{
-					return false;
-				}
+					return (0);
 			}
 		}
 	}
-	return true;
+	return (1);
 }
 
 public OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
@@ -27192,7 +26300,7 @@ public OnPlayerChangeInterface(playerid, IFace.E_GROUPS:element, bool:toggle)
 			}
 		#endif
 	}
-	return true;
+	return (1);
 }
 
 public	OnPlayerPhoneCall(playerid, number)

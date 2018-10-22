@@ -28,14 +28,14 @@ enum
 
 enum // Vehicle Class
 {
-	VC_SPECIAL,		// (+) РЎРїРµС†РёР°Р»СЊРЅС‹Р№
-	VC_LOWCOST,		// (+) Р‘СЋРґР¶РµС‚РЅС‹Р№ 			(5.000$ - 11.500$)
-	VC_GENERAL, 	// (+) РЎСЂРµРґРЅРёР№ 				(11.500$ - 21.000$)
-	VC_LOWRIDER,    // (+) Р›РѕСѓСЂР°Р№РґРµСЂСЃРєРёР№        (15.000$ - 20.000$)
-	VC_PREMIER,     // (+) РџСЂРµРґСЃС‚Р°РІРёС‚РµР»СЊСЃРєРёР№    (21.000$ - 55.000$)
-	VC_SPORT,       // (+) РЎРїРѕСЂС‚РёРІРЅС‹Рµ           (27.000$ - 55.000$)
-	VC_MONSTER,		// (+) РћРіСЂРѕРјРЅС‹Рµ РґР¶РёРїС‹       (21.000$ - 55.000$)
-	VC_SUPER,       // (+) РЎСѓРїРµСЂ РґРѕСЂРѕРіРёРµ        (55.000$ - 330.000$)
+	VC_SPECIAL,		// (+) Специальный
+	VC_LOWCOST,		// (+) Бюджетный 			(5.000$ - 11.500$)
+	VC_GENERAL, 	// (+) Средний 				(11.500$ - 21.000$)
+	VC_LOWRIDER,    // (+) Лоурайдерский        (15.000$ - 20.000$)
+	VC_PREMIER,     // (+) Представительский    (21.000$ - 55.000$)
+	VC_SPORT,       // (+) Спортивные           (27.000$ - 55.000$)
+	VC_MONSTER,		// (+) Огромные джипы       (21.000$ - 55.000$)
+	VC_SUPER,       // (+) Супер дорогие        (55.000$ - 330.000$)
 }
 
 enum VEHICLE_ENUM
@@ -140,7 +140,7 @@ new const VehParams[212][VEHICLE_ENUM] =
 	{486, MTYPE_NONE,	"Dozer", 		VC_SPECIAL, false, 100000, 60 },
 	{487, MTYPE_HELIC,	"Maverick",		VC_SPECIAL, false, 100000, 60 },
 	{488, MTYPE_HELIC,	"News Chopper", VC_SPECIAL, false, 100000, 60 },
-	{489, MTYPE_NONE,	"Rancher", 		VC_PREMIER, false, 36500, 60 }, // СЃРј. 505
+	{489, MTYPE_NONE,	"Rancher", 		VC_PREMIER, false, 36500, 60 }, // см. 505
 	{490, MTYPE_NONE,	"FBI Rancher", 	VC_SPECIAL, false, 100000, 60 },
 	{491, MTYPE_NONE,	"Virgo", 		VC_PREMIER, false, 25000, 60 },
 	{492, MTYPE_NONE,	"Greenwood", 	VC_GENERAL, false, 19900, 60 },
@@ -156,7 +156,7 @@ new const VehParams[212][VEHICLE_ENUM] =
 	{502, MTYPE_NONE,	"Hotring Racer", VC_SPECIAL, true, 390, 60 },
 	{503, MTYPE_NONE,	"Hotring Racer", VC_SPECIAL, true, 390, 60 },
 	{504, MTYPE_NONE,	"Bloodring Banger", VC_SPECIAL, true, 390, 60 },
-	{505, MTYPE_NONE,	"Rancher", 		VC_PREMIER, false, 37500, 60 }, // СЃРј. 459
+	{505, MTYPE_NONE,	"Rancher", 		VC_PREMIER, false, 37500, 60 }, // см. 459
 	{506, MTYPE_NONE,	"Super GT", 	VC_SPORT,   false, 36000, 60 },
 	{507, MTYPE_NONE,	"Elegant", 		VC_PREMIER, false, 31000, 60 },
 	{508, MTYPE_NONE,	"Journey", 		VC_SPECIAL, false, 100000, 60 },
@@ -278,17 +278,17 @@ enum
 
 enum
 {
-	VEH_AVAILABLE_NONE,		//	РЅРµ РёРјРµРµС‚ РґРѕСЃС‚СѓРїР° Рє Р°РІС‚Рѕ
-	VEH_AVAILABLE_DRIVE,	//	РјРѕР¶РµС‚ РµР·РґРёС‚СЊ, РЅРѕ РЅРµ РјРѕР¶РµС‚ Р·Р°РІРѕРґРёС‚СЊ, Р·Р°РєСЂС‹РІР°С‚СЊ Рё С‚ Рґ
-	VEH_AVAILABLE_CONTROL,	//	РјРѕР¶РµС‚ СѓРїСЂР°РІР»СЏС‚СЊ: Р·Р°РєСЂС‹РІР°С‚СЊ, Р·Р°РІРѕРґРёС‚СЊ (Р°СЂРµРЅРґРѕРІР°РЅРЅРѕРµ Р°РІС‚Рѕ/РёРІРµРЅС‚)
-	VEH_AVAILABLE_OWNER		//	Р»РёС‡РЅРѕРµ Р°РІС‚Рѕ
+	VEH_AVAILABLE_NONE,		//	не имеет доступа к авто
+	VEH_AVAILABLE_DRIVE,	//	может ездить, но не может заводить, закрывать и т д
+	VEH_AVAILABLE_CONTROL,	//	может управлять: закрывать, заводить (арендованное авто/ивент)
+	VEH_AVAILABLE_OWNER		//	личное авто
 }
 
 enum cInfo
 {
 	cID,
 	cType, // 0 - Default, 1 - Players, 2 - Factions, 3 - Job, 4 - Part job, 5 - Rent, 6 - Event
-	cOwnerID, // id РІ С‚Р°Р±Р»РёС†Рµ (РёРіСЂРѕРєР°/Р±РёР·РЅРµСЃР°/Р±Р°РЅРґС‹)
+	cOwnerID, // id в таблице (игрока/бизнеса/банды)
 	cRank,
 	cModel,
 	cPlate[10],
@@ -316,10 +316,10 @@ enum cInfo
 	cNeon,
 	cFlash,
 	// Tuning end.
-	Float:cMileage, // РџСЂРѕР±РµРі РІ РєРј
-	// fine_park // РЎС‚Р°С‚СѓСЃ С€С‚СЂР°С„-СЃС‚РѕСЏРЅРєРё (РІ РјР°СЃСЃРёРІ РЅРµ Р·Р°РїРёСЃС‹РІР°РµС‚СЃСЏ): 0 - РќРµ РѕС€С‚СЂР°С„РѕРІР°РЅ, 1 - РќРµРїСЂР°РІРёР»СЊРЅР°СЏ РїР°СЂРєРѕРІРєР°
+	Float:cMileage, // Пробег в км
+	// fine_park // Статус штраф-стоянки (в массив не записывается): 0 - Не оштрафован, 1 - Неправильная парковка
 };
-// РЎРѕС…СЂР°РЅСЏСЋС‰РёРµСЃСЏ РїР°СЂР°РјРµС‚СЂС‹ С‚СЂР°РЅСЃРїРѕСЂС‚Р°
+// Сохраняющиеся параметры транспорта
 new CarInfo[MAX_VEHICLES][cInfo];
 
 enum vInfo
@@ -347,20 +347,20 @@ enum vInfo
 	bool:vAlarmLight,
 	Float:vFuel,
 	Float:vWishFuel,
-	vBitHack,				// РџРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ РІР·Р»РѕРјР°
+	vBitHack,				// Последовательность взлома
 	Text3D:vLabel,
 	vIterNext,
 	vFlashMode,
 	vFlashState,
-	vTrailerID,				// РџРѕСЂСЏРґРєРѕРІС‹Р№ РЅРѕРјРµСЂ РїСЂРёРєСЂРµРїР»РµРЅРЅРѕРіРѕ С‚СЂРµР№Р»РµСЂР°
-	bool:vSpawnDestroy,		// Р•СЃР»Рё true, С‚Рѕ СѓРЅРёС‡С‚РѕР¶РёС‚СЊ РїСЂРё СЃРїР°РІРЅ
-	bool:vBlockMove,		//	Р—Р°Р±Р»РѕРєРёСЂРѕРІР°С‚СЊ РїРµСЂРµРјРµС‰РµРЅРёРµ Р°РІС‚Рѕ
-	vObject[2], // Р”Р»СЏ РґРёРЅР°РјРёС‡РµСЃРєРёС… РѕР±СЉРµРєС‚РѕРІ
-	Text3D:vText3D, // Р”Р»СЏ 3Рґ С‚РµРєСЃС‚Р°
+	vTrailerID,				// Порядковый номер прикрепленного трейлера
+	bool:vSpawnDestroy,		// Если true, то уничтожить при спавн
+	bool:vBlockMove,		//	Заблокировать перемещение авто
+	vObject[2], // Для динамических объектов
+	Text3D:vText3D, // Для 3д текста
 
-	bool:vTrapState, // РЎС‚Р°С‚СѓСЃ РіСЂСѓР·РѕРІРѕРіРѕ Р»СЋРєР° (false - Р·Р°РєСЂС‹С‚, true - РѕС‚РєСЂС‹С‚)
+	bool:vTrapState, // Статус грузового люка (false - закрыт, true - открыт)
 }
-// РќРµ СЃРѕС…СЂР°РЅСЏСЋС‰РёРµСЃСЏ РїР°СЂР°РјРµС‚СЂС‹ С‚СЂР°РЅСЃРїРѕСЂС‚Р°
+// Не сохраняющиеся параметры транспорта
 new VehInfo[MAX_VEHICLES][vInfo];
 new g_NeonObject[MAX_VEHICLES][2];
 

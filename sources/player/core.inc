@@ -12,6 +12,7 @@
 #include "player/walk"
 #include "player/ask"
 #include "player/autoschool"
+#include "player/gym/core"
 
 stock	ToggleNameTags(playerid, bool:toggle)
 {

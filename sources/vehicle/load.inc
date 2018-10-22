@@ -1,3 +1,5 @@
+#include "npc/header"
+
 /*static const Float:RandomCars[][] =
 {
 	{-2125.7424,658.0462,52.2988,90.0},
@@ -217,7 +219,8 @@ static const Float:FC_RandomCars[][] =
 
 Public: Vehicle.OnGameModeInit()
 {
-	CreateNPCRecordVehicle();
+	NPC.CreateRecordVehicle();
+	//CreateNPCRecordVehicle();
 
 	new vehicles = LoadVehicles();
 	printf("  Load vehicles: %d.", vehicles);
@@ -290,60 +293,6 @@ CMD:testtrain(playerid, params[])
 	//obj = CreateDynamicObject(3052, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 	//AttachDynamicObjectToVehicle(obj, freightTrain[0], 0.0, -7.5, -0.7, 0.0, 0.0, 0.0);
 	return true;
-}
-
-CreateNPCRecordVehicle()
-{
-	// Поезда   (создаются всегда первыми)
-	for(new i = 0; i < sizeof(TrainInfo); i++)
-	{
-        TrainInfo[i][trID] = MyCreateVehicle(TrainInfo[i][trVID], Arr4<TrainInfo[i][trPos]>, 1, 1);
-        VehInfo[ TrainInfo[i][trID] ][vLocked] = 999;
-        if(TrainInfo[i][trVID] == 537)
-        {
-        	freightTrain[0] = TrainInfo[i][trID] + 1;
-        	freightTrain[1] = TrainInfo[i][trID] + 2;
-        	freightTrain[2] = TrainInfo[i][trID] + 3;
-        	VehInfo[ freightTrain[0] ][vLocked] = 999;
-			VehInfo[ freightTrain[1] ][vLocked] = 999;
-			VehInfo[ freightTrain[2] ][vLocked] = 999;
-        }
-        else
-        {
-	    #if defined _FCNPC_included
-			VehInfo[ TrainInfo[i][trID] + 1 ][vLocked] = 999;
-			VehInfo[ TrainInfo[i][trID] + 2 ][vLocked] = 999;
-			VehInfo[ TrainInfo[i][trID] + 3 ][vLocked] = 999;
-		#else
-			CarInfo[ TrainInfo[i][trID] + 1 ][cOwnerID] = -1;
-			CarInfo[ TrainInfo[i][trID] + 2 ][cOwnerID] = -1;
-			CarInfo[ TrainInfo[i][trID] + 3 ][cOwnerID] = -1;
-		#endif
-        }
-	}
-	if(TrainInfo[0][trID] != 1)
-	{
-		printf("WARNING! Trains must be created first (ID 1-3), the current Id's': %d-%d", TrainInfo[0][trID], TrainInfo[0][trID] + 2);
-	}
-	else
-	{
-		print("  Trains successfully created");
-	}
-
-	// Автобусы для записи ботов (маршрут: Аэропорт ЛС - Джефферсон)
-	/*BusVehicle[0] = MyCreateVehicle(418, 1188.3907,-1815.1123,13.7037, 0.0, 6, 6);
-	BusVehicle[1] = MyCreateVehicle(418, 1188.3907,-1821.9747,13.7036, 0.0, 6, 6);
-	BusVehicle[2] = MyCreateVehicle(418, 1188.3907,-1829.9794,13.7036, 0.0, 6, 6);
-	BusVehicle[3] = MyCreateVehicle(418, 1188.3907,-1838.1414,13.7036, 0.0, 6, 6);
-	for(new i = 0; i < sizeof(BusVehicle); i++)
-	{
-	    new vehicleid = BusVehicle[i];
-		VehInfo[vehicleid][vLabel] = CreateDynamic3DTextLabel("Аэропорт ЛС - Джефферсон\nБесплатный", 0xFF8300FF, 0.0, 0.0, 1.5, 40.0, INVALID_PLAYER_ID, vehicleid, 1);
-		VehInfo[vehicleid][vLights] = true;
-		VehInfo[vehicleid][vRadio] = 1;
-		CarInfo[vehicleid][cOwnerID] = -1;
-		UpdateVehicleParamsEx(vehicleid);
-	}*/
 }
 
 stock LoadVehicles()
