@@ -114,7 +114,7 @@ stock RobberyFinish(playerid, step, bool:status)
 				{
 				    if(robbery_biz[i] >= 0 && robbery_offerid[i] == playerid)
 				    {
-			            ProgressBarHide(i);
+			            IFace.ProgressBarHide(i);
 						PlayerPlaySound(i, 0, 0.0, 0.0, 0.0);
 				        if(!status)
 				        {
@@ -189,7 +189,7 @@ stock RobberyClear(playerid, reason = 0)
 		robbery_money[playerid] = 0;
 		robbery_offerid[playerid] = 0;
 		robbery_step[playerid] = 0;
-        ProgressBarHide(playerid);
+        IFace.ProgressBarHide(playerid);
 		PlayerPlaySound(playerid, 0, 0.0, 0.0, 0.0);
 	}
 }
@@ -213,7 +213,7 @@ Public: Robbering(playerid)
 		ShowPlayerHint(playerid, "Касса пуста!~n~Бегите отсюда!");
 	}
 	format(string, sizeof(string), "Robbery~n~%s%d$~w~/~g~%d$", (GangRobberyMoney[gang] < bank) ? ("~y~") : ("~g~"), GangRobberyMoney[gang], bank);
-	ProgressBarUpdate(playerid, GangRobberyMoney[gang], bank, string);
+	IFace.ShowPlayerProgress(playerid, GangRobberyMoney[gang], bank, string);
 	PlayerPlaySound(playerid, 1052, 0.0, 0.0, 0.0);
 	return true;
 }

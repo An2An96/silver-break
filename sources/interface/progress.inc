@@ -10,23 +10,27 @@ static
 	PlayerText:ProgressBar_Backbox,
 	PlayerText:ProgressBar_Title;
 
-Public: IFace.Progress_Toggle(playerid, bool:toggle)
-{
-	if(toggle)
+flags:progress(CMD_DEVELOPER);
+CMD:progress(playerid, params[])
+{// [BT]
+    new string[128];
+    if(sscanf(params, "s[32] ", string))
+        return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /progress [update/hide]");
+	if(strcheck(string, "hide"))
+		IFace.ProgressBarHide(playerid);
+	else if(strcheck(string, "update"))
 	{
-		PlayerTextDrawShow(playerid, ProgressBar_Background);
-		PlayerTextDrawShow(playerid, ProgressBar_Backbox);	
+		new title[32], rus, value, maxvalue;
+		if(sscanf(params, "{s[32]}is[32]ii", rus, title, value, maxvalue))
+		    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /progress update [rusik] [title] [value] [maxvalue]");
+		IFace.ShowPlayerProgress(playerid, value, maxvalue, RusText(title, rus));
 	}
 	else
-	{
-		PlayerTextDrawHide(playerid, ProgressBar_ActiveLine);
-		PlayerTextDrawHide(playerid, ProgressBar_Background);
-		PlayerTextDrawHide(playerid, ProgressBar_Backbox);
-		PlayerTextDrawHide(playerid, ProgressBar_Title);
-	}
+		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Такого действия в этой команде не существует.");
+	return true;
 }
 
-stock ProgressBarUpdate(playerid, value, max = 100, title[] = "")
+stock	IFace.ShowPlayerProgress(playerid, value, max = 100, title[] = "")
 {
 	IFace.ToggleGroup(playerid, IFace.PROGRESS, true);
 
@@ -43,12 +47,28 @@ stock ProgressBarUpdate(playerid, value, max = 100, title[] = "")
 	PlayerTextDrawShow(playerid, ProgressBar_ActiveLine);
 }
 
-stock ProgressBarHide(playerid)
+stock	IFace.ProgressBarHide(playerid)
 {
 	IFace.ToggleGroup(playerid, IFace.PROGRESS, false);
 }
 
-IFace.Progress_Create_Player(playerid)
+Public: IFace.Progress_Toggled(playerid, bool:toggle)
+{
+	if(toggle)
+	{
+		PlayerTextDrawShow(playerid, ProgressBar_Background);
+		PlayerTextDrawShow(playerid, ProgressBar_Backbox);	
+	}
+	else
+	{
+		PlayerTextDrawHide(playerid, ProgressBar_ActiveLine);
+		PlayerTextDrawHide(playerid, ProgressBar_Background);
+		PlayerTextDrawHide(playerid, ProgressBar_Backbox);
+		PlayerTextDrawHide(playerid, ProgressBar_Title);
+	}
+}
+
+public	OnPlayerTextDrawInit(playerid)
 {
 	// Progress Bar
 	ProgressBar_Title = CreatePlayerTextDraw(playerid, 535.0, 124.0, "Progress");
@@ -95,4 +115,19 @@ IFace.Progress_Create_Player(playerid)
 	PlayerTextDrawUseBox(playerid, ProgressBar_ActiveLine, 1);
 	PlayerTextDrawBoxColor(playerid, ProgressBar_ActiveLine, -554770177);
 	PlayerTextDrawTextSize(playerid, ProgressBar_ActiveLine, 542.0, 0.0);
+
+	#if defined Progress_OnPlayerTextDrawInit
+		return (Progress_OnPlayerTextDrawInit(playerid));
+	#else
+		return (1);
+	#endif
 }
+#if defined _ALS_OnPlayerTextDrawInit
+	#undef OnPlayerTextDrawInit
+#else
+	#define _ALS_OnPlayerTextDrawInit
+#endif
+#define OnPlayerTextDrawInit	Progress_OnPlayerTextDrawInit
+#if defined Progress_OnPlayerTextDrawInit
+	forward Progress_OnPlayerTextDrawInit(playerid);
+#endif

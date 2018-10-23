@@ -15,15 +15,22 @@ static
 
 	RepBarTimer[MAX_PLAYERS];
 
+flags:reptest(CMD_DEVELOPER);
+CMD:reptest(playerid, params[])
+{	// [BT]
+	new title[32], oldval, newval, maxval;
+	if (sscanf(params, "s[32]ddd", title, oldval, newval, maxval))
+	    return SendClientMessage(playerid, -1,
+			"Используйте: /reptest [текст] [старое знач.] [новое знач.] [макс. знач.]");
+    return IFace.RepBarShow(playerid, title, oldval, newval, maxval);
+}
+
 Public: IFace.RepBar_Toggle(playerid, bool:toggle)
 {
 	if(toggle)
 	{
-		if(RepBarTimer[playerid])
-		{
-		    IFace.RepBar_Toggle(playerid, false);
-		}
-
+		if (RepBarTimer[playerid])
+			IFace.RepBar_Toggle(playerid, false);
 		TextDrawShowForPlayer(playerid, g_RepBar_Background);
 		TextDrawShowForPlayer(playerid, g_RepBar_BackgroundLine);
 		TextDrawShowForPlayer(playerid, g_RepBar_ScaleText);
@@ -37,38 +44,39 @@ Public: IFace.RepBar_Toggle(playerid, bool:toggle)
 		PlayerTextDrawHide(playerid, RepBar_Title);
 		PlayerTextDrawHide(playerid, RepBar_ActiveLine);
 		PlayerTextDrawDestroy(playerid, RepBar_GreenLine[playerid]);
-		KillTimer(RepBarTimer[playerid]),		RepBarTimer[playerid] = 0;
+		KillTimer(RepBarTimer[playerid]);
+		RepBarTimer[playerid] = 0;
 	}
 }
 
-Public: _RepBarHide(playerid)
-{
-    IFace.ToggleGroup(playerid, IFace.REPBAR, false);
-	return true;
-}
-
-RepBarShow(playerid, title[], oldval, newval, maxval = 100, time = 5000)
+IFace.RepBarShow(playerid, title[], oldval, newval, maxval = 100, time = 5000)
 {
 	IFace.ToggleGroup(playerid, IFace.REPBAR, true);	
 
-	PlayerTextDrawSetString(playerid, RepBar_Title, RusText(title, isRus(playerid)));
+	PlayerTextDrawSetString(playerid, RepBar_Title,
+		RusText(title, isRus(playerid)));
 	PlayerTextDrawShow(playerid, RepBar_Title);
 
 	new Float:tmp1, Float:tmp2;
 	if(oldval <= newval)
 	{
-		if(newval > maxval) maxval = newval;
+		if(newval > maxval)
+			maxval = newval;
 		tmp1 = 100.0 * newval / maxval;
 		tmp2 = 100.0 * oldval / maxval;
-		RepBar_GreenLine[playerid] = CreatePlayerTextDraw(playerid, 512.0 + 0.89 * tmp2, 185.0, "4");
-		PlayerTextDrawBoxColor(playerid, RepBar_GreenLine[playerid], COLOR_GREEN);
+		RepBar_GreenLine[playerid] =
+			CreatePlayerTextDraw(playerid, 512.0 + 0.89 * tmp2, 185.0, "4");
+		PlayerTextDrawBoxColor(playerid,
+			RepBar_GreenLine[playerid], COLOR_GREEN);
 	}
 	else
 	{
-	    if(oldval > maxval) maxval = oldval;
+	    if(oldval > maxval)
+			maxval = oldval;
 		tmp1 = 100.0 * oldval / maxval;
 		tmp2 = 100.0 * newval / maxval;
-		RepBar_GreenLine[playerid] = CreatePlayerTextDraw(playerid, 512.0 + 0.89 * tmp2, 185.0, "4");
+		RepBar_GreenLine[playerid] =
+			CreatePlayerTextDraw(playerid, 512.0 + 0.89 * tmp2, 185.0, "4");
 		PlayerTextDrawBoxColor(playerid, RepBar_GreenLine[playerid], COLOR_RED);
 	}
 	PlayerTextDrawTextSize(playerid, RepBar_ActiveLine, 508.0 + 0.89 * tmp1, 85.0);
@@ -86,10 +94,16 @@ RepBarShow(playerid, title[], oldval, newval, maxval = 100, time = 5000)
 	PlayerTextDrawShow(playerid, RepBar_GreenLine[playerid]);
 
 	RepBarTimer[playerid] = SetTimerEx("_RepBarHide", time, false, "d", playerid);
+	return (1);
+}
+
+Public: _RepBarHide(playerid)
+{
+    IFace.ToggleGroup(playerid, IFace.REPBAR, false);
 	return true;
 }
 
-IFace.RepBar_Create_Base()
+public	OnTextDrawInit()
 {
 	g_RepBar_Background = TextDrawCreate(555.0, 170.0, "1");
 	TextDrawAlignment(g_RepBar_Background, 2);
@@ -125,9 +139,24 @@ IFace.RepBar_Create_Base()
 	TextDrawSetOutline(g_RepBar_ScaleText, 0);
 	TextDrawSetProportional(g_RepBar_ScaleText, 1);
 	TextDrawSetShadow(g_RepBar_ScaleText, 0);
-}
 
-IFace.RepBar_Create_Player(playerid)
+	#if defined RepBar_OnTextDrawInit
+		return (RepBar_OnTextDrawInit());
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnTextDrawInit
+	#undef OnTextDrawInit
+#else
+	#define _ALS_OnTextDrawInit
+#endif
+#define OnTextDrawInit	RepBar_OnTextDrawInit
+#if defined RepBar_OnTextDrawInit
+	forward RepBar_OnTextDrawInit();
+#endif
+
+public	OnPlayerTextDrawInit(playerid)
 {
 	RepBar_Title = CreatePlayerTextDraw(playerid, 500.0, 167.0, "Title:");
 	PlayerTextDrawBackgroundColor(playerid, RepBar_Title, -1263159297);
@@ -149,4 +178,19 @@ IFace.RepBar_Create_Player(playerid)
 	PlayerTextDrawUseBox(playerid, RepBar_ActiveLine, 1);
 	PlayerTextDrawBoxColor(playerid, RepBar_ActiveLine, -1347440743);
 	PlayerTextDrawTextSize(playerid, RepBar_ActiveLine, 508.0, 85.0);
+
+	#if defined RepBar_OnPlayerTextDrawInit
+		return (RepBar_OnPlayerTextDrawInit(playerid));
+	#else
+		return (1);
+	#endif
 }
+#if defined _ALS_OnPlayerTextDrawInit
+	#undef OnPlayerTextDrawInit
+#else
+	#define _ALS_OnPlayerTextDrawInit
+#endif
+#define OnPlayerTextDrawInit	RepBar_OnPlayerTextDrawInit
+#if defined RepBar_OnPlayerTextDrawInit
+	forward RepBar_OnPlayerTextDrawInit(playerid);
+#endif

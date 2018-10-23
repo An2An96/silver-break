@@ -520,7 +520,7 @@ Public: PrisonCycle(playerid, step)
 			SetPlayerInterior(playerid, 0);
 			GameTextForPlayer(playerid, " ", 1000, 4);
 			MySetPlayerPos(playerid,1506.7561,-1668.6215,14.0469,270.0);
-			IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+			IFace.ToggleTVEffect(playerid, true);
 			TogglePlayerControllable(playerid, false);
 			SetPlayerCameraPos(playerid, 1545.2393, -1676.6, 19.4898);
 			SetPlayerCameraLookAt(playerid, 1546.2374, -1676.6, 19.3147);
@@ -1452,7 +1452,7 @@ ChoosePlayerVehicle(playerid, mode)
 			ChooseVehicleModel[playerid] = 0;
 			CancelSelectTextDraw(playerid);
 			SetCameraBehindPlayer(playerid);
-			IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
+			IFace.ToggleTVEffect(playerid, false);
 			TogglePlayerControllable(playerid, true);
 			GameTextForPlayer(playerid, " ", 1000, 4);
 			TextDrawHideForPlayer(playerid, tdChooseButton1);
@@ -1464,7 +1464,7 @@ ChoosePlayerVehicle(playerid, mode)
 	    case 1:
 	    {// Start choosing
 	        ChooseVehicleSel[playerid] = 0;
-			IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+			IFace.ToggleTVEffect(playerid, true);
 			SelectTextDraw(playerid, COLOR_SERVER);
 			TogglePlayerControllable(playerid, false);
 			TextDrawShowForPlayer(playerid, tdChooseButton1);
@@ -2604,7 +2604,7 @@ JailJobClear(playerid)
 	}
 	else if(j_jobstep{playerid} == 2)
 	{
-		ProgressBarHide(playerid);
+		IFace.ProgressBarHide(playerid);
 		DestroyDynamicObject(j_JobObj[playerid]), j_JobObj[playerid] = INVALID_STREAMER_ID;
 		RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
 
@@ -2622,7 +2622,7 @@ JailJobClear(playerid)
 
 Public: JailJobFinish(playerid, success)
 {
-    ProgressBarHide(playerid);
+    IFace.ProgressBarHide(playerid);
 	RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
 	DestroyDynamicObject(j_JobObj[playerid]), j_JobObj[playerid] = INVALID_STREAMER_ID;
 	MyApplyAnimation(playerid, "CARRY", "crry_prtial", 4.0, 0, 0, 0, 0, 0);
@@ -2789,7 +2789,7 @@ StartPlayerTirShooting(playerid)
 	p_ShootingWave{playerid} = -1;
 	NextShootingTarget(playerid);
 	SetPlayerVisualTimer(playerid, TirMissionInfo[element][TIR_TIME], true);
-	ProgressBarUpdate(playerid, ((PlayerInfo[playerid][pShooting] - 1) * 3 * 7), (3 * 3 * 7), "Progress");
+	IFace.ShowPlayerProgress(playerid, ((PlayerInfo[playerid][pShooting] - 1) * 3 * 7), (3 * 3 * 7), "Progress");
 	GameTextForPlayer(playerid, "~g~Fire!", 1000, 6);
 	return true;
 }
@@ -2818,7 +2818,7 @@ Public: NextShootingTarget(playerid)
 			p_ShootingWave{playerid} = 0;
 			p_isShooting{playerid} = false;
 			HidePlayerVisualTimer(playerid);
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 			MySetPlayerPosFade(playerid, FT_TIR, 293.7, -24.6, 1001.5, 0.0, false, GetPlayerInterior(playerid), GetPlayerVirtualWorld(playerid));
 		}
 	}
@@ -2827,7 +2827,7 @@ Public: NextShootingTarget(playerid)
 FinishPlayerShooting(playerid, bool:fail = false)
 {
 	DestroyTirTarget(playerid);
-	ProgressBarHide(playerid);
+	IFace.ProgressBarHide(playerid);
 	HidePlayerVisualTimer(playerid);
 	MyChangePlayerWeapon(playerid, false);
 
@@ -3008,7 +3008,7 @@ stock StoryMissionCancel(playerid)
 		if(mission_timer[playerid] > 0)								KillTimer(mission_timer[playerid]), mission_timer[playerid] = 0;
 		if(gType_CP[playerid] == CPMODE_MISSION)					MyDisablePlayerCheckpoint(playerid);
 		RemovePlayerAttachedObject(playerid, ATTACH_SLOT_IN_HAND);
-		ProgressBarHide(playerid);
+		IFace.ProgressBarHide(playerid);
 		IFace.HidePlayerInfoBar(playerid);
 		//PlayerTextDrawHide(playerid, InfoBar);
 		HideMissionMessage(playerid);
@@ -3053,100 +3053,6 @@ stock TogglePlayerMapIcon(playerid, bool:toggle)
 			Streamer_RemoveArrayData(STREAMER_TYPE_MAP_ICON, BizInfo[b][bMapIcon], E_STREAMER_PLAYER_ID, playerid);
 	}
 	Streamer_Update(playerid, STREAMER_TYPE_MAP_ICON);
-}
-
-Public: StopChatGame()
-{
-	if(ChatGameTick)
-	{
-		new string[129];
-	    SendFormatMessageToAll(COLOR_WHITE, string, PREFIX_GAME "Никто не ответил на задание. Правильный ответ: '"SCOLOR_GAME"%s"SCOLOR_WHITE"'.", ChatGameRes);
-		ChatGameTick = 0;
-	}
-}
-
-stock StartRandomGame()
-{
-	if(!ChatGameTick)
-	{
-		new string[128];
-		switch(random(2))
-		{
-		    case 0:
-		    {// Случайная строка
-				new const SECRETWORDS[] = {'/','!','"','@','#','$','^','&','*','(',')','-','=','+','_','.','~','1','2','3','4','5','6',
-				'7','8','9','0','Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','Z','X','C','V','B','N','M'};
-				//
-			    ChatGameRes = "";
-				for(new c; c < 10; c++)
-				{
-				    if(!c)	ChatGameRes[c] = SECRETWORDS[random(sizeof(SECRETWORDS)-17)+17]; // без спец символов
-				    else 	ChatGameRes[c] = SECRETWORDS[random(sizeof(SECRETWORDS))];
-				}
-			    SendFormatMessageToAll(COLOR_WHITE, string, PREFIX_GAME "Напишите в чат '"SCOLOR_GAME"%s"SCOLOR_WHITE"' как можно быстрее!", ChatGameRes);
-		    }
-		    case 1:
-		    {// Арифметическое действие
-		        new acttext[20], num1, num2;
-		        switch(random(5))
-		        {
-		            case 0:
-		            {
-				        /*if(!random(2))	num1 = random(201)-100;
-				        else            num1 = random(2001)-1000;
-				        if(random(2))	num2 = random(100);
-				        else            num2 = random(1000);*/
-				        num1 = random(201)-100;
-				        num2 = random(201)-100;
-				        valstr(ChatGameRes, num1 + num2);
-				        if(num2 < 0) format(acttext, 20, "%d + (%d)", num1, num2);
-				        else         format(acttext, 20, "%d + %d", num1, num2);
-		            }
-		            case 1:
-		            {
-				        num1 = random(101);
-				        num2 = random(201)-100;
-				        valstr(ChatGameRes, num1 - num2);
-				        if(num2 < 0) format(acttext, 20, "%d – (%d)", num1, num2);
-				        else         format(acttext, 20, "%d – %d", num1, num2);
-		            }
-		            case 2:
-		            {
-				        if(!random(2))	num1 = random(23)-11;
-				        else            num1 = random(43)-21;
-				        if(random(2))	num2 = random(23)-11;
-				        else            num2 = random(43)-21;
-				        valstr(ChatGameRes, num1 * num2);
-				        if(num2 < 0) format(acttext, 20, "%d * (%d)", num1, num2);
-				        else         format(acttext, 20, "%d * %d", num1, num2);
-		            }
-		            case 3:
-		            {
-				        num2 = random(20) + 1;
-				        num1 = random(21) * num2;
-				        valstr(ChatGameRes, num1 / num2);
-						format(acttext, 20, "%d / %d", num1, num2);
-
-		            }
-		            case 4:
-		            {
-		                if(random(3) == 0) num1 = 2;
-				        else num1 = random(12)+1;
-				        //
-				        if(num1 < 3) num2 = random(11);
-				        else if(3 < num1 < 5) num2 = random(5);
-				        else if(num1 >= 5) num2 = random(3);
-						//
-				        valstr(ChatGameRes, floatround(floatpower(num1, num2)));
-						format(acttext, 20, "%d^%d", num1, num2);
-		            }
-		        }
-			    SendFormatMessageToAll(COLOR_WHITE, string, PREFIX_GAME "Напишите в чат решение '"SCOLOR_GAME"%s = ?"SCOLOR_WHITE"' как можно быстрее!", acttext);
-		    }
-		}
-	    ChatGameTick = GetTickCount();
-	    ChatGameTimer = SetTimer("StopChatGame", 30000, false);
-	}
 }
 
 stock UpdatePlayerColor(playerid)
@@ -3195,103 +3101,6 @@ stock FormatSkill(prefix[], skillname[], level, skill, next)
 	else
 		format(string, sizeof(string), "%s{FFFFFF}%s\t%d ур.\t%d/%d\n", prefix, skillname, level, skill, next);
 	return string;
-}
-
-stock GetTaxiSkill(playerid)
-{
-	if(1 <= PlayerInfo[playerid][pTaxiLevel] < 5)
-	    return PlayerInfo[playerid][pTaxiLevel] * 2000;
-	return -1;
-}
-
-stock GiveTaxiSkill(playerid, skill = 1)
-{
-	if(0 <= PlayerInfo[playerid][pTaxiLevel] < 5)
-	{
-		if(PlayerInfo[playerid][pTaxiLevel] == 0)	PlayerInfo[playerid][pTaxiLevel] = 1;
-
-	    new string[128], next = GetTaxiSkill(playerid);
-		PlayerInfo[playerid][pTaxiSkill] += skill;
-		if(PlayerInfo[playerid][pTaxiSkill] >= next)
-		{
-			PlayerInfo[playerid][pTaxiLevel]++;
-			PlayerInfo[playerid][pTaxiSkill] -= next;
-			next = GetTaxiSkill(playerid);
-
-			format(string, 128, "~g~Таксист~n~~w~+ Бонус к зарплате: ~y~%d%s", getWageBonus(PlayerInfo[playerid][pTaxiLevel]), "%%");
-			ShowPlayerHint(playerid, string);
-		}
-		else if(PlayerInfo[playerid][pTaxiSkill] % 200 == 0)
-		{
-			format(string, 128, "Таксист [Yровень: %d]", PlayerInfo[playerid][pTaxiLevel]);
-			RepBarShow(playerid, string, PlayerInfo[playerid][pTaxiSkill] - 1, PlayerInfo[playerid][pTaxiSkill], next);
-		}
-	}
-}
-
-stock GetBusSkill(playerid)
-{
-	if(1 <= PlayerInfo[playerid][pBusLevel] < 5)
-	    return PlayerInfo[playerid][pBusLevel] * 700;
-	return -1;
-}
-
-stock GiveBusSkill(playerid, skill = 1)
-{
-	if(0 <= PlayerInfo[playerid][pBusLevel] < 5)
-	{
-		if(PlayerInfo[playerid][pBusLevel] == 0)	PlayerInfo[playerid][pBusLevel] = 1;
-
-	    new string[128], next = GetBusSkill(playerid);
-		PlayerInfo[playerid][pBusSkill] += skill;
-		if(PlayerInfo[playerid][pBusSkill] >= next)
-		{
-			PlayerInfo[playerid][pBusLevel]++;
-			PlayerInfo[playerid][pBusSkill] -= next;
-			next = GetBusSkill(playerid);
-
-			format(string, 128, "~g~Водитель автобуса~n~~w~+ Бонус к зарплате: ~y~%d%s", getWageBonus(PlayerInfo[playerid][pBusLevel]), "%%");
-			ShowPlayerHint(playerid, string);
-		}
-		else if(PlayerInfo[playerid][pBusSkill] % 70 == 0)
-		{
-			format(string, 128, "Водитель [Yровень: %d]", PlayerInfo[playerid][pBusLevel]);
-			RepBarShow(playerid, string, PlayerInfo[playerid][pBusSkill] - 1, PlayerInfo[playerid][pBusSkill], next);
-		}
-
-	}
-}
-
-stock GetTruckSkill(playerid)
-{
-	if(1 <= PlayerInfo[playerid][pTruckLevel] < 5)
-	    return PlayerInfo[playerid][pTruckLevel] * 20;
-	return -1;
-}
-
-stock GiveTruckSkill(playerid, skill = 1)
-{
-	if(0 <= PlayerInfo[playerid][pTruckLevel] < 5)
-	{
-		if(PlayerInfo[playerid][pTruckLevel] == 0)	PlayerInfo[playerid][pTruckLevel] = 1;
-
-	    new string[128], next = GetTruckSkill(playerid);
-		PlayerInfo[playerid][pTruckSkill] += skill;
-		if(PlayerInfo[playerid][pTruckSkill] >= next)
-		{
-			PlayerInfo[playerid][pTruckLevel]++;
-			PlayerInfo[playerid][pTruckSkill] -= next;
-			next = GetTruckSkill(playerid);
-
-			format(string, 128, "~g~Дальнобойщик~n~~w~+ Бонус к зарплате: ~y~%d%s", getWageBonus(PlayerInfo[playerid][pTruckLevel]), "%%");
-			ShowPlayerHint(playerid, string);
-		}
-		else if(PlayerInfo[playerid][pTruckSkill] % 2 == 0)
-		{
-			format(string, 128, "Дальнобой [Yровень: %d]", PlayerInfo[playerid][pTruckLevel]);
-			RepBarShow(playerid, string, PlayerInfo[playerid][pTruckSkill] - 1, PlayerInfo[playerid][pTruckSkill], next);
-		}
-	}
 }
 
 stock ReloadEmmetStore()
@@ -3375,29 +3184,6 @@ stock log(const filename[], const message[])
 	format(lstring, sizeof(lstring), "[%02d/%02d/%04d][%02d:%02d:%02d] %s\r\n", day, month, year, hour, minuite, second, message);
 	fwriterus(file, lstring);
 	fclose(file);
-}
-
-//	Механик
-stock CancelMechanicDuty(playerid)
-{
-	if(Job.GetPlayerNowWork(playerid) == JOB_MECHANIC)
-	{
-		new string[128];
-		// Удаление иконки вызова
-		if(IsPlayerLogged(MechanicClientid[playerid]))
-		{
-		    new clientid = MechanicClientid[playerid];
-		    DestroyDynamicMapIcon(MechanicMapIcon[playerid]), MechanicMapIcon[playerid] = INVALID_STREAMER_ID;
-		    DestroyDynamicMapIcon(MechanicMapIcon[clientid]), MechanicMapIcon[clientid] = INVALID_STREAMER_ID;
-			SendFormatMessage(MechanicClientid[playerid], COLOR_LIGHTBLUE, string, "%s закончил дежурство. Вызовите механика еще раз!", ReturnPlayerName(playerid));
-		}
-		//SendFormatMessage(playerid, COLOR_LIGHTBLUE, string, "Вы закончили дежурство и заработали: {FFFFFF}%d$", TaxiMoney[playerid]);
-		MechanicClientid[playerid] = INVALID_PLAYER_ID;
-		MechanicStatus[playerid] = 0;
-		HideMissionMessage(playerid);
-		//Job.ClearPlayerNowWork(playerid);
-	}
-    return true;
 }
 
 Public: UpdatePlayerTime(playerid)
@@ -4356,29 +4142,44 @@ public OnGameModeExit()
 
 IsPlayerAimingAt(playerid, Float:x, Float:y, Float:z, Float:radius)
 {
-    new Float:camera_x,Float:camera_y,Float:camera_z,Float:vector_x,Float:vector_y,Float:vector_z;
-    GetPlayerCameraPos(playerid, camera_x, camera_y, camera_z);
-    GetPlayerCameraFrontVector(playerid, vector_x, vector_y, vector_z);
+	new Float:camera_x, Float:camera_y, Float:camera_z,
+		Float:vector_x, Float:vector_y, Float:vector_z;
+	GetPlayerCameraPos(playerid, camera_x, camera_y, camera_z);
+	GetPlayerCameraFrontVector(playerid, vector_x, vector_y, vector_z);
 
-    new Float:vertical, Float:horizontal;
+	new Float:vertical, Float:horizontal;
+	switch (GetPlayerWeapon(playerid))
+	{
+		case 34, 35, 36:
+		{
+			if (DistanceCameraTargetToLocation(camera_x, camera_y, camera_z, x, y, z, vector_x, vector_y, vector_z) < radius)
+				return (1);
+			return (0);
+		}
+		case 30, 31:
+		{
+			vertical = 4.0;
+			horizontal = -1.6;
+		}
+		case 33:
+		{
+			vertical = 2.7;
+			horizontal = -1.0;
+		}
+		default:
+		{
+			vertical = 6.0;
+			horizontal = -2.2;
+		}
+	}
 
-    switch (GetPlayerWeapon(playerid))
-    {
-                    case 34,35,36: {
-                    if (DistanceCameraTargetToLocation(camera_x, camera_y, camera_z, x, y, z, vector_x, vector_y, vector_z) < radius) return true;
-                    return false;
-                    }
-                    case 30,31: {vertical = 4.0; horizontal = -1.6;}
-                    case 33: {vertical = 2.7; horizontal = -1.0;}
-                    default: {vertical = 6.0; horizontal = -2.2;}
-    }
+	new Float:angle = GetPointAngleToPoint(0, 0, floatsqroot(vector_x * vector_x + vector_y * vector_y), vector_z) - 270.0;
+	new Float:resize_x, Float:resize_y, Float:resize_z = floatsin(angle+vertical, degrees);
+	GetXYInFrontOfPoint(resize_x, resize_y, GetPointAngleToPoint(0, 0, vector_x, vector_y)+horizontal, floatcos(angle+vertical, degrees));
 
-    new Float:angle = GetPointAngleToPoint(0, 0, floatsqroot(vector_x*vector_x+vector_y*vector_y), vector_z) - 270.0;
-    new Float:resize_x, Float:resize_y, Float:resize_z = floatsin(angle+vertical, degrees);
-    GetXYInFrontOfPoint(resize_x, resize_y, GetPointAngleToPoint(0, 0, vector_x, vector_y)+horizontal, floatcos(angle+vertical, degrees));
-
-    if (DistanceCameraTargetToLocation(camera_x, camera_y, camera_z, x, y, z, resize_x, resize_y, resize_z) < radius) return true;
-    return false;
+	if (DistanceCameraTargetToLocation(camera_x, camera_y, camera_z, x, y, z, resize_x, resize_y, resize_z) < radius)
+		return (1);
+	return (0);
 }
 
 public OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY, Float:fZ)
@@ -4467,8 +4268,14 @@ public OnPlayerWeaponShot(playerid, weaponid, hittype, hitid, Float:fX, Float:fY
 				if(hitid == p_ShootingTargetObjects[playerid][i])
 				{
 					p_ShootingHits{playerid}++;
-					ProgressBarUpdate(playerid, ((PlayerInfo[playerid][pShooting] - 1) * 3 * 7) + (p_ShootingWave{playerid} * 7) + p_ShootingHits{playerid}, (3 * 3 * 7), "Progress");
-					if(p_ShootingHits{playerid} == 7)
+					new max_progress = (3 * 3 * 7);
+					new cur_progress =
+						(((PlayerInfo[playerid][pShooting] - 1) * 3 * 7)
+						+ (p_ShootingWave{playerid} * 7)
+						+ p_ShootingHits{playerid});
+					IFace.ShowPlayerProgress(playerid,
+						cur_progress, max_progress, "Progress");
+					if (p_ShootingHits{playerid} == 7)
 					{
 						new Float:obj_pos[3];
 						GetPlayerObjectPos(playerid, p_ShootingTargetObjects[playerid][0], Arr3<obj_pos>);
@@ -4511,62 +4318,50 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
 {
 	// Float:amount (положительный)
 	// bodypart: 9 - голова, 8 - правая нога, 7 - левая нога, 6 - правая рука, 5 - левая рука, 4 - член, 3 - корпус
-	if(issuerid == INVALID_PLAYER_ID)	return false;
-	if(IsPlayerNPC(playerid) || gPlayerLogged[playerid] == false)
-	{
-		return true;
-	}
+	if(issuerid == INVALID_PLAYER_ID)
+		return (0);
+	if (IsPlayerNPC(playerid) || !gPlayerLogged[playerid])
+		return (1);
+
 	new string[128];
 	if(showDebug[playerid])
 	{
 		SendFormatMessage(playerid, -1, string, "OnPlayerTakeDamage [issuerid = %d, amount = %f, weaponid = %d, bodypart = %d]", issuerid, amount, weaponid, bodypart);
 	}
 
-	//	бокс
-	if(IsPlayerBoxing(playerid))
+	if (issuerid != INVALID_PLAYER_ID)
 	{
-		new Float:health = MyGetPlayerHealth(playerid);
-		if(issuerid != INVALID_PLAYER_ID && gPlayerBoxEnemy[issuerid] == playerid)
+		//	Система самообороны
+		if (!IsPlayerBoxing(issuerid) && gPlayerBoxEnemy[issuerid] != playerid)
 		{
-			UpdateAttackHealth(issuerid);
-		}
-		if((health - amount) < 15.0)
-		{
-			FinishBox(playerid, (weaponid == 54) ? 0 : 1);
-		}
-		return true;
-	}
-
-	//	Система самообороны
-	new gtc			= GetPVarInt(issuerid,		"Player:Attack:LastAttack");
-	new Float:dmg	= GetPVarFloat(issuerid,	"Player:Attack:GiveDmg") + amount;
-	if(GetTickCount() > gtc + 60000)	dmg = amount;
-	if(dmg > 5.0)
-	{
-		if(!IsForce(PlayerInfo[issuerid][pFaction]))
-		{
-			//	ставим флаг атакующий
-			SetPVarInt(issuerid, "Player:Attack:Attacker",	true);
-			SetPVarInt(issuerid, "Player:Attack:GTC",		GetTickCount());
-			foreach(LoginPlayer, i)
+			new gtc = GetPVarInt(issuerid, "Player:Attack:LastAttack");
+			new Float:dmg = GetPVarFloat(issuerid, "Player:Attack:GiveDmg") + amount;
+			if (GetTickCount() > gtc + 60000)
+				dmg = amount;
+			if (dmg > 5.0)
 			{
-				if(PlayerInfo[i][pFaction] != F_POLICE)
+				if (!IsForce(PlayerInfo[issuerid][pFaction]))
 				{
-					MySetPlayerMarkerForPlayer(i, issuerid, 0xFF0000FF);
+					//	ставим флаг атакующий
+					SetPVarInt(issuerid, "Player:Attack:Attacker", true);
+					SetPVarInt(issuerid, "Player:Attack:GTC", GetTickCount());
+					foreach(LoginPlayer, i)
+					{
+						if (PlayerInfo[i][pFaction] != F_POLICE)
+						{
+							MySetPlayerMarkerForPlayer(i, issuerid, 0xFF0000FF);
+						}
+					}
 				}
 			}
+			SetPVarFloat(issuerid,	"Player:Attack:GiveDmg",	dmg);
+			SetPVarInt(issuerid,	"Player:Attack:LastAttack",	GetTickCount());
 		}
-	}
-	SetPVarFloat(issuerid,	"Player:Attack:GiveDmg",	dmg);
-	SetPVarInt(issuerid,	"Player:Attack:LastAttack",	GetTickCount());
 
-
-	if(issuerid != INVALID_PLAYER_ID)
-	{
-	    if(weaponid == 50 && amount < 1.0)
+	    if (weaponid == 50 && amount < 1.0)
 	    {
 	        new vehid = GetPlayerVehicleID(issuerid);
-	        if(vehid > 0)
+	        if (vehid > 0)
 	        {
 		        new Float:X, Float:Y, Float:Z;
 		        GetVehiclePos(vehid, X, Y, Z);
@@ -4577,11 +4372,15 @@ public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
 	    }
 	
 		new weap = GetPlayerWeapon(issuerid);
-		if(weap != weaponid || GetPlayerState(issuerid) != PLAYER_STATE_ONFOOT)								return false;
-		else if(weaponid >= 0 && weaponid <= 15 || weaponid == 37 || weaponid == 41 || weaponid == 42)
+		if (weap != weaponid || GetPlayerState(issuerid) != PLAYER_STATE_ONFOOT)
+			return (0);
+		else if (weaponid >= 0 && weaponid <= 15 || weaponid == 37
+			|| weaponid == 41 || weaponid == 42)
 		{
-			if(GetDistanceBetweenPlayers(playerid, issuerid) > 4.0)											return false;
-			if(GetTickCount() - GetPVarInt(issuerid, "Player:LastAttack") > 500 + GetPlayerPing(playerid))	return false;
+			if(GetDistanceBetweenPlayers(playerid, issuerid) > 4.0)
+				return (0);
+			if(GetTickCount() - GetPVarInt(issuerid, "Player:LastAttack") > 500 + GetPlayerPing(playerid))
+				return (0);
 		}
 
 //		GivePlayerDamage(playerid, amount);
@@ -5892,7 +5691,10 @@ EveryMinuteTimer()
 	}
 
 	// Мини миссии
-	if((minute - 1) % 20 == 0)	StartRandomGame();
+#if defined _player_chat_game_included
+	if ((minute - 1) % 20 == 0)
+		StartRandomChatGame();
+#endif
 	return true;
 }
 
@@ -6375,8 +6177,10 @@ ZeroVars(playerid, source = 0)
 	Dialogid[playerid] 				= INVALID_DIALOGID;
 
 	//	Clear Game Functions
-	for(new i = 0; i < 11; i++)		SetPlayerSkillLevel(playerid, i, 500);
-	for(new i = 0; i < 10; i++)		RemovePlayerAttachedObject(playerid, i);
+	for(new i = 0; i < 11; i++)
+		SetPlayerSkillLevel(playerid, i, 500);
+	for(new i = 0; i < 10; i++)
+		RemovePlayerAttachedObject(playerid, i);
 	return true;
 }
 // End ZeroVars()
@@ -6420,8 +6224,9 @@ Public: OnPlayerLogged(playerid)
 		}
 	}
 	//	in game params
+	CallLocalFunction("OnPlayerTextDrawInit", "d", playerid);
+
 	EnablePlayerCameraTarget(playerid, true);
-	IFace.Load_Player(playerid);
 	UpdatePlayerColor(playerid);
 	SetPlayerScore(playerid, PlayerInfo[playerid][pLevel]);
 	UpdatePlayerGraffitiCP(playerid); 	//  toggle graffiti
@@ -7056,7 +6861,7 @@ public OnPlayerSpawn(playerid)
 		//	IFace
 		TextDrawHideForPlayer(playerid, Busted);
 		TextDrawHideForPlayer(playerid, Wasted);
-		IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
+		IFace.ToggleTVEffect(playerid, false);
 		IFace.ToggleGroup(playerid, IFace.SPEEDO, false);
 		StopPlayerFade(playerid);
 
@@ -7094,7 +6899,7 @@ public OnPlayerSpawn(playerid)
 		{
 			if(GetPVarInt(playerid, "PrisonCycle"))
 			{
-				IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+				IFace.ToggleTVEffect(playerid, true);
 				SetPlayerCameraPos(playerid, 693.5, -2917.4, 1701.3);
 				SetPlayerCameraLookAt(playerid, 690.0, -2917.4, 1700.8);
 				SetTimerEx("MyFreezePlayer", 1000, false, "d", playerid);
@@ -8229,7 +8034,9 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 			    		// Работа доставщиков
 						if(DeliveryVehLoadCount[vehicleid] > 0)
 				    	{
-							ProgressBarUpdate(playerid, DeliveryVehLoadDamage[vehicleid], 100, isRus(playerid) ? RusText("Ущерб") : "Damage");
+							IFace.ShowPlayerProgress(playerid,
+								DeliveryVehLoadDamage[vehicleid], 100,
+								isRus(playerid) ? RusText("Ущерб") : "Damage");
 				    	}
 			    	}
 		    	#endif
@@ -11313,12 +11120,12 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
         	PursuitArestPlayer[playerid] = INVALID_PLAYER_ID;
         	GameTextForPlayer(playerid, "~r~arrest failure", 3000, 3);
         	ClearAnimations(playerid);
-        	ProgressBarHide(playerid);
+        	IFace.ProgressBarHide(playerid);
         }
 		if(PursuitCancelHandsup[playerid])
 		{
 			PursuitCancelHandsup[playerid] = 0;
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 		}*/
 	    if(GetPVarInt(playerid, "StartLockTimer"))
    		{
@@ -11778,7 +11585,7 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 		/*if(PursuitReinforc[playerid])
 		{
 			PursuitReinforc[playerid] = 0;
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 		}*/
 	}
 	else if(PRESSED(KEY_ANALOG_DOWN))
@@ -11793,7 +11600,11 @@ public OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 {
 	new string[256];
-	if (response)	// KEY_YES
+	if (response == OFFER_RESPONSE_DISCONNECT)
+	{
+		SendFormatMessage(playerid, COLOR_LIGHTRED, string, "%s покинул сервер, предложение отклонено.", ReturnPlayerName(offerid));
+	}
+	else if (response == OFFER_RESPONSE_YES)	// KEY_YES
 	{
 		//new ammount = amount[0]; //AskAmount[playerid];
 		if(offerid == INVALID_PLAYER_ID || IsPlayerLogged(offerid))
@@ -12184,7 +11995,7 @@ public	OnPlayerAskResponse(playerid, offerid, askid, const amount[], response)
 			SendFormatMessage(playerid, COLOR_WHITE, string, PREFIX_ERROR "%s вышел с сервера - запрос не актуален.", ReturnPlayerName(offerid));
 		}
 	}
-	else // KEY_NO // OnPlayerYNStateChange
+	else if (response == OFFER_RESPONSE_NO || response == OFFER_RESPONSE_TIMEOUT) // KEY_NO // OnPlayerYNStateChange
 	{
 	no_ask:
         if(GetPlayerAsk(playerid) != 0)
@@ -12289,7 +12100,8 @@ Public: OnPlayerVehicleCrash(playerid, Float:damage)
 	if(DeliveryVehLoadCount[vehicleid] > 0)
 	{
 		DeliveryVehLoadDamage[vehicleid] -= floatround(damage);
-		ProgressBarUpdate(playerid, DeliveryVehLoadDamage[vehicleid], 100);
+		IFace.ShowPlayerProgress(playerid,
+			DeliveryVehLoadDamage[vehicleid], 100);
 	}
 #endif	
 	return true;
@@ -20679,7 +20491,7 @@ public OnFadeComplete(playerid, fadeid)
 		case FADE_TELEPORT:
 		{
 			SetCameraBehindPlayer(playerid);
-	        MySetPlayerPos(playerid, Arr4<fade_TPToPos[playerid]>, fade_Interior[playerid], fade_VirtualWorld[playerid]);
+			MySetPlayerPos(playerid, Arr4<fade_TPToPos[playerid]>, fade_Interior[playerid], fade_VirtualWorld[playerid]);
 			FadeColorForPlayer(playerid, 0, 0, 0, 255, 0, 0, 0, 0, 10);
 			fade_Teleporting[playerid] = 0;
 			if(fade_Freeze[playerid] == false)	TogglePlayerControllable(playerid, true);
@@ -21134,35 +20946,6 @@ CMD:vtimer(playerid, params[])
 	return true;
 }
 
-flags:reptest(CMD_DEVELOPER);
-CMD:reptest(playerid, params[])
-{// [BT]
-	new title[32], oldval, newval, maxval;
-	if(sscanf(params, "s[32]ddd", title, oldval, newval, maxval))
-	    return SendClientMessage(playerid, -1, "Используйте: /reptest [текст] [старое знач.] [новое знач.] [макс. знач.]");
-    return RepBarShow(playerid, title, oldval, newval, maxval);
-}
-
-flags:progress(CMD_DEVELOPER);
-CMD:progress(playerid, params[])
-{// [BT]
-    new string[128];
-    if(sscanf(params, "s[32] ", string))
-        return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /progress [update/hide]");
-	if(strcheck(string, "hide"))
-		ProgressBarHide(playerid);
-	else if(strcheck(string, "update"))
-	{
-		new title[32], rus, value, maxvalue;
-		if(sscanf(params, "{s[32]}is[32]ii", rus, title, value, maxvalue))
-		    return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /progress update [rusik] [title] [value] [maxvalue]");
-		ProgressBarUpdate(playerid, value, maxvalue, RusText(title, rus));
-	}
-	else
-		SendClientMessage(playerid, COLOR_WHITE, PREFIX_ERROR "Такого действия в этой команде не существует.");
-	return true;
-}
-
 flags:jailperiod(CMD_DEVELOPER);
 CMD:jailperiod(playerid, params[])
 {// [BT]
@@ -21189,7 +20972,7 @@ flags:setcam(CMD_DEVELOPER);
 CMD:setcam(playerid, params[])
 {// [BT]
 	TogglePlayerSpectating(playerid, true);
-	IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+	IFace.ToggleTVEffect(playerid, true);
 	RegisterCutScene(playerid, strval(params), 0, 0);
 	return true;
 }*/
@@ -21233,7 +21016,7 @@ CMD:testcycle(playerid, params[])
 	PlayerInfo[playerid][pJailTime] = gettime() + 600;
 	SetPVarInt(playerid, "PrisonCycle", 1);
     TogglePlayerSpectating(playerid, 1);
-	IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+	IFace.ToggleTVEffect(playerid, true);
 	PrisonCycle(playerid, 4);
 	return true;
 }
@@ -22040,7 +21823,7 @@ COMMAND:tds(playerid, params[])
 	new bool:effect;
 	if(sscanf(params, "b", effect))
 		return SendClientMessage(playerid, COLOR_WHITE, "Используйте: /tds [value]");
-	IFace.ToggleGroup(playerid, IFace.TV_EFFECT, effect);
+	IFace.ToggleTVEffect(playerid, effect);
 	return true;
 }
 

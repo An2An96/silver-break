@@ -11,6 +11,8 @@
 
 #define INTERFACE_SELECT_COLOR		0xB7BBC499
 
+forward OnTextDrawInit();
+forward OnPlayerTextDrawInit(playerid);
 forward IsPlayerChangeInterface(playerid, element, bool:toggle);
 forward OnPlayerChangeInterface(playerid, element, bool:toggle);
 
@@ -267,11 +269,6 @@ static	IFace.IsChangeGroupToggle(playerid,
 		if (IsPlayerChangeInterface(playerid, element, toggle) == 0)
 			return (0);
 	#endif
-	// if(!CallLocalFunction("IsPlayerChangeInterface",
-	// 	"ddd", playerid, _:element, toggle))
-	// {
-	// 	return (0);
-	// }
 	return (1);
 }
 
@@ -344,7 +341,29 @@ stock	IFace.ZeroVars(playerid)
 	}
 }
 
-//
+//	Callbacks
+// public	OnPlayerLogged(playerid)
+// {
+// 	#if defined OnPlayerTextDrawInit
+// 		OnPlayerTextDrawInit();
+// 	#endif
+
+// 	#if defined Core_IFace_OnPlayerLogged
+// 		return Core_IFace_OnPlayerLogged(playerid);
+// 	#else
+// 		return (1);
+// 	#endif
+// }
+// #if defined _ALS_OnPlayerLogged
+// 	#undef OnPlayerLogged
+// #else
+// 	#define _ALS_OnPlayerLogged
+// #endif
+// #define OnPlayerLogged Core_IFace_OnPlayerLogged
+// #if defined Core_IFace_OnPlayerLogged
+// 	forward Core_IFace_OnPlayerLogged(playerid);
+// #endif
+
 public	OnPlayerDisconnect(playerid, reason)
 {
 	IFace.ZeroVars(playerid);
@@ -352,7 +371,7 @@ public	OnPlayerDisconnect(playerid, reason)
 	#if defined Core_IFace_OnPlayerDisconnect
 		return Core_IFace_OnPlayerDisconnect(playerid, reason);
 	#else
-		return (0);
+		return (1);
 	#endif
 }
 #if defined _ALS_OnPlayerDisconnect
@@ -400,6 +419,10 @@ public	OnGameModeInit()
 			IFace.Groups[i][e][giShow] = true;
 		}
 	}
+
+	#if defined OnTextDrawInit
+		OnTextDrawInit();
+	#endif
 
 	#if defined Core_IFace_OnGameModeInit
 		return Core_IFace_OnGameModeInit();

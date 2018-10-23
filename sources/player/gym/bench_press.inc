@@ -74,7 +74,7 @@ stock	BenchpressStart(playerid, bench_idx)
 	if (PlayerInfo[playerid][pTraining] >= MAX_TRAINING)
 		return ShowPlayerHint(playerid,
 			"Вы достаточно потренеровались, приходите позже!");
-	IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+	IFace.ToggleTVEffect(playerid, true);
 	SetPlayerArmedWeapon(playerid, 0);
 
 	//	===================	Set player camera pos and look 	====================
@@ -157,7 +157,7 @@ static	BenchpressEND(playerid)
 	//	========================================================================
 
 	IFace.HidePlayerInfoBar(playerid);
-	ProgressBarHide(playerid);
+	IFace.ProgressBarHide(playerid);
 
 	MyApplyAnimation(playerid,
 		"benchpress", "gym_bp_getoff", 4.1, 0, 0, 0, 0, 0);
@@ -195,14 +195,14 @@ Public: BenchpressNext(playerid, action)
 			if(PlayerInfo[playerid][pJailTime])
 				HidePlayerPrisonTime(playerid);
 			GymBlockKey{playerid} = false;
-		    ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
+		    IFace.ShowPlayerProgress(playerid, playerBenchStep{playerid}, 100);
 			IFace.ShowPlayerInfoBar(playerid, "Повторений: 0");
 	        BenchpressTimer[playerid] = SetTimerEx("BenchpressUpdate",
 				100, true, "i", playerid);
 		}
 		case BENCHSTEP_DOWN_FINISH:	//  finish DOWN
 		{
-			ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
+			IFace.ShowPlayerProgress(playerid, playerBenchStep{playerid}, 100);
 		    GymBlockKey{playerid} = false;
 		}
 	 	case BENCHSTEP_UP_FINISH:	//  finish UP
@@ -245,7 +245,7 @@ Public: BenchpressNext(playerid, action)
 	 	}
 	 	case BENCHSTEP_FINISH_ALL:	//  finish
 		{
-			IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
+			IFace.ToggleTVEffect(playerid, false);
 		    SetCameraBehindPlayer(playerid);
 		    BlockPlayerAnimation(playerid, false);
 		    MyApplyAnimation(playerid,
@@ -272,7 +272,7 @@ Public: BenchpressUpdate(playerid)
 			playerBenchStep{playerid} = 0;
 		else
 			playerBenchStep{playerid} = playerBenchStep{playerid} - 4;
-		ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
+		IFace.ShowPlayerProgress(playerid, playerBenchStep{playerid}, 100);
 	}
 	else
 	{
@@ -308,8 +308,8 @@ stock	BenchpressClear(playerid)
 	{
 		KillTimer(BenchpressTimer[playerid]);
 		KillTimer(BenchpressStepTimer[playerid]);
-		ProgressBarHide(playerid);
-		IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
+		IFace.ProgressBarHide(playerid);
+		IFace.ToggleTVEffect(playerid, false);
 		IFace.HidePlayerInfoBar(playerid);
 		SetCameraBehindPlayer(playerid);
 		//BlockPlayerAnimation(playerid, false);
@@ -337,7 +337,7 @@ public	OnPlayerClickSprint(playerid)
 	{
 		playerBenchStep{playerid} += 5;
 		playerBenchStop{playerid} = true;
-		ProgressBarUpdate(playerid, playerBenchStep{playerid}, 100);
+		IFace.ShowPlayerProgress(playerid, playerBenchStep{playerid}, 100);
 		BenchpressUP(playerid);
 		return (1);
 	}

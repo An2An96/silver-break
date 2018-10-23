@@ -40,7 +40,8 @@ stock FadeColorForPlayer(playerid, RR1, GG1, BB1, AA1, RR2, GG2, BB2, AA2, steps
 	tmpsteps += _setAmounts(playerid, 1, GG1, GG2);
 	tmpsteps += _setAmounts(playerid, 2, BB1, BB2);
 	tmpsteps += _setAmounts(playerid, 3, AA1, AA2);
-	if(tmpsteps)	pStep[playerid] += tmpsteps + 1;
+	if(tmpsteps)
+		pStep[playerid] += tmpsteps + 1;
 
 	if(!pFadeTimer[playerid])	
 	{
@@ -51,10 +52,12 @@ stock FadeColorForPlayer(playerid, RR1, GG1, BB1, AA1, RR2, GG2, BB2, AA2, steps
 
 stock StopPlayerFade(playerid)
 {
-	if(!pFadeTimer[playerid])	return false;
-	KillTimer(pFadeTimer[playerid]),	pFadeTimer[playerid] = 0;
+	if(!pFadeTimer[playerid])
+		return (0);
+	KillTimer(pFadeTimer[playerid]);
+	pFadeTimer[playerid] = 0;
 	PlayerTextDrawHide(playerid, fade_text[playerid]);
-	return true;
+	return (1);
 }
 
 Public: UpdateFadeTimer(playerid)

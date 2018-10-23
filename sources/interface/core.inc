@@ -4,6 +4,7 @@
 
 #define _interface_core_included
 
+#include "interface/tv_effect"
 #include "interface/fader"
 #include "interface/hint"
 #include "interface/exp_line"
@@ -21,7 +22,6 @@
 //---	Global TD
 new
 	Text:BuyHelp,
-	Text:lbt, Text:lbb,
 	//Text:TD_Loading,
 	Text:tdChooseButton1,
 	Text:tdChooseButton2,
@@ -132,6 +132,110 @@ stock UpdateAttackHealth(playerid)
 }
 
 //
+public IsPlayerChangeInterface(playerid, element, bool:toggle)
+{
+	switch(element)
+	{
+		case IFace.SPEEDO:
+		{
+			if(toggle)
+			{
+				if(!IFace.GetGroupToggleAndVisible(playerid, IFace.INTERFACE))
+					return (0);
+			}
+		}
+	}
+	return (1);
+}
+
+public OnPlayerChangeInterface(playerid, element, bool:toggle)
+{
+	switch(element)
+	{
+		case IFace.INTERFACE:
+		{
+			IFace.ChangeVisibleGroup(playerid, IFace.SPEEDO, toggle);
+			if(RestTime > 0)
+			{
+				IFace.ToggleGroup(playerid, IFace.RESTART, toggle);
+			}
+		}
+
+	#if defined _inventory_interface_included
+		case IFace.INVENTORY:
+		{
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _interface_select_menu_included
+		case IFace.SELECT_MENU:
+		{
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _player_phone_included
+		case IFace.PHONE:
+		{
+			#if defined _interface_hint_included
+				UpdatePlayerHints(playerid);
+			#endif
+		}
+	#endif
+
+	#if defined _interface_progress_included
+		case IFace.PROGRESS:
+		{
+			if (toggle)
+			{
+				if (PlayerInfo[playerid][pJailTime])
+				{
+					PlayerTextDrawHide(playerid, p_JailPeriod);
+				}	
+			}
+			else
+			{
+				if (PlayerInfo[playerid][pJailTime])
+				{
+					PlayerTextDrawShow(playerid, p_JailPeriod);
+				}
+			}	
+		}
+	#endif
+
+		case IFace.LOGO:
+		{
+			if (toggle)
+			{
+				TextDrawShowForPlayer(playerid, LogoTD[0]);
+				TextDrawShowForPlayer(playerid, LogoTD[1]);
+			}
+			else
+			{
+				TextDrawHideForPlayer(playerid, LogoTD[0]);
+				TextDrawHideForPlayer(playerid, LogoTD[1]);
+			}
+		}
+		case IFace.RESTART:
+		{
+			if (toggle)
+			{
+				TextDrawShowForPlayer(playerid, RestartInfo);
+			}
+			else
+			{
+				TextDrawHideForPlayer(playerid, RestartInfo);
+			}
+		}
+	}
+	return (1);
+}
+
 public OnPlayerClickTextDraw(playerid, Text:clickedid)
 {
 	#if defined _inventory_interface_included
@@ -406,10 +510,8 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid)
     return (0);
 }
 
-Interface_StaticCreate()
+public	OnTextDrawInit()
 {
-	IFace.AddWantHide(IFace.TV_EFFECT,	IFace.INTERFACE);
-
 	//	Admin
 	GUI_TD[td_AdmPanel] = TextDrawCreate(150.0, 425.0, "-1_____-1_____-1_____-1_____-1_____-1_____-1_____-1_____-1_____-1");
 	TextDrawColor(GUI_TD[td_AdmPanel], 0xEF8100FF);
@@ -568,20 +670,7 @@ Interface_StaticCreate()
 	TextDrawSetProportional(TD_Loading, 1);
 	TextDrawSetShadow(TD_Loading, 1);*/
 
-	//	CamEffects
-	lbt = TextDrawCreate(-2.0, 0.0, "---");
-	lbb = TextDrawCreate(0.0, 340.0, "---");
-	TextDrawUseBox(lbt, 1);
-	TextDrawUseBox(lbb, 1);
-	TextDrawBoxColor(lbt, 0x000000ff);
-	TextDrawBoxColor(lbb, 0x000000ff);
-	TextDrawTextSize(lbt, 640.0, -69.0);
-	TextDrawTextSize(lbb, 638.0, -60.0);
-	TextDrawLetterSize(lbt, 0.0, 10.5);
-	TextDrawLetterSize(lbb, 0.0, 12.0);
-
 	//---
-
 	/*TD_TutTitle = TextDrawCreate(320.0, 120.0, "Silver Break");
 	TextDrawAlignment(TD_TutTitle, 2);
 	TextDrawBackgroundColor(TD_TutTitle, 255);
@@ -679,9 +768,96 @@ Interface_StaticCreate()
 		TextDrawTextSize( PayNSprayColorMenu[ i ], 17.5, 17.5 );
 		TextDrawSetSelectable( PayNSprayColorMenu[ i ], 1 );
 	}
+
+	return (1);
 }
 
-Interface_PlayerCreate(playerid)
+Public: IFace.OnGameModeInit()
+{
+	//	Create Groups
+	IFace.CreateGroup(IFace.TV_EFFECT,			#IFace.TVEffect_Toggled, false);
+	IFace.CreateGroup(IFace.EXP_LINE,			#IFace.ExpLine_Toggle, false);
+	IFace.CreateGroup(IFace.PROGRESS,			#IFace.Progress_Toggled, false);
+	IFace.CreateGroup(IFace.REPBAR,				#IFace.RepBar_Toggle, false);
+	IFace.CreateGroup(IFace.MISSION_MES,		#IFace.Mission_Message_Toggle, false);
+	IFace.CreateGroup(IFace.VISUAL_TIMER,		#IFace.VisualTimer_Toggle, false);
+	IFace.CreateGroup(IFace.HACK_LOCK,			#IFace.HackLock_Toggle, false);
+	IFace.CreateGroup(IFace.CAM_EFFECT,			#IFace.CamEffect_Toggle, false);
+	IFace.CreateGroup(IFace.BUY_MENU,			#IFace.BuyMenu_Toggle, true);
+	IFace.CreateGroup(IFace.SELECT_MENU,		#IFace.SelectMenu_Toggle, true);
+	IFace.CreateGroup(IFace.SELECTER,			#IFace.Selecter_Toggle, true);
+	IFace.CreateGroup(IFace.INTERFACE,			#IFace.Player_Toggle, false);
+	IFace.CreateGroup(IFace.LOGO,				"", false);
+	IFace.CreateGroup(IFace.RESTART,			"", false);
+	IFace.CreateGroup(IFace.WANTED,				#IFace.Wanted_Toggle, false);
+	IFace.CreateGroup(IFace.INVENTORY,			#IFace.Inv_Toggle, true);
+	IFace.CreateGroup(IFace.PHONE,				#IFace.Phone_Toggle, false);
+	IFace.CreateGroup(IFace.HOUSE_ENTER_MENU,	#IFace.House_EnterMenuToggle, false);
+	IFace.CreateGroup(IFace.HOUSE_FUR,			#IFace.House_FurToggle, false);
+	IFace.CreateGroup(IFace.WORK_INFO,			#IFace.Job_Toggle, false);
+	IFace.CreateGroup(IFace.SPEEDO,				#IFace.Veh_Toggle, false);
+
+	#if defined _player_interface_included
+		IFace.Player_Load_Base();
+	#endif
+	#if defined _player_phone_included
+		IFace.Phone_Load_Base();
+	#endif
+
+	#if defined _inventory_interface_included
+		IFace.Inv_Create_Base();
+	#endif
+
+	#if defined _interface_exp_line_included
+		IFace.ExpLine_Create_Base();
+	#endif
+
+	#if defined _interface_cam_effect_included
+		IFace.CamEffect_Load_Base();
+	#endif
+	#if defined _interface_buy_menu_included
+		IFace.BuyMenu_Load_Base();
+	#endif
+	#if defined _interface_select_menu_included
+		IFace.SelectMenu_Create_Base();
+	#endif
+	#if defined _interface_selecter_included
+		IFace.Selecter_Create_Base();
+	#endif	
+
+	#if defined _vehicle_interface_included
+		IFace.Veh_Create_Base();
+	#endif
+
+	#if defined _events_races_included
+		IFace.Race_Create_Base();
+	#endif
+
+	#if defined _house_interface_included
+		IFace.House_Create_Base();
+	#endif
+
+	IFace.Hack_Create_Base();
+
+	Reg_IFace_Create_Base();
+
+	return CONTINUE;
+}
+
+Public: IFace.OnPlayerConnect(playerid)
+{
+	#if defined _interface_mission_included
+		IFace.Mission_Create_Player(playerid);
+	#endif
+
+	#if defined _interface_fader_included
+		IFace.Fader_Create_Player(playerid);
+	#endif	
+
+	return CONTINUE;
+}
+
+public	OnPlayerTextDrawInit(playerid)
 {
 	GUI_PlayerTD[ptd_SpecInfo] = CreatePlayerTextDraw(playerid, 320.0, 350.0, "_");
 	PlayerTextDrawAlignment(playerid, GUI_PlayerTD[ptd_SpecInfo], 2);
@@ -766,102 +942,6 @@ Interface_PlayerCreate(playerid)
 	PlayerTextDrawLetterSize(playerid, PTD_AttachHealth[2], 0.3, 1.2);
 	PlayerTextDrawColor(playerid, PTD_AttachHealth[2], 0xB1C8FBFF);
 	PlayerTextDrawSetOutline(playerid, PTD_AttachHealth[2], 1);
-}
-
-Public: IFace.OnGameModeInit()
-{
-	//	Create Groups
-	IFace.CreateGroup(IFace.TV_EFFECT,			"", false);
-	IFace.CreateGroup(IFace.EXP_LINE,			#IFace.ExpLine_Toggle, false);
-	IFace.CreateGroup(IFace.PROGRESS,			#IFace.Progress_Toggle, false);
-	IFace.CreateGroup(IFace.REPBAR,				#IFace.RepBar_Toggle, false);
-	IFace.CreateGroup(IFace.MISSION_MES,		#IFace.Mission_Message_Toggle, false);
-	IFace.CreateGroup(IFace.VISUAL_TIMER,		#IFace.VisualTimer_Toggle, false);
-	IFace.CreateGroup(IFace.HACK_LOCK,			#IFace.HackLock_Toggle, false);
-	IFace.CreateGroup(IFace.CAM_EFFECT,			#IFace.CamEffect_Toggle, false);
-	IFace.CreateGroup(IFace.BUY_MENU,			#IFace.BuyMenu_Toggle, true);
-	IFace.CreateGroup(IFace.SELECT_MENU,		#IFace.SelectMenu_Toggle, true);
-	IFace.CreateGroup(IFace.SELECTER,			#IFace.Selecter_Toggle, true);
-	IFace.CreateGroup(IFace.INTERFACE,			#IFace.Player_Toggle, false);
-	IFace.CreateGroup(IFace.LOGO,				"", false);
-	IFace.CreateGroup(IFace.RESTART,			"", false);
-	IFace.CreateGroup(IFace.WANTED,				#IFace.Wanted_Toggle, false);
-	IFace.CreateGroup(IFace.INVENTORY,			#IFace.Inv_Toggle, true);
-	IFace.CreateGroup(IFace.PHONE,				#IFace.Phone_Toggle, false);
-	IFace.CreateGroup(IFace.HOUSE_ENTER_MENU,	#IFace.House_EnterMenuToggle, false);
-	IFace.CreateGroup(IFace.HOUSE_FUR,			#IFace.House_FurToggle, false);
-	IFace.CreateGroup(IFace.WORK_INFO,			#IFace.Job_Toggle, false);
-	IFace.CreateGroup(IFace.SPEEDO,				#IFace.Veh_Toggle, false);
-
-	Interface_StaticCreate();
-
-	#if defined _player_interface_included
-		IFace.Player_Load_Base();
-	#endif
-	#if defined _player_phone_included
-		IFace.Phone_Load_Base();
-	#endif
-
-	#if defined _inventory_interface_included
-		IFace.Inv_Create_Base();
-	#endif
-
-	#if defined _interface_exp_line_included
-		IFace.ExpLine_Create_Base();
-	#endif
-
-	#if defined _interface_repbar_included
-		IFace.RepBar_Create_Base();
-	#endif
-
-	#if defined _interface_cam_effect_included
-		IFace.CamEffect_Load_Base();
-	#endif
-	#if defined _interface_buy_menu_included
-		IFace.BuyMenu_Load_Base();
-	#endif
-	#if defined _interface_select_menu_included
-		IFace.SelectMenu_Create_Base();
-	#endif
-	#if defined _interface_selecter_included
-		IFace.Selecter_Create_Base();
-	#endif	
-
-	#if defined _vehicle_interface_included
-		IFace.Veh_Create_Base();
-	#endif
-
-	#if defined _events_races_included
-		IFace.Race_Create_Base();
-	#endif
-
-	#if defined _house_interface_included
-		IFace.House_Create_Base();
-	#endif
-
-	IFace.Hack_Create_Base();
-
-	Reg_IFace_Create_Base();
-
-	return CONTINUE;
-}
-
-Public: IFace.OnPlayerConnect(playerid)
-{
-	#if defined _interface_mission_included
-		IFace.Mission_Create_Player(playerid);
-	#endif
-
-	#if defined _interface_fader_included
-		IFace.Fader_Create_Player(playerid);
-	#endif	
-
-	return CONTINUE;
-}
-
-IFace.Load_Player(playerid)
-{
-	Interface_PlayerCreate(playerid);
 
 	#if defined _player_interface_included
 		IFace.Player_Load_Player(playerid);
@@ -880,14 +960,6 @@ IFace.Load_Player(playerid)
 
 	#if defined _interface_exp_line_included
 		IFace.ExpLine_Create_Player(playerid);
-	#endif
-
-	#if defined _interface_progress_included
-		IFace.Progress_Create_Player(playerid);	
-	#endif
-
-	#if defined _interface_repbar_included
-		IFace.RepBar_Create_Player(playerid);	
 	#endif
 
 	#if defined _vehicle_interface_included
@@ -925,121 +997,6 @@ IFace.Load_Player(playerid)
 	#if defined _interface_info_bar_included
 		IFace.InfoBar_CreatePlayerTD(playerid);
 	#endif
-}
 
-public IsPlayerChangeInterface(playerid, element, bool:toggle)
-{
-	switch(element)
-	{
-		case IFace.SPEEDO:
-		{
-			if(toggle)
-			{
-				if(!IFace.GetGroupToggleAndVisible(playerid, IFace.INTERFACE))
-					return (0);
-			}
-		}
-	}
-	return (1);
-}
-
-public OnPlayerChangeInterface(playerid, element, bool:toggle)
-{
-	switch(element)
-	{
-		case IFace.INTERFACE:
-		{
-			IFace.ChangeVisibleGroup(playerid, IFace.SPEEDO, toggle);
-			if(RestTime > 0)
-			{
-				IFace.ToggleGroup(playerid, IFace.RESTART, toggle);
-			}
-		}
-
-	#if defined _inventory_interface_included
-		case IFace.INVENTORY:
-		{
-			#if defined _interface_hint_included
-				UpdatePlayerHints(playerid);
-			#endif
-		}
-	#endif
-
-	#if defined _interface_select_menu_included
-		case IFace.SELECT_MENU:
-		{
-			#if defined _interface_hint_included
-				UpdatePlayerHints(playerid);
-			#endif
-		}
-	#endif
-
-	#if defined _player_phone_included
-		case IFace.PHONE:
-		{
-			#if defined _interface_hint_included
-				UpdatePlayerHints(playerid);
-			#endif
-		}
-	#endif
-
-	#if defined _interface_progress_included
-		case IFace.PROGRESS:
-		{
-			if (toggle)
-			{
-				if (PlayerInfo[playerid][pJailTime])
-				{
-					PlayerTextDrawHide(playerid, p_JailPeriod);
-				}	
-			}
-			else
-			{
-				if (PlayerInfo[playerid][pJailTime])
-				{
-					PlayerTextDrawShow(playerid, p_JailPeriod);
-				}
-			}	
-		}
-	#endif
-
-		case IFace.TV_EFFECT:
-		{
-			if (toggle)
-			{
-				TextDrawShowForPlayer(playerid, lbb);
-				TextDrawShowForPlayer(playerid, lbt);	
-			}
-			else
-			{
-				TextDrawHideForPlayer(playerid, lbt);
-				TextDrawHideForPlayer(playerid, lbb);
-			}
-		}
-		case IFace.LOGO:
-		{
-			if (toggle)
-			{
-				TextDrawShowForPlayer(playerid, LogoTD[0]);
-				TextDrawShowForPlayer(playerid, LogoTD[1]);
-			}
-			else
-			{
-				TextDrawHideForPlayer(playerid, LogoTD[0]);
-				TextDrawHideForPlayer(playerid, LogoTD[1]);
-			}
-		}
-		case IFace.RESTART:
-		{
-			if (toggle)
-			{
-				TextDrawShowForPlayer(playerid, RestartInfo);
-			}
-			else
-			{
-				TextDrawHideForPlayer(playerid, RestartInfo);
-			}
-		}
-	}
 	return (1);
 }

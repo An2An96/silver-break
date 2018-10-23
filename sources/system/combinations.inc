@@ -38,16 +38,21 @@ Public: Comb_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 	    if(PlayerComb[playerid][ CurentCombStep[playerid] ] == flag)	
 		{
 			CurentCombStep[playerid]++;
-			ProgressBarUpdate(playerid, CurentCombStep[playerid], CombCount[playerid], "Progress");
+			IFace.ShowPlayerProgress(playerid,
+				CurentCombStep[playerid], CombCount[playerid], "Progress");
 			new delay = CallLocalFunction("OnPlayerSelectComb", "ddd", playerid, CombSource[playerid], flag);
-			if(delay)	CombTimer[playerid] = SetTimerEx("_NextPlayerCombStep", delay, false, "d", playerid);
-			else 		_NextPlayerCombStep(playerid);
+			if(delay)
+				CombTimer[playerid] = SetTimerEx("_NextPlayerCombStep", delay, false, "d", playerid);
+			else
+				_NextPlayerCombStep(playerid);
 		}
 		else
 		{
 			new result = CallLocalFunction("OnPlayerCombFinish", "ddd", playerid, CombSource[playerid], true);
-			if(result)	_RestartInput(playerid);
-			else 		ClearPlayerComb(playerid);
+			if(result)
+				_RestartInput(playerid);
+			else
+				ClearPlayerComb(playerid);
 		}
 	}
     return CONTINUE;
@@ -64,7 +69,7 @@ stock SetPlayerComb(playerid, source, comb_size, bool:comb[], bool:comb_show = t
 		PlayerComb[playerid][i] = comb[i];
 	}
 	_ShowComb(playerid);
-	ProgressBarUpdate(playerid, 0, CombCount[playerid], "Progress");
+	IFace.ShowPlayerProgress(playerid, 0, CombCount[playerid], "Progress");
 	return true;
 }
 
@@ -76,7 +81,7 @@ stock ClearPlayerComb(playerid)
 	CombCount[playerid] = 0;
 	CurentCombStep[playerid] = 0;
 	CombShow[playerid] = false;
-	ProgressBarHide(playerid);
+	IFace.ProgressBarHide(playerid);
 }
 
 stock GetPlayerComb(playerid)
@@ -127,5 +132,5 @@ static _RestartInput(playerid)
 {
 	CurentCombStep[playerid] = 0;
 	_ShowComb(playerid);
-	ProgressBarUpdate(playerid, 0, CombCount[playerid], "Progress");
+	IFace.ShowPlayerProgress(playerid, 0, CombCount[playerid], "Progress");
 }

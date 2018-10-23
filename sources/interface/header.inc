@@ -8,8 +8,6 @@
 #define INTERFACE_CO_MAIN_COLOR					0xA32725FF
 #define INTERFACE_BUTTON_COLOR					INTERFACE_CO_MAIN_COLOR
 
-forward IFace.Load_Player(playerid);
-
 forward IFace.ChangeMoney_Update(playerid, money);
 
 enum // IFace.E_GROUPS
@@ -43,43 +41,6 @@ enum // IFace.E_GROUPS
 	//	Vehicle
 	IFace.SPEEDO,
 }
-
-// enum IFace.E_GROUPS_INFO
-// {
-// 	bool:gToggleMouse,
-// 	gFunction[32],
-// }
-// new const IFace.GroupsInfo[IFace.E_GROUPS][IFace.E_GROUPS_INFO] = {
-// 	{ false,	"" },
-// 	//	Interface
-// 	{ false,	"" },
-// 	{ false,	#IFace.ExpLine_Toggle },
-// 	{ false,	#IFace.Progress_Toggle },
-// 	{ false,	#IFace.RepBar_Toggle },
-// 	{ false,	#IFace.Mission_Message_Toggle },
-// 	{ false,	#IFace.VisualTimer_Toggle },
-// 	{ false,	#IFace.HackLock_Toggle },
-// 	{ false,	#IFace.CamEffect_Toggle },
-// 	{ true,		#IFace.BuyMenu_Toggle },
-// 	{ true,		#IFace.SelectMenu_Toggle },
-// 	{ true,		#IFace.Selecter_Toggle },
-// 	//	Player Interface
-// 	{ false,	#IFace.Player_Toggle }, 
-// 	{ false,	"" },
-// 	{ false,	"" },
-// 	{ false,	#IFace.Wanted_Toggle },
-// 	//	Inventory
-// 	{ true,		#IFace.Inv_Toggle },
-// 	//	Player
-// 	{ false,	#IFace.Phone_Toggle },
-// 	{ false,	#IFace.House_EnterMenuToggle },
-// 	//	House
-// 	{ false,	#IFace.House_FurToggle },
-// 	//	Job
-// 	{ false,	#IFace.Job_Toggle },
-// 	//	Vehicle
-// 	{ false,	#IFace.Veh_Toggle }
-// };
 
 enum E_GUI_TD
 {

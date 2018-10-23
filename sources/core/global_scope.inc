@@ -937,10 +937,6 @@ new FineparkCount;
 new FineparkVehicle;
 new Text3D:Finepark3DText;
 
-new ChatGameTick; // 0 no game; > 0 going;
-new ChatGameTimer;
-new ChatGameRes[20];
-
 new EmmetStore[7][3];// [Пистолет, Полуавтомат,...] [0 weaponid; 1 ammo; 2 price]
 
 new bool:ClockStatus;

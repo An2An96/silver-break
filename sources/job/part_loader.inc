@@ -90,7 +90,7 @@ Public: Loader_OnPlayerEnterDynamicArea(playerid, areaid)
 			InterpolateCameraPos(playerid, Arr3<PlayerCameraPos>, 2143.9578,-2272.7078,19.9885, 3000);
 			InterpolateCameraLookAt(playerid, Arr3<PlayerCameraVector>, 2134.0881,-2277.4233,21.5105, 3000);
 		    TogglePlayerControllable(playerid, false);
-		    IFace.ToggleGroup(playerid, IFace.TV_EFFECT, true);
+		    IFace.ToggleTVEffect(playerid, true);
 		    SetTimerEx("Loader_CameraRemove", 5000, false, "i", playerid);
 	    }
 	    return true;
@@ -370,7 +370,7 @@ Public: Loader_OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 Public: Loader_CameraRemove(playerid)
 {
 	TogglePlayerControllable(playerid, true);
-	IFace.ToggleGroup(playerid, IFace.TV_EFFECT, false);
+	IFace.ToggleTVEffect(playerid, false);
 	SetCameraBehindPlayer(playerid);
 }
 

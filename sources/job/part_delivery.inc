@@ -99,7 +99,7 @@ Delivery_FinishWork(playerid, reason = Job.REASON_COMPLETE)
 	#pragma unused reason
 	if(DeliveryVehLoadCount[ gLastVehicle[playerid] ] > 0)
 	{
-		ProgressBarHide(playerid);
+		IFace.ProgressBarHide(playerid);
 	}
 	if(DeliveryStatus[playerid] == DELIVERY_STATUS_CARRY)
 	{
@@ -130,7 +130,8 @@ Public: Delivery_Load(vehicleid, count)
 	    new playerid = VehInfo[vehicleid][vDriver];
 	    if(playerid != -1)
 	    {
-			ProgressBarUpdate(playerid, 1000, 1000, isRus(playerid) ? RusText("׃שונב") : "Damage");
+			IFace.ShowPlayerProgress(playerid, 1000, 1000,
+				isRus(playerid) ? RusText("׃שונב") : "Damage");
 			PlayerPlaySound(playerid, 1058, 0.0, 0.0, 0.0);
 			TogglePlayerControllable(playerid, true);
 
@@ -175,7 +176,7 @@ Delivery_StartUnload(playerid, oldstate)
 			Delivery_CreatePoint(gLastVehicle[playerid]);
 		}
 	 	MyDisablePlayerCheckpoint(playerid);
-		ProgressBarHide(playerid);
+		IFace.ProgressBarHide(playerid);
 	}
 }
 

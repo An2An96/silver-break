@@ -353,12 +353,12 @@ public	OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			PursuitArestPlayer[playerid] = INVALID_PLAYER_ID;
 			GameTextForPlayer(playerid, "~r~arrest failure", 3000, 3);
 			ClearAnimations(playerid);
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 		}
 		if (PursuitCancelHandsup[playerid])
 		{
 			PursuitCancelHandsup[playerid] = 0;
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 		}
 	}
 	else if (RELEASED(KEY_CTRL_BACK))
@@ -366,7 +366,7 @@ public	OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 		if (PursuitReinforc[playerid])
 		{
 			PursuitReinforc[playerid] = 0;
-			ProgressBarHide(playerid);
+			IFace.ProgressBarHide(playerid);
 		}
 	}
 
@@ -394,27 +394,27 @@ public	OnEveryMillisecondTimer()
 		if(PursuitCancelHandsup[i])
 		{
 			if (++PursuitCancelHandsup[i] < 15)
-				ProgressBarUpdate(i, PursuitCancelHandsup[i], 15,
+				IFace.ShowPlayerProgress(i, PursuitCancelHandsup[i], 15,
 					RusText("Сопротивление", isRus(i)));
 			else
 			{
 				PursuitHandsupCancel(i);
 				PursuitCancelHandsup[i] = 0;
-				ProgressBarHide(i);
+				IFace.ProgressBarHide(i);
 			}
 		}
 		//	Reinforc
 		if (PursuitReinforc[i])
 		{
 			if (++PursuitReinforc[i] < 20)
-				ProgressBarUpdate(i, PursuitReinforc[i], 20,
+				IFace.ShowPlayerProgress(i, PursuitReinforc[i], 20,
 					RusText("Подмога", isRus(i)));
 			else
 			{
 				new string[128];
 				new Float:pos[3];
 
-				ProgressBarHide(i);
+				IFace.ProgressBarHide(i);
 				PursuitReinforc[i] = 0;
 				PursuitReinforcReload[i] = 120;
 				PursuitReinforcTime[i] = 60;
@@ -439,7 +439,7 @@ public	OnEveryMillisecondTimer()
 					&& (PlayerCuffedTime[pursued]
 					|| GetPVarInt(pursued, "Police:Pursuit:Handsup")))
 				{
-					ProgressBarUpdate(i, PursuitArest[i], 50,
+					IFace.ShowPlayerProgress(i, PursuitArest[i], 50,
 						RusText("Арест", isRus(i)));
 					GameTextForPlayer(pursued,
 						"~r~A ~b~r ~r~r ~b~e ~r~s ~b~t", 500, 3);
@@ -453,7 +453,7 @@ public	OnEveryMillisecondTimer()
 					PursuitArestPlayer[i] = INVALID_PLAYER_ID;
 					GameTextForPlayer(i, "~r~arrest failure", 3000, 3);
 					ClearAnimations(i);
-					ProgressBarHide(i);
+					IFace.ProgressBarHide(i);
 				}
 			}
 			else
@@ -479,7 +479,7 @@ public	OnEveryMillisecondTimer()
 				PursuitArest[i] = 0;
 				PursuitArestPlayer[i] = INVALID_PLAYER_ID;
 				ClearAnimations(i);
-				ProgressBarHide(i);
+				IFace.ProgressBarHide(i);
 			}
 		}
 	}
@@ -585,7 +585,7 @@ PursuitHandsupClear(playerid, clearanim = 1)
 	if(PursuitCancelHandsup[playerid] > 0)
 	{
 		PursuitCancelHandsup[playerid] = 0;
-		ProgressBarHide(playerid);
+		IFace.ProgressBarHide(playerid);
 	}
 	if(clearanim)
 	{
