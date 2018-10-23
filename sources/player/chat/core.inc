@@ -1,7 +1,8 @@
 #include "player/chat/header"
 
 #include "player/chat/commands"
-#tryinclude "player/chat/binds"
+#include "player/chat/game"
+#include "player/chat/binds"
 
 stock ProxDetector(playerid, Float:rad, const string[], color1 = 0xFFFFFFFF, color2 = 0xE6E6E6E6, color3 = 0xC8C8C8C8, color4 = 0xAAAAAAAA, color5 = 0x8C8C8C8C, censore = false)
 {
