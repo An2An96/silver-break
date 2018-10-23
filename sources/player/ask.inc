@@ -11,6 +11,14 @@ forward OnPlayerAskResponse(playerid, offerid, askid, const amount[], response);
 
 enum
 {
+	OFFER_RESPONSE_TIMEOUT,
+	OFFER_RESPONSE_DISCONNECT,
+	OFFER_RESPONSE_YES,
+	OFFER_RESPONSE_NO
+}
+
+enum
+{
 	ASK_NONE,
 	ASK_INVITE,
 	ASK_POLICE_FINE,
@@ -103,8 +111,11 @@ public	AskTimer()
 		// јвтоматический отказ по истечении времени предложени€
 		if(AskTime[i] > 0 && --AskTime[i] == 0)
 		{
-			CallLocalFunction("OnPlayerAskResponse", "dddab", i, AskOfferID[i], AskWhat[i], AskAmounts[i], false);
-			StopAsking(i);
+			if (CallLocalFunction("OnPlayerAskResponse", "dddab",
+				i, AskOfferID[i], AskWhat[i], AskAmounts[i], OFFER_RESPONSE_TIMEOUT))
+			{
+				StopAsking(i);
+			}
 		}
 	}
 	return (1);
@@ -120,10 +131,13 @@ public	OnPlayerClickY(playerid)
 		GetPlayerKeys(playerid, newkeys, tmp, tmp);
 		if (HOLDING(KEY_SPRINT))	//	ѕробел + Y
 		{
-			(CallLocalFunction("OnPlayerAskResponse", "dddab",
-				playerid, AskOfferID[playerid],
-				AskWhat[playerid], AskAmounts[playerid], true));
-			return (StopAsking(playerid));
+			if(CallLocalFunction("OnPlayerAskResponse", "dddab",
+				playerid, AskOfferID[playerid], AskWhat[playerid],
+				AskAmounts[playerid], OFFER_RESPONSE_YES))
+			{
+				StopAsking(playerid);
+			}
+			return (1);
 		}
 	}
 
@@ -152,8 +166,15 @@ public	OnPlayerClickN(playerid)
 	{	
 		GetPlayerKeys(playerid, newkeys, tmp, tmp);
 		if (HOLDING(KEY_SPRINT))	//	ѕробел + N
-			return (CallLocalFunction("OnPlayerAskResponse", "dddab",
-				playerid, AskOfferID[playerid], AskWhat[playerid], AskAmounts[playerid], false));
+		{
+			if (CallLocalFunction("OnPlayerAskResponse", "dddab",
+				playerid, AskOfferID[playerid], AskWhat[playerid],
+				AskAmounts[playerid], OFFER_RESPONSE_NO))
+			{
+				StopAsking(playerid);
+			}
+			return (1);
+		}
 	}
 
 	#if defined Ask_OnPlayerClickN
@@ -174,14 +195,16 @@ public	OnPlayerClickN(playerid)
 
 public	OnPlayerDisconnect(playerid, reason)
 {
-	new string[128];
-
 	foreach(Player, i)
 	{
 		if (AskOfferID[i] == playerid)
 		{
-			SendFormatMessage(i, COLOR_LIGHTRED, string, "%s покинул сервер, предложение отклонено.", ReturnPlayerName(playerid));
-			StopAsking(i);
+			if (CallLocalFunction("OnPlayerAskResponse", "dddab",
+				i, AskOfferID[i], AskWhat[i], AskAmounts[i],
+				OFFER_RESPONSE_DISCONNECT))
+			{
+				StopAsking(i);
+			}
 			break;
 		}
 	}

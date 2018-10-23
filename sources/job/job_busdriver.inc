@@ -263,6 +263,39 @@ Public: UpdateBusCheckpoint(playerid)
 	}
 }
 
+stock	GetBusSkill(playerid)
+{
+	if (1 <= PlayerInfo[playerid][pBusLevel] < 5)
+		return (PlayerInfo[playerid][pBusLevel] * 700);
+	return (-1);
+}
+
+stock	GiveBusSkill(playerid, skill = 1)
+{
+	if (0 <= PlayerInfo[playerid][pBusLevel] < 5)
+	{
+		if(PlayerInfo[playerid][pBusLevel] == 0)
+			PlayerInfo[playerid][pBusLevel] = 1;
+
+	    new string[128], next = GetBusSkill(playerid);
+		PlayerInfo[playerid][pBusSkill] += skill;
+		if(PlayerInfo[playerid][pBusSkill] >= next)
+		{
+			PlayerInfo[playerid][pBusLevel]++;
+			PlayerInfo[playerid][pBusSkill] -= next;
+			next = GetBusSkill(playerid);
+
+			format(string, 128, "~g~Водитель автобуса~n~~w~+ Бонус к зарплате: ~y~%d%s", getWageBonus(PlayerInfo[playerid][pBusLevel]), "%%");
+			ShowPlayerHint(playerid, string);
+		}
+		else if(PlayerInfo[playerid][pBusSkill] % 70 == 0)
+		{
+			format(string, 128, "Водитель [Yровень: %d]", PlayerInfo[playerid][pBusLevel]);
+			IFace.RepBarShow(playerid, string, PlayerInfo[playerid][pBusSkill] - 1, PlayerInfo[playerid][pBusSkill], next);
+		}
+	}
+}
+
 //////////	Private 	//////////
 static _SetBusCheckpoint(playerid, step)
 {

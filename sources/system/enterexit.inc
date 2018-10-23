@@ -232,10 +232,10 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 		return 1;
 	#endif
 }
-#if defined _ALS_OnPlayerPickUpDP
+#if defined _ALS_OnPlayerPickUpDynPickup
 	#undef OnPlayerPickUpDynamicPickup
 #else
-	#define _ALS_OnPlayerPickUpDP
+	#define _ALS_OnPlayerPickUpDynPickup
 #endif
 #define OnPlayerPickUpDynamicPickup Enterexit_OnPlayerPickUpDP
 #if defined Enterexit_OnPlayerPickUpDP

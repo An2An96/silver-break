@@ -11,6 +11,7 @@
 #tryinclude "job/job_busdriver"
 #tryinclude "job/job_trucker"
 #tryinclude "job/job_taxi"
+#tryinclude "job/job_mechanic"
 #tryinclude "job/part_loader"
 #tryinclude "job/part_farmer"
 #tryinclude "job/part_delivery"
@@ -38,7 +39,6 @@ public OnPlayerDeath(playerid, killerid, reason)
 #else
 	#define _ALS_OnPlayerDeath
 #endif
-
 #define OnPlayerDeath JobCore_OnPlayerDeath
 #if defined JobCore_OnPlayerDeath
 	forward JobCore_OnPlayerDeath(playerid, killerid, reason);

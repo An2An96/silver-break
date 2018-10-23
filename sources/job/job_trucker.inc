@@ -315,6 +315,44 @@ Trucker_UpdateTrailerStatus(tid = -1)
 	}
 }
 
+stock	GetTruckSkill(playerid)
+{
+	if (1 <= PlayerInfo[playerid][pTruckLevel] < 5)
+		return PlayerInfo[playerid][pTruckLevel] * 20;
+	return -1;
+}
+
+stock	GiveTruckSkill(playerid, skill = 1)
+{
+	if (0 <= PlayerInfo[playerid][pTruckLevel] < 5)
+	{
+		if (PlayerInfo[playerid][pTruckLevel] == 0)
+			PlayerInfo[playerid][pTruckLevel] = 1;
+
+	    new string[128], next = GetTruckSkill(playerid);
+		PlayerInfo[playerid][pTruckSkill] += skill;
+		if (PlayerInfo[playerid][pTruckSkill] >= next)
+		{
+			PlayerInfo[playerid][pTruckLevel]++;
+			PlayerInfo[playerid][pTruckSkill] -= next;
+			next = GetTruckSkill(playerid);
+
+			format(string, 128,
+				"~g~Дальнобойщик~n~~w~+ Бонус к зарплате: ~y~%d%s",
+					getWageBonus(PlayerInfo[playerid][pTruckLevel]), "%%");
+			ShowPlayerHint(playerid, string);
+		}
+		else if (PlayerInfo[playerid][pTruckSkill] % 2 == 0)
+		{
+			format(string, 128,
+				"Дальнобой [Yровень: %d]", PlayerInfo[playerid][pTruckLevel]);
+			IFace.RepBarShow(playerid, string,
+				PlayerInfo[playerid][pTruckSkill] - 1,
+				PlayerInfo[playerid][pTruckSkill], next);
+		}
+	}
+}
+
 //////////	Dialogs 	//////////
 DialogCreate:Trucker_TrailerList(playerid)
 {

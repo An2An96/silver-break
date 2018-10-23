@@ -345,6 +345,38 @@ Taxi_EverySecondTimer()
 	}
 }
 
+stock GetTaxiSkill(playerid)
+{
+	if(1 <= PlayerInfo[playerid][pTaxiLevel] < 5)
+	    return PlayerInfo[playerid][pTaxiLevel] * 2000;
+	return -1;
+}
+
+stock GiveTaxiSkill(playerid, skill = 1)
+{
+	if(0 <= PlayerInfo[playerid][pTaxiLevel] < 5)
+	{
+		if(PlayerInfo[playerid][pTaxiLevel] == 0)	PlayerInfo[playerid][pTaxiLevel] = 1;
+
+	    new string[128], next = GetTaxiSkill(playerid);
+		PlayerInfo[playerid][pTaxiSkill] += skill;
+		if(PlayerInfo[playerid][pTaxiSkill] >= next)
+		{
+			PlayerInfo[playerid][pTaxiLevel]++;
+			PlayerInfo[playerid][pTaxiSkill] -= next;
+			next = GetTaxiSkill(playerid);
+
+			format(string, 128, "~g~Таксист~n~~w~+ Бонус к зарплате: ~y~%d%s", getWageBonus(PlayerInfo[playerid][pTaxiLevel]), "%%");
+			ShowPlayerHint(playerid, string);
+		}
+		else if(PlayerInfo[playerid][pTaxiSkill] % 200 == 0)
+		{
+			format(string, 128, "Таксист [Yровень: %d]", PlayerInfo[playerid][pTaxiLevel]);
+			IFace.RepBarShow(playerid, string, PlayerInfo[playerid][pTaxiSkill] - 1, PlayerInfo[playerid][pTaxiSkill], next);
+		}
+	}
+}
+
 //////////	Dialogs 	///////////
 DialogCreate:Taxi_Duty(playerid)
 {

@@ -10,7 +10,7 @@ stock	GivePlayerPower(playerid, Float:power)
 		* ((PlayerInfo[playerid][pVip]) ? (1.2) : (1.0));
 	new b = floatround(PlayerInfo[playerid][pPower], floatround_floor);
 	if (b > a)
-		RepBarShow(playerid, "Ваша сила выросла:", a, b);
+		IFace.RepBarShow(playerid, "Ваша сила выросла:", a, b);
 	return (1);
 }
 

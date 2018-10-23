@@ -314,6 +314,38 @@ public	OnPlayerEverySecondTimer(playerid)
 	forward Boxing_OnPlayerEverySecondTimer(playerid);
 #endif
 
+public OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart)
+{
+	if (IsPlayerBoxing(playerid))
+	{
+		new Float:health = MyGetPlayerHealth(playerid);
+		if (issuerid != INVALID_PLAYER_ID
+			&& gPlayerBoxEnemy[issuerid] == playerid)
+		{
+			UpdateAttackHealth(issuerid);
+		}
+		if ((health - amount) < 15.0)
+		{
+			FinishBox(playerid, (weaponid == 54) ? 0 : 1);
+		}
+	}
+
+	#if defined Boxing_OnPlayerTakeDamage
+		return Boxing_OnPlayerTakeDamage(playerid, issuerid, amount, weaponid, bodypart);
+	#else
+		return (1);
+	#endif
+}
+#if defined _ALS_OnPlayerTakeDamage
+	#undef OnPlayerTakeDamage
+#else
+	#define _ALS_OnPlayerTakeDamage
+#endif
+#define OnPlayerTakeDamage Boxing_OnPlayerTakeDamage
+#if defined Boxing_OnPlayerTakeDamage
+	forward Boxing_OnPlayerTakeDamage(playerid, issuerid, Float:amount, weaponid, bodypart);
+#endif
+
 COMMAND:box(playerid, params[])
 {
 	new giveplayerid;
