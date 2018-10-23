@@ -10,6 +10,43 @@
 #include "vehicle/load"
 #include "vehicle/interface"
 
+stock MyPutPlayerInVehicle(playerid, vehicleid, seatid)
+{
+	if (!GetVehicleModel(vehicleid))
+		return (0);
+	gEnteringVehicle[playerid] = -1;
+	PlayerVehicle[playerid] = vehicleid;
+	PutPlayerInVehicle(playerid, vehicleid, seatid);
+
+	UpdatePlayerWeather(playerid);
+	UpdatePlayerTime(playerid);
+	UpdatePlayerGPSZone(playerid);
+	return (1);
+}
+
+MySetVehiclePos(vehicleid, Float:x, Float:y, Float:z, Float:a = 0.0)
+{
+	BlockVehicleEffect(vehicleid);
+	if (VehInfo[vehicleid][vDriver] >= 0)
+		EffectCheck{ VehInfo[vehicleid][vDriver] } = 2;
+	if (VehInfo[vehicleid][vCoDriver] >= 0)
+		EffectCheck{ VehInfo[vehicleid][vCoDriver] } = 2;
+	if (VehInfo[vehicleid][vLeftSeat] >= 0)
+		EffectCheck{ VehInfo[vehicleid][vLeftSeat] } = 2;
+	if (VehInfo[vehicleid][vRightSeat] >= 0)
+		EffectCheck{ VehInfo[vehicleid][vRightSeat] } = 2;
+	SetVehiclePos(vehicleid, x, y, z);
+	SetVehicleZAngle(vehicleid, a);
+	return (1);
+}
+
+stock	MyGetVehiclePos(vehicleid, &Float:x, &Float:y, &Float:z, &Float:a)
+{
+	GetVehiclePos(vehicleid, x, y, z);
+	GetVehicleZAngle(vehicleid, a);
+	return (1);
+}
+
 stock MyCreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1 = -1, color2 = -1, respawn_delay = VEH_SPAWNTIME, addsiren = 0)
 {
 	new vehid;

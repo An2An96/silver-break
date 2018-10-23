@@ -12,15 +12,15 @@ stock AC_GivePlayerWeapon(playerid, weaponid, ammo)
 	    {
 	        case PLAYER_STATE_DRIVER:
 	        {
-	            // РЈР±СЂР°С‚СЊ РѕСЂСѓР¶РёРµ РёР· СЂСѓРє РІРѕРґРёС‚РµР»СЏ
+	            // Убрать оружие из рук водителя
 	            SetPlayerArmedWeapon(playerid, 0);
 	        }
 	        case PLAYER_STATE_PASSENGER:
 	        {
-	            // РЈР±СЂР°С‚СЊ РѕСЂСѓР¶РёРµ РёР· СЂСѓРє РїР°СЃСЃР°Р¶РёСЂР°
+	            // Убрать оружие из рук пассажира
 	            if(!(3 <= slot <= 5))
 	            {
-	                // РљСЂРѕРјРµ РґСЂРѕР±РѕРІРёРєРѕРІ, РїРѕР»СѓР°РІС‚РѕРјР°С‚РѕРІ Рё Р°РІС‚РѕРјР°С‚РѕРІ
+	                // Кроме дробовиков, полуавтоматов и автоматов
 	                SetPlayerArmedWeapon(playerid, 0);
 	            }
 	        }
